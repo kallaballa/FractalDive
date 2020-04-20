@@ -1,0 +1,9 @@
+src/*.o
+src/*.gch
+src/*.dep
+src/dive
+.cproject
+.project
+.settings/
+perf.data
+perf.data.old
