@@ -17,7 +17,12 @@ private:
   size_t height_;
 	class SDL_Surface *screen_;
   bool offscreen_;
+#ifdef _JAVASCRIPT
+  const uint8_t BYTES_PER_PIXEL = 4;
+#else
   const uint8_t BYTES_PER_PIXEL = 3;
+#endif
+
 public:
   Canvas(size_t width, size_t height, bool offscreen = false);
   virtual ~Canvas() {};

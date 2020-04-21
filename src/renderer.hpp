@@ -35,8 +35,8 @@ public:
 			HEIGHT_(height),
 			BUFFERSIZE(width * height),
 			maxIterations_(maxIterations),
-			offsetx_(-width/2),
-			offsety_(-height/2),
+			offsetx_(-float(width)/2.0),
+			offsety_(-float(height)/2.0),
 			rgbdata_(width * height),
 			greydata_(width * height)
 {
@@ -50,8 +50,14 @@ public:
 	void zoomAt(int32_t x, int32_t y, double factor, bool zoomin);
 	void zoomAtCenter(double factor, bool zoomin);
 	void pan(const int32_t& x, const int32_t& y);
-};
+	size_t getMaxIterations() {
+		return maxIterations_;
+	}
 
+	void setMaxIterations(size_t mi) {
+		maxIterations_ = mi;
+	}
+};
 } /* namespace fractaldive */
 
 #endif /* SRC_RENDERER_HPP_ */

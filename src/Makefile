@@ -5,9 +5,10 @@ TARGET := dive.html
 endif
 
 SRCS  := main.cpp renderer.cpp color.cpp canvas.cpp
+ifndef JAVASCRIPT
 CXXFLAGS += `pkg-config --cflags sdl x11`
 LIBS += `pkg-config --libs sdl x11`
-
+endif
 #precompiled headers
 HEADERS := 
 

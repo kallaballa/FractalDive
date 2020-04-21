@@ -7,8 +7,8 @@
 
 #include <cassert>
 #include <cmath>
-#include <iostream>
 #include <complex>
+#include <iostream>
 
 namespace fractaldive {
 
@@ -34,12 +34,12 @@ void Renderer::render(bool greyonly) {
 // Calculate the color of a specific pixel
 void Renderer::iterate(int32_t x, int32_t y, size_t maxiterations, bool greyonly) {
 		using std::complex;
-		float x0 = (x + offsetx_ + panx_) / (zoom_ / 10);
-		float y0 = (y + offsety_ + pany_) / (zoom_ / 10);
-    complex<float> point(x0/WIDTH_, y0/HEIGHT_);
+		float xViewport = (x + offsetx_ + panx_) / (zoom_ / 10);
+		float yViewport = (y + offsety_ + pany_) / (zoom_ / 10);
+    complex<float> point(xViewport/WIDTH_, yViewport/HEIGHT_);
     complex<float> z(0, 0);
     size_t iterations = 0;
-    while (abs (z) < 2 && iterations < maxIterations_) {
+    while (abs(z) < 2 && iterations < maxIterations_) {
         z = z * z + point;
         ++iterations;
     }
@@ -49,7 +49,7 @@ void Renderer::iterate(int32_t x, int32_t y, size_t maxiterations, bool greyonly
   	if (iterations == maxiterations) {
   		color = {0, 0, 0}; // Black
   	} else {
-  		// 254 so we can use 0 as grey index for black
+  		// 254 so we can use 0 as index for black
   		index = std::floor((float(iterations) / (maxiterations - 1)) * 254.0);
   		color = palette_[index];
   	}
