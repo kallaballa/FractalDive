@@ -21,7 +21,7 @@
 
 constexpr size_t WIDTH = 256;
 constexpr size_t HEIGHT = 256;
-size_t MAX_ITERATIONS = 250;
+size_t MAX_ITERATIONS = 500;
 
 namespace fd = fractaldive;
 
@@ -110,6 +110,7 @@ std::pair<int32_t, int32_t> identifyCenterOfTileOfHighestDetail(const size_t& nu
 
 bool dive() {
 	double detail = measureDetail(renderer.greydata_, renderer.WIDTH_ * renderer.HEIGHT_);
+//	std::cerr << "detail:" << detail << " " << "zoom:" << renderer.getZoom() << std::endl;
 	if(detail < 0.1) {
 #ifdef _JAVASCRIPT
 		emscripten_cancel_main_loop();

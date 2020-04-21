@@ -16,7 +16,7 @@ public:
 	const size_t BUFFERSIZE;
 private:
 	Color palette_[256];
-	size_t maxIterations_;
+	uint64_t maxIterations_;
 	int32_t offsetx_;
 	int32_t offsety_;
 
@@ -50,11 +50,15 @@ public:
 	void zoomAt(int32_t x, int32_t y, double factor, bool zoomin);
 	void zoomAtCenter(double factor, bool zoomin);
 	void pan(const int32_t& x, const int32_t& y);
+	double getZoom() {
+		return zoom_;
+	}
+
 	size_t getMaxIterations() {
 		return maxIterations_;
 	}
 
-	void setMaxIterations(size_t mi) {
+	void setMaxIterations(const size_t& mi) {
 		maxIterations_ = mi;
 	}
 };

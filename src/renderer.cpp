@@ -37,13 +37,11 @@ void Renderer::render(bool greyonly) {
 		size_t sliceHeight = std::floor(float(HEIGHT_) / numThreads);
 		size_t remainder = HEIGHT_ % sliceHeight;
 		std::vector<std::thread*> threads;
-		std::cerr << sliceHeight << ":" << remainder << std::endl;
 
 		for(size_t i = 0; i < numThreads; ++i) {
 			if(i == (numThreads - 1) && remainder > 0)
 				sliceHeight += remainder;
 
-			std::cerr << 2 << std::endl;
 			std::thread* t = new std::thread([=](){
 				for (size_t y = sliceHeight * i; y < (sliceHeight * (i + 1)); y++) {
 					for (size_t x = 0; x < WIDTH_; x++) {
