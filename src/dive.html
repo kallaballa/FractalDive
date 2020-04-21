@@ -1,0 +1,24 @@
+<html>
+	<body>
+	<canvas id="canvas" width=256 height=256></canvas>
+
+		<script>
+			var Module = {
+				print: (function() {
+					return function(text) {
+						console.log(text);
+					};
+				})(),
+				printErr: function(text) {
+						if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                        console.error(text);
+                },				
+				canvas: (function() {
+					var canvas = document.getElementById('canvas');
+					return canvas;
+				})()
+			};
+		</script>
+		<script src="dive.js"></script>
+	</body>
+</html>

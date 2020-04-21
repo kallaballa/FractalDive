@@ -27,8 +27,8 @@ private:
 	void generatePalette();
 	void iterate(int32_t x, int32_t y, size_t maxiterations, bool greyonly);
 public:
-	std::vector<Color> rgbdata_;
-	std::vector<uint8_t> greydata_;
+	Color* rgbdata_;
+	uint8_t* greydata_;
 
 	Renderer(const size_t& width, const size_t& height, const size_t& maxIterations) :
 			WIDTH_(width),
@@ -37,8 +37,8 @@ public:
 			maxIterations_(maxIterations),
 			offsetx_(-float(width)/2.0),
 			offsety_(-float(height)/2.0),
-			rgbdata_(width * height),
-			greydata_(width * height)
+			rgbdata_(new Color[width * height]),
+			greydata_(new uint8_t[width * height])
 {
 		generatePalette();
 	}

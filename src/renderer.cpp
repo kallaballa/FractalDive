@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cmath>
 #include <complex>
+#include <thread>
 #include <iostream>
 
 namespace fractaldive {
@@ -23,12 +24,47 @@ void Renderer::generatePalette() {
 // Generate the fractal image
 void Renderer::render(bool greyonly) {
 	// Iterate over the pixels
+#ifndef _JAVASCRIPT
 	for (size_t y = 0; y < HEIGHT_; y++) {
 		#pragma omp parallel for ordered schedule(dynamic)
 		for (size_t x = 0; x < WIDTH_; x++) {
 			iterate(x, y, maxIterations_, greyonly);
 		}
 	}
+#else
+	const size_t numThreads = 8;
+	if(HEIGHT_ > (numThreads * 2)) {
+		size_t sliceHeight = std::floor(float(HEIGHT_) / numThreads);
+		size_t remainder = HEIGHT_ % sliceHeight;
+		std::vector<std::thread*> threads;
+		std::cerr << sliceHeight << ":" << remainder << std::endl;
+
+		for(size_t i = 0; i < numThreads; ++i) {
+			if(i == (numThreads - 1) && remainder > 0)
+				sliceHeight += remainder;
+
+			std::cerr << 2 << std::endl;
+			std::thread* t = new std::thread([=](){
+				for (size_t y = sliceHeight * i; y < (sliceHeight * (i + 1)); y++) {
+					for (size_t x = 0; x < WIDTH_; x++) {
+						iterate(x, y, maxIterations_, greyonly);
+					}
+				}
+			});
+			threads.push_back(t);
+		}
+		for(auto& t : threads) {
+			t->join();
+			delete t;
+		}
+	} else {
+		for (size_t y = 0; y < HEIGHT_; y++) {
+			for (size_t x = 0; x < WIDTH_; x++) {
+				iterate(x, y, maxIterations_, greyonly);
+			}
+		}
+	}
+#endif
 }
 
 // Calculate the color of a specific pixel

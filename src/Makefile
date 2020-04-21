@@ -1,7 +1,7 @@
 TARGET  := dive
 
 ifdef JAVASCRIPT
-TARGET := dive.html
+TARGET := dive.js
 endif
 
 SRCS  := main.cpp renderer.cpp color.cpp canvas.cpp

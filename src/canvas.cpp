@@ -50,7 +50,7 @@ inline void Canvas::putpixel(const size_t& x, const size_t& y, const Color& c) {
 	}
 #endif
 }
-void Canvas::draw(const std::vector<Color>& rgbdata) {
+void Canvas::draw(const Color* rgbdata) {
 	if (SDL_MUSTLOCK(screen_))
 		SDL_LockSurface(screen_);
 

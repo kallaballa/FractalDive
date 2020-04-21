@@ -28,7 +28,7 @@ public:
   virtual ~Canvas() {};
   void putpixel(const size_t& x, const size_t& y, const Color& c);
   void flip();
-  void draw(const std::vector<Color>& rgbdata);
+  void draw(const Color* rgbdata);
 };
 }
 #endif /* CANVAS_H_ */

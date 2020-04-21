@@ -7,3 +7,6 @@ src/dive
 .settings/
 perf.data
 perf.data.old
+src/dive.js
+src/dive.wasm
+src/dive.worker.js
