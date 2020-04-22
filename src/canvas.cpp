@@ -4,7 +4,7 @@
 #include "color.hpp"
 
 namespace fractaldive {
-Canvas::Canvas(size_t width, size_t height, bool offscreen) :
+Canvas::Canvas(const dim_t& width, const dim_t& height, bool offscreen) :
   width_(width), height_(height), screen_(NULL), offscreen_(offscreen) {
   if (width > 0 && height > 0) {
     if (SDL_Init(SDL_INIT_VIDEO) == -1) {
@@ -31,7 +31,7 @@ void Canvas::flip() {
   }
 }
 
-inline void Canvas::putpixel(const size_t& x, const size_t& y, const Color& c) {
+inline void Canvas::putpixel(const coord_t& x, const coord_t& y, const color24_t& c) {
 	Uint8 *p = (Uint8 *) screen_->pixels + y * screen_->pitch + x * BYTES_PER_PIXEL;
 #ifdef _JAVASCRIPT
 	p[0] = c.r_;
@@ -50,15 +50,14 @@ inline void Canvas::putpixel(const size_t& x, const size_t& y, const Color& c) {
 	}
 #endif
 }
-void Canvas::draw(const Color* rgbdata) {
+void Canvas::draw(const rgb_image_t& rgbdata) {
 	if (SDL_MUSTLOCK(screen_))
 		SDL_LockSurface(screen_);
 
 
-	for(size_t y = 0; y < height_; ++y) {
-		for(size_t x = 0; x < width_; ++x) {
-			const Color& c = rgbdata[y * width_ + x];
-			putpixel(x, y, c);
+	for(dim_t y = 0; y < height_; ++y) {
+		for(dim_t x = 0; x < width_; ++x) {
+			putpixel(x, y, rgbdata[y * width_ + x]);
 		}
 	}
 

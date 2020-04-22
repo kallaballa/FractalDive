@@ -6,15 +6,15 @@
 #include <SDL/SDL.h>
 #include <vector>
 
-#include "color.hpp"
+#include "types.hpp"
 
 using std::string;
 
 namespace fractaldive {
 class Canvas {
 private:
-  size_t width_;
-  size_t height_;
+  dim_t width_;
+  dim_t height_;
 	class SDL_Surface *screen_;
   bool offscreen_;
 #ifdef _JAVASCRIPT
@@ -24,11 +24,11 @@ private:
 #endif
 
 public:
-  Canvas(size_t width, size_t height, bool offscreen = false);
+  Canvas(const dim_t& width, const dim_t& height, bool offscreen = false);
   virtual ~Canvas() {};
-  void putpixel(const size_t& x, const size_t& y, const Color& c);
+  void putpixel(const coord_t& x, const coord_t& y, const color24_t& c);
   void flip();
-  void draw(const Color* rgbdata);
+  void draw(const rgb_image_t& rgbdata);
 };
 }
 #endif /* CANVAS_H_ */

@@ -15,27 +15,27 @@ namespace fractaldive {
 
 // Generate palette
 void Renderer::generatePalette() {
-	size_t increment = Palette::SIZE_ / 256;
+	size_t increment = palette24_t::SIZE_ / 256;
 	for (size_t i = 0; i < 256; i++) {
-		palette_[i] = Palette::ITEMS_[i * increment];
+		palette_[i] = palette24_t::ITEMS_[i * increment];
 	}
 }
 
 // Generate the fractal image
 void Renderer::render(bool greyonly) {
 	// Iterate over the pixels
-#ifndef _JAVASCRIPT
-	for (size_t y = 0; y < HEIGHT_; y++) {
+#ifndef _JAVASCRIPT_MT
+	for (dim_t y = 0; y < HEIGHT_; y++) {
 		#pragma omp parallel for ordered schedule(dynamic)
-		for (size_t x = 0; x < WIDTH_; x++) {
+		for (dim_t x = 0; x < WIDTH_; x++) {
 			iterate(x, y, maxIterations_, greyonly);
 		}
 	}
 #else
-	const size_t numThreads = 8;
+	const size_t numThreads = std::thread::hardware_concurrency();
 	if(HEIGHT_ > (numThreads * 2)) {
-		size_t sliceHeight = std::floor(float(HEIGHT_) / numThreads);
-		size_t remainder = HEIGHT_ % sliceHeight;
+		dim_t sliceHeight = std::floor(float(HEIGHT_) / numThreads);
+		dim_t remainder = HEIGHT_ % sliceHeight;
 		std::vector<std::thread*> threads;
 
 		for(size_t i = 0; i < numThreads; ++i) {
@@ -43,8 +43,8 @@ void Renderer::render(bool greyonly) {
 				sliceHeight += remainder;
 
 			std::thread* t = new std::thread([=](){
-				for (size_t y = sliceHeight * i; y < (sliceHeight * (i + 1)); y++) {
-					for (size_t x = 0; x < WIDTH_; x++) {
+				for (dim_t y = sliceHeight * i; y < (sliceHeight * (i + 1)); y++) {
+					for (dim_t x = 0; x < WIDTH_; x++) {
 						iterate(x, y, maxIterations_, greyonly);
 					}
 				}
@@ -56,8 +56,8 @@ void Renderer::render(bool greyonly) {
 			delete t;
 		}
 	} else {
-		for (size_t y = 0; y < HEIGHT_; y++) {
-			for (size_t x = 0; x < WIDTH_; x++) {
+		for (dim_t y = 0; y < HEIGHT_; y++) {
+			for (dim_t x = 0; x < WIDTH_; x++) {
 				iterate(x, y, maxIterations_, greyonly);
 			}
 		}
@@ -66,19 +66,20 @@ void Renderer::render(bool greyonly) {
 }
 
 // Calculate the color of a specific pixel
-void Renderer::iterate(int32_t x, int32_t y, size_t maxiterations, bool greyonly) {
+void Renderer::iterate(const coord_t& x, const coord_t& y, const uint64_t& maxiterations, const bool& greyonly) {
 		using std::complex;
-		float xViewport = (x + offsetx_ + panx_) / (zoom_ / 10);
-		float yViewport = (y + offsety_ + pany_) / (zoom_ / 10);
-    complex<float> point(xViewport/WIDTH_, yViewport/HEIGHT_);
-    complex<float> z(0, 0);
-    size_t iterations = 0;
+		float_t xViewport = (x + offsetx_ + panx_) / (zoom_ / 10);
+		float_t yViewport = (y + offsety_ + pany_) / (zoom_ / 10);
+    complex<float_t> point(xViewport/WIDTH_, yViewport/HEIGHT_);
+    complex<float_t> z(0, 0);
+    uint64_t iterations = 0;
+
     while (abs(z) < 2 && iterations < maxIterations_) {
         z = z * z + point;
         ++iterations;
     }
 
-  	Color color;
+  	color24_t color;
   	size_t index = 0;
   	if (iterations == maxiterations) {
   		color = {0, 0, 0}; // Black
@@ -104,7 +105,7 @@ void Renderer::iterate(int32_t x, int32_t y, size_t maxiterations, bool greyonly
 }
 
 // Zoom the fractal
-void Renderer::zoomAt(int32_t x, int32_t y, double factor, bool zoomin) {
+void Renderer::zoomAt(const coord_t& x, const coord_t& y, const float_t& factor, const bool& zoomin) {
 	if (zoomin) {
 // Zoom in
 		zoom_ *= factor;
@@ -118,17 +119,7 @@ void Renderer::zoomAt(int32_t x, int32_t y, double factor, bool zoomin) {
 	}
 }
 
-void Renderer::zoomAtCenter(double factor, bool zoomin) {
-	if (zoomin) {
-		// Zoom in
-		zoom_ *= factor;
-	} else {
-		// Zoom out
-		zoom_ /= factor;
-	}
-}
-
-void Renderer::pan(const int32_t& x, const int32_t& y) {
+void Renderer::pan(const coord_t& x, const coord_t& y) {
 	panx_ += x;
 	pany_ += y;
 }

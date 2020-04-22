@@ -6,23 +6,23 @@
 
 namespace fractaldive {
 
-struct Color {
+template<typename T> struct Color {
 	constexpr Color() : r_(0), g_(0), b_(0) {
 	}
 
-	constexpr Color(const uint8_t& r, const uint8_t& g, const uint8_t& b) : r_(r), g_(g), b_(b) {
+	constexpr Color(const T& r, const T& g, const T& b) : r_(r), g_(g), b_(b) {
 	}
 	constexpr Color(const uint32_t& rgb) : r_(rgb >> 16 & 0xFF), g_(rgb >> 8 & 0xFF), b_(rgb & 0xFF) {
 	}
 
-	uint8_t r_;
-	uint8_t g_;
-	uint8_t b_;
+	T r_;
+	T g_;
+	T b_;
 };
 
-struct Palette {
+template <typename T> struct Palette {
 	constexpr static size_t SIZE_ = 519;
-	const static Color ITEMS_[];
+	const static Color<T> ITEMS_[];
 };
 
 } /* namespace fractaldive */
