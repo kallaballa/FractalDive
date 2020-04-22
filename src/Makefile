@@ -4,10 +4,16 @@ ifdef JAVASCRIPT
 TARGET := dive.js
 endif
 
+ifdef JAVASCRIPT_MT
+TARGET := dive.js
+endif
+
 SRCS  := main.cpp renderer.cpp color.cpp canvas.cpp
 ifndef JAVASCRIPT
+ifndef JAVASCRIPT_MT
 CXXFLAGS += `pkg-config --cflags sdl x11`
 LIBS += `pkg-config --libs sdl x11`
+endif
 endif
 #precompiled headers
 HEADERS := 
