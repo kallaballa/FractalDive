@@ -24,16 +24,20 @@ endif
 ifdef JAVASCRIPT_MT
 JAVASCRIPT=1
 CXXFLAGS += -D_JAVASCRIPT_MT -s USE_PTHREADS=1 -s PROXY_TO_PTHREAD
-LDFLAGS +=  -O3 -s USE_PTHREADS=1 -s PROXY_TO_PTHREAD
+LDFLAGS += -D_JAVASCRIPT_MT -s USE_PTHREADS=1 -s PROXY_TO_PTHREAD
 endif
 
 ifdef JAVASCRIPT
 CXX	:= em++
-CXXFLAGS += -D_JAVASCRIPT -s ALLOW_MEMORY_GROWTH=1 -s DEMANGLE_SUPPORT=1 -s ASYNCIFY
-LDFLAGS +=  -O3 -s ASYNCIFY -s ALLOW_MEMORY_GROWTH=1
-else
-CXXFLAGS += -fopenmp
-LDFLAGS += -fopenmp
+# clang options
+EMFLAGS = -O3 -g0 -flto -fno-rtti -fno-exceptions -ffp-contract=fast -freciprocal-math -fno-signed-zeros -DNDEBUG -D_JAVASCRIPT
+# em++ options partially passed to llvm
+EMFLAGS += --closure 1 --llvm-opts "['-menable-no-infs', '-menable-no-nans', '-menable-unsafe-fp-math']"
+# em++ flags
+EMFLAGS +=  -s INITIAL_MEMORY=33554432 -s ASYNCIFY
+
+CXXFLAGS += $(EMFLAGS)
+LDFLAGS += $(EMFLAGS)
 endif
 
 ifdef X86
@@ -51,7 +55,11 @@ ifneq ($(UNAME_S), Darwin)
 release: LDFLAGS += -s
 endif
 release: CXXFLAGS += -g0 -O3
+ifdef JAVASCRIPT
 release: dirs
+else
+release: hardcore
+endif
 
 info: CXXFLAGS += -g3 -O0
 info: LDFLAGS += -Wl,--export-dynamic -rdynamic

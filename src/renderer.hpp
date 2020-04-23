@@ -16,6 +16,7 @@ public:
 	const dim_t BUFFERSIZE;
 private:
 	color24_t palette_[256];
+	uint64_t initialMaxIterations_;
 	uint64_t maxIterations_;
 	coord_t offsetx_;
 	coord_t offsety_;
@@ -35,6 +36,7 @@ public:
 			WIDTH_(width),
 			HEIGHT_(height),
 			BUFFERSIZE(width * height),
+			initialMaxIterations_(maxIterations),
 			maxIterations_(maxIterations),
 			offsetx_(-float_t(width)/2.0),
 			offsety_(-float_t(height)/2.0),
@@ -45,10 +47,18 @@ public:
 	}
 
 	virtual ~Renderer() {
-		delete rgbdata_;
-		delete greydata_;
+		delete[] rgbdata_;
+		delete[] greydata_;
 	}
 
+	void reset() {
+		maxIterations_ = initialMaxIterations_;
+		offsetx_ = -float_t(WIDTH_)/2.0;
+		offsety_ = -float_t(WIDTH_)/2.0;
+		panx_ = 0;
+		pany_ = 0;
+		zoom_ = 2;
+	}
 	void render(bool greyonly = false);
 	void zoomAt(const coord_t& x, const coord_t& y, const float_t& factor, const bool& zoomin);
 	void pan(const coord_t& x, const coord_t& y);

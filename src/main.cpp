@@ -22,22 +22,12 @@ using namespace fractaldive;
 #include "renderer.hpp"
 #include "canvas.hpp"
 
-constexpr dim_t WIDTH = 256;
-constexpr dim_t HEIGHT = 256;
+constexpr dim_t WIDTH = 200;
+constexpr dim_t HEIGHT = 200;
 constexpr dim_t FRAME_SIZE = WIDTH * HEIGHT;
+constexpr size_t FPS = 12;
 
-#ifdef _JAVASCRIPT
-
-#ifdef _JAVASCRIPT_MT
-dim_t max_iterations = 400;
-#else
-dim_t max_iterations = 200;
-#endif
-
-#else
-dim_t max_iterations = 500;
-#endif
-
+dim_t max_iterations = 100;
 
 
 fractaldive::Renderer renderer(WIDTH, HEIGHT, max_iterations);
@@ -145,33 +135,50 @@ bool dive() {
 }
 
 void auto_benchmark() {
-	fractaldive::Renderer bmRenderer(WIDTH, HEIGHT, max_iterations);
-	bmRenderer.zoomAt(WIDTH/2, HEIGHT/2, 3, true);
-	auto start = std::chrono::system_clock::now();
-	for(size_t i = 0; i < 10; ++i)
-		bmRenderer.render();
+  std::cerr << "init: " << renderer.getMaxIterations() << std::endl;
+	auto oneStart = std::chrono::system_clock::now();
+	for(size_t i = 0; i < 20; ++i)
+	renderer.render();
+  auto oneDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
+		std::chrono::system_clock::now() - oneStart);
 
-	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-		std::chrono::system_clock::now() - start);
+  std::cerr << "one: " << oneDuration.count() << std::endl;
 
-	max_iterations = std::round(50000.0  / std::pow(std::ceil(float_t(duration.count()) / 200.0), 3.0));
-	renderer.setMaxIterations(max_iterations);
-	std::cerr << "benchmark: " << duration.count() << " = " << max_iterations << std::endl;
+  float_t factor;
+#ifdef _JAVASCRIPT
+#ifdef _JAVASCRIPT_MT
+  factor = std::pow(oneDuration.count(),2) / 400000.0;
+#else
+  factor = std::pow(oneDuration.count(),2) / 65000.0;
+#endif
+#else
+  factor = std::pow(oneDuration.count(),2) / 4500.0;
+#endif
+  float_t iterations = max_iterations / factor;
+	renderer.setMaxIterations(std::round(iterations));
+	std::cerr << "benchmarked max_iterations: " << renderer.getMaxIterations() << "/" << factor << std::endl;
 }
 
 bool step() {
-#ifndef _JAVASCRIPT
 		auto start = std::chrono::system_clock::now();
-#endif
 
 		bool result = dive();
 
-#ifndef _JAVASCRIPT
 		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
 			std::chrono::system_clock::now() - start);
 
-		std::cerr << 1000.0 / duration.count() << std::endl;
+
+		int32_t targetMillis = 1000.0 / FPS;
+		int32_t diff = targetMillis - duration.count();
+
+
+		if(diff > 0) {
+#ifndef _JAVASCRIPT
+			std::this_thread::sleep_for(std::chrono::milliseconds(diff));
 #endif
+		}	else if(diff < 0)
+			std::cerr << "Underrun: " << diff * -1 << std::endl;
+		//std::cerr << 1000.0 / (duration.count() + diff) << std::endl;
 		return result;
 }
 
@@ -184,19 +191,20 @@ void js_step() {
 void run() {
 	auto_benchmark();
 
+	std::cerr << renderer.getMaxIterations() << std::endl;
   while(do_run) {
   	renderer.pan((rand() % 10) - 20, (rand() % 10) - 20);
   	renderer.render();
 
-  	#ifdef _JAVASCRIPT
-  	emscripten_set_main_loop(js_step, 0, 1);
+#ifdef _JAVASCRIPT
+  	emscripten_set_main_loop(js_step, FPS, 1);
 #else
 		while(do_run && step()) {
 		}
-  }
-
-	SDL_Quit();
 #endif
+  	renderer.reset();
+  }
+	SDL_Quit();
 }
 
 #ifndef _JAVASCRIPT

@@ -1,8 +1,3 @@
-// ------------------------------------------------------------------------
-// Based on:
-// http://rembound.com/articles/drawing-mandelbrot-fractals-with-html5-canvas-and-javascript
-// ------------------------------------------------------------------------
-
 #include "renderer.hpp"
 
 #include <cassert>
@@ -24,15 +19,21 @@ void Renderer::generatePalette() {
 // Generate the fractal image
 void Renderer::render(bool greyonly) {
 	// Iterate over the pixels
+
+#ifdef _JAVASCRIPT
 #ifndef _JAVASCRIPT_MT
 	for (dim_t y = 0; y < HEIGHT_; y++) {
-		#pragma omp parallel for ordered schedule(dynamic)
 		for (dim_t x = 0; x < WIDTH_; x++) {
 			iterate(x, y, maxIterations_, greyonly);
 		}
 	}
-#else
-	const size_t numThreads = std::thread::hardware_concurrency();
+	return;
+#endif
+#endif
+
+
+
+	const size_t numThreads = 8;
 	if(HEIGHT_ > (numThreads * 2)) {
 		dim_t sliceHeight = std::floor(float(HEIGHT_) / numThreads);
 		dim_t remainder = HEIGHT_ % sliceHeight;
@@ -51,6 +52,7 @@ void Renderer::render(bool greyonly) {
 			});
 			threads.push_back(t);
 		}
+		std::cerr << "threads: " << threads.size() << std::endl;
 		for(auto& t : threads) {
 			t->join();
 			delete t;
@@ -62,7 +64,6 @@ void Renderer::render(bool greyonly) {
 			}
 		}
 	}
-#endif
 }
 
 // Calculate the color of a specific pixel
