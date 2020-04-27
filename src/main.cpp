@@ -23,8 +23,8 @@ using namespace fractaldive;
 #include "renderer.hpp"
 #include "canvas.hpp"
 
-constexpr fd_dim_t WIDTH = 320;
-constexpr fd_dim_t HEIGHT = 320;
+constexpr fd_dim_t WIDTH = 200;
+constexpr fd_dim_t HEIGHT = 200;
 constexpr fd_dim_t FRAME_SIZE = WIDTH * HEIGHT;
 constexpr size_t FPS = 12;
 
@@ -138,19 +138,24 @@ bool dive(bool zoom) {
 	return true;
 }
 
-void auto_benchmark() {
+void auto_scale_max_iterations() {
 	std::cerr << "init: " << renderer.getMaxIterations() << std::endl;
 
   auto start = std::chrono::system_clock::now();
 
-  fd_float_t zr = 0.0, zi = 0.0;
-  fd_float_t cr = 0.5;
-  fd_float_t ci = 0.5;
-	for(size_t i = 0; i < 6000000; ++i) {
-		const fd_float_t& temp = zr * zr - zi * zi + cr;
-    zi = 2.0 * zr * zi + ci;
-    zr = temp;
+	fd_mandelfloat_t zr = 0.0, zi = 0.0;
+	fd_mandelfloat_t cr = 0.5;
+	fd_mandelfloat_t ci = 0.5;
+	fd_mandelfloat_t two = 2.0;
+    for(size_t i = 0; i < 6000000; ++i) {
+    	const fd_mandelfloat_t& temp = zr * zr - zi * zi + cr;
+      zi = two * zr * zi + ci;
+      zr = temp;
 	}
+
+  //hacky way of convincing the compiler to not optimize that benchmark loop away,
+  //without actually doing something with it
+  __asm__ __volatile__("" :: "m" (zr));
 
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
 		std::chrono::system_clock::now() - start);
@@ -164,7 +169,7 @@ void auto_benchmark() {
   	count = fd_float_t(duration.count());
   std::cerr << "count: " << count << std::endl;
 
-  fd_float_t iterations = (3000.0 / count);
+  fd_float_t iterations = (5000.0 / count);
 	renderer.setMaxIterations(std::round(iterations));
 	std::cerr << "benchmarked max_iterations: " << iterations << std::endl;
 }
@@ -201,7 +206,7 @@ void js_step() {
 #endif
 
 void run() {
-	auto_benchmark();
+	auto_scale_max_iterations();
 
 	std::cerr << renderer.getMaxIterations() << std::endl;
   while(do_run) {

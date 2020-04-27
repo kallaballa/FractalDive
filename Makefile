@@ -50,6 +50,10 @@ CXXFLAGS += -mavx
 endif
 endif
 
+ifdef FIXEDPOINT
+CXXFLAGS += -D_FIXEDPOINT
+endif
+
 ifdef X86
 CXXFLAGS += -m32
 LDFLAGS += -L/usr/lib -m32 -static-libgcc -m32 -Wl,-Bstatic
