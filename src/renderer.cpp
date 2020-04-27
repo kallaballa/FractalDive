@@ -3,63 +3,44 @@
 #include <cassert>
 #include <cmath>
 #include <complex>
-#include <thread>
-#include <iostream>
+
+#include "threadpool.hpp"
 
 namespace fractaldive {
 
-// Generate palette
 void Renderer::generatePalette() {
 	size_t increment = palette24_t::SIZE_ / 256;
+	const color24_t *colors = palette24_t::getColors();
 	for (size_t i = 0; i < 256; i++) {
-		palette_[i] = palette24_t::ITEMS_[i * increment];
+		palette_[i] = colors[i * increment];
 	}
 }
 
 // Generate the fractal image
 void Renderer::render(bool greyonly) {
-	// Iterate over the pixels
+	if(ThreadPool::cores() > 0) {
+  	ThreadPool& tpool = ThreadPool::getInstance();
+  	size_t tpsize = tpool.size();
+		// Iterate over the pixels
+		fd_dim_t sliceHeight = std::floor(fd_float_t(HEIGHT_) / tpsize);
+		fd_dim_t remainder = (HEIGHT_ % sliceHeight);
+		fd_dim_t extra = 0;
+		for (size_t i = 0; i < tpsize; ++i) {
+			if (i == (tpsize - 1) && remainder > 0)
+				extra = remainder;
 
-#ifdef _JAVASCRIPT
-#ifndef _JAVASCRIPT_MT
-	for (dim_t y = 0; y < HEIGHT_; y++) {
-		for (dim_t x = 0; x < WIDTH_; x++) {
-			iterate(x, y, maxIterations_, greyonly);
-		}
-	}
-	return;
-#endif
-#endif
-
-
-
-	const size_t numThreads = 8;
-	if(HEIGHT_ > (numThreads * 2)) {
-		dim_t sliceHeight = std::floor(float(HEIGHT_) / numThreads);
-		dim_t remainder = HEIGHT_ % sliceHeight;
-		std::vector<std::thread*> threads;
-
-		for(size_t i = 0; i < numThreads; ++i) {
-			if(i == (numThreads - 1) && remainder > 0)
-				sliceHeight += remainder;
-
-			std::thread* t = new std::thread([=](){
-				for (dim_t y = sliceHeight * i; y < (sliceHeight * (i + 1)); y++) {
-					for (dim_t x = 0; x < WIDTH_; x++) {
+			tpool.work([=]() {
+				for (fd_dim_t y = sliceHeight * i; y < (sliceHeight * (i + 1)) + extra; y++) {
+					for (fd_dim_t x = 0; x < WIDTH_; x++) {
 						iterate(x, y, maxIterations_, greyonly);
 					}
 				}
 			});
-			threads.push_back(t);
 		}
-		std::cerr << "threads: " << threads.size() << std::endl;
-		for(auto& t : threads) {
-			t->join();
-			delete t;
-		}
+		tpool.join();
 	} else {
-		for (dim_t y = 0; y < HEIGHT_; y++) {
-			for (dim_t x = 0; x < WIDTH_; x++) {
+		for (fd_dim_t y = 0; y < HEIGHT_; y++) {
+			for (fd_dim_t x = 0; x < WIDTH_; x++) {
 				iterate(x, y, maxIterations_, greyonly);
 			}
 		}
@@ -67,33 +48,38 @@ void Renderer::render(bool greyonly) {
 }
 
 // Calculate the color of a specific pixel
-void Renderer::iterate(const coord_t& x, const coord_t& y, const uint64_t& maxiterations, const bool& greyonly) {
-		using std::complex;
-		float_t xViewport = (x + offsetx_ + panx_) / (zoom_ / 10);
-		float_t yViewport = (y + offsety_ + pany_) / (zoom_ / 10);
-    complex<float_t> point(xViewport/WIDTH_, yViewport/HEIGHT_);
-    complex<float_t> z(0, 0);
-    uint64_t iterations = 0;
-
-    while (abs(z) < 2 && iterations < maxIterations_) {
-        z = z * z + point;
-        ++iterations;
+void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const uint64_t& maxiterations, const bool& greyonly) {
+	using std::complex;
+	fd_float_t xViewport = (x + offsetx_ + panx_) / (zoom_ / 10);
+	fd_float_t yViewport = (y + offsety_ + pany_) / (zoom_ / 10);
+	uint64_t iterations = 0;
+	fd_float_t zr = 0.0, zi = 0.0;
+	fd_float_t cr = xViewport/WIDTH_;
+	fd_float_t ci = yViewport/HEIGHT_;
+    while (iterations < maxIterations_ && zr * zr + zi * zi < 4.0) {
+    	const fd_float_t& temp = zr * zr - zi * zi + cr;
+      zi = 2.0 * zr * zi + ci;
+      zr = temp;
+      ++iterations;
     }
 
-  	color24_t color;
+    color24_t color;
   	size_t index = 0;
   	if (iterations == maxiterations) {
   		color = {0, 0, 0}; // Black
   	} else {
   		// 254 so we can use 0 as index for black
-  		index = std::floor((float(iterations) / (maxiterations - 1)) * 254.0);
+  		index = std::floor((fd_float_t(iterations) / (maxiterations - 1)) * 254.0);
   		color = palette_[index];
   	}
 
   	size_t pixelindex = (y * WIDTH_ + x);
   	// Apply the color
   	if (!greyonly) {
-  		rgbdata_[pixelindex] = color;
+  		if(pixelindex >= WIDTH_ * HEIGHT_)
+  			std::cerr << x << " <-> " << y << std::flush << std::endl;
+  		else
+  			rgbdata_[pixelindex] = color;
   	}
 
   	//cheap greyscale. we don't need perceptual acuity to measure detail.
@@ -106,7 +92,7 @@ void Renderer::iterate(const coord_t& x, const coord_t& y, const uint64_t& maxit
 }
 
 // Zoom the fractal
-void Renderer::zoomAt(const coord_t& x, const coord_t& y, const float_t& factor, const bool& zoomin) {
+void Renderer::zoomAt(const fd_coord_t& x, const fd_coord_t& y, const fd_float_t& factor, const bool& zoomin) {
 	if (zoomin) {
 // Zoom in
 		zoom_ *= factor;
@@ -120,7 +106,7 @@ void Renderer::zoomAt(const coord_t& x, const coord_t& y, const float_t& factor,
 	}
 }
 
-void Renderer::pan(const coord_t& x, const coord_t& y) {
+void Renderer::pan(const fd_coord_t& x, const fd_coord_t& y) {
 	panx_ += x;
 	pany_ += y;
 }

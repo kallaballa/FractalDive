@@ -11,37 +11,37 @@ namespace fractaldive {
 
 class Renderer {
 public:
-	const dim_t WIDTH_;
-	const dim_t HEIGHT_;
-	const dim_t BUFFERSIZE;
+	const fd_dim_t WIDTH_;
+	const fd_dim_t HEIGHT_;
+	const fd_dim_t BUFFERSIZE;
 private:
 	color24_t palette_[256];
 	uint64_t initialMaxIterations_;
 	uint64_t maxIterations_;
-	coord_t offsetx_;
-	coord_t offsety_;
+	fd_coord_t offsetx_;
+	fd_coord_t offsety_;
 
 	// Pan and zoom parameters
-	coord_t panx_ = 0;
-	coord_t pany_ = 0;
-	float_t zoom_ = 2;
+	fd_coord_t panx_ = 0;
+	fd_coord_t pany_ = 0;
+	fd_float_t zoom_ = 2;
 
 	void generatePalette();
-	void iterate(const coord_t& x, const coord_t& y, const uint64_t& maxiterations, const bool& greyonly);
+	void iterate(const fd_coord_t& x, const fd_coord_t& y, const uint64_t& maxiterations, const bool& greyonly);
 public:
 	rgb_image_t rgbdata_;
 	grey_image_t greydata_;
 
-	Renderer(const dim_t& width, const dim_t& height, const uint64_t& maxIterations) :
+	Renderer(const fd_dim_t& width, const fd_dim_t& height, const uint64_t& maxIterations) :
 			WIDTH_(width),
 			HEIGHT_(height),
 			BUFFERSIZE(width * height),
 			initialMaxIterations_(maxIterations),
 			maxIterations_(maxIterations),
-			offsetx_(-float_t(width)/2.0),
-			offsety_(-float_t(height)/2.0),
+			offsetx_(-fd_float_t(width)/2.0),
+			offsety_(-fd_float_t(height)/2.0),
 			rgbdata_(new color24_t[width * height]),
-			greydata_(new ccomp_t[width * height])
+			greydata_(new fd_ccomp_t[width * height])
 {
 		generatePalette();
 	}
@@ -53,17 +53,17 @@ public:
 
 	void reset() {
 		maxIterations_ = initialMaxIterations_;
-		offsetx_ = -float_t(WIDTH_)/2.0;
-		offsety_ = -float_t(WIDTH_)/2.0;
+		offsetx_ = -fd_float_t(WIDTH_)/2.0;
+		offsety_ = -fd_float_t(WIDTH_)/2.0;
 		panx_ = 0;
 		pany_ = 0;
 		zoom_ = 2;
 	}
 	void render(bool greyonly = false);
-	void zoomAt(const coord_t& x, const coord_t& y, const float_t& factor, const bool& zoomin);
-	void pan(const coord_t& x, const coord_t& y);
+	void zoomAt(const fd_coord_t& x, const fd_coord_t& y, const fd_float_t& factor, const bool& zoomin);
+	void pan(const fd_coord_t& x, const fd_coord_t& y);
 
-	float_t getZoom() const {
+	fd_float_t getZoom() const {
 		return zoom_;
 	}
 

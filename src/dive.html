@@ -2,64 +2,43 @@
 <html>
 
 <head>
-  <title>Fractal Dive!</title>
+  <title>Endless Fractal Dive Loop</title>
 </head>
 <body id="body" style="width: 98vw; height:98vh; background-color: black;">
-<!--	<textarea id="logger" rows=50 cols=50></textarea>-->
 	<canvas style="width: 1024px; height: 1024px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.25;" id="bgcanvas0" ></canvas>
-	<canvas style="width: 512px; height: 512px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.5;" id="bgcanvas1" ></canvas>
+	<canvas style="width: 640px; height: 640px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.5;" id="bgcanvas1" ></canvas>
+	<canvas style="width: 320px; height: 320px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); " id="canvas"></canvas>
 
-	<canvas style="width: 256px; height: 256px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); " id="canvas"></canvas>
 
-
-	<script>
-	var canvas = document.getElementById('canvas');
-                var bgcanvas0 = document.getElementById('bgcanvas0');
-                var bgcanvas1 = document.getElementById('bgcanvas1');
-                var bgctx0 = bgcanvas0.getContext('2d');
-                var bgctx1 = bgcanvas1.getContext('2d');
-                bgctx0.scale(2, 1);
-                bgctx1.scale(2, 1);
-
+        <script>
+            var canvas = document.getElementById('canvas');
+            var bgcanvas0 = document.getElementById('bgcanvas0');
+            var bgcanvas1 = document.getElementById('bgcanvas1');
+            var bgctx0 = bgcanvas0.getContext('2d');
+            var bgctx1 = bgcanvas1.getContext('2d');
+            bgctx0.scale(2, 1);
+            bgctx1.scale(2, 1);
 
             function copyToBg() {
                 bgctx0.drawImage(canvas,0,0);
                 bgctx1.drawImage(canvas,0,0);
+                window.requestAnimationFrame(copyToBg);
             }
 
             var Module = {
 				print: (function() {
 					return function(message) {
-/*						var logger = document.getElementById("logger");
-						if(logger === null)
-                            return;
-                        if (typeof message == 'object') {
-                            logger.innerHTML += (JSON && JSON.stringify ? JSON.stringify(message) : message) + '\n';
-                        } else {
-                            logger.innerHTML += message + '\n';
-                        }*/
-                        console.log(message);
+                       console.log(new Error().stack);
 					};
 				})(),
 				printErr: function(message) {
-						/*var logger = document.getElementById("logger");
-						if(logger === null)
-                            return;
-						if (typeof message == 'object') {
-                            logger.innerHTML += (JSON && JSON.stringify ? JSON.stringify(message) : message) + '\n';
-                        } else {
-                            if (arguments.length > 1) message = Array.prototype.slice.call(arguments).join(' ');
-                            logger.innerHTML += message + '\n';
-                        }*/ 
-                        if (arguments.length > 1) message = Array.prototype.slice.call(arguments).join(' ');
-                        console.error("err" + message);
+                    console.error(message);
                 },				
 				canvas: (function() {
-					var canvas = document.getElementById('canvas');
-					return canvas;
+					return document.getElementById('canvas');
 				})()
 			};
-			setInterval(copyToBg, 83);
+           window.requestAnimationFrame(copyToBg);
 		</script>
 		<script src="dive.js"></script>
 	</body>

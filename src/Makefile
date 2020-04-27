@@ -8,7 +8,7 @@ ifdef JAVASCRIPT_MT
 TARGET := dive.js
 endif
 
-SRCS  := main.cpp renderer.cpp color.cpp canvas.cpp
+SRCS  := main.cpp renderer.cpp canvas.cpp threadpool.cpp
 ifndef JAVASCRIPT
 ifndef JAVASCRIPT_MT
 CXXFLAGS += `pkg-config --cflags sdl x11`

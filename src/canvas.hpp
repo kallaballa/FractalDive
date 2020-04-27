@@ -13,8 +13,8 @@ using std::string;
 namespace fractaldive {
 class Canvas {
 private:
-  dim_t width_;
-  dim_t height_;
+  fd_dim_t width_;
+  fd_dim_t height_;
 	class SDL_Surface *screen_;
   bool offscreen_;
 #ifdef _JAVASCRIPT
@@ -24,9 +24,9 @@ private:
 #endif
 
 public:
-  Canvas(const dim_t& width, const dim_t& height, bool offscreen = false);
+  Canvas(const fd_dim_t& width, const fd_dim_t& height, bool offscreen = false);
   virtual ~Canvas() {};
-  void putpixel(const coord_t& x, const coord_t& y, const color24_t& c);
+  void putpixel(const fd_coord_t& x, const fd_coord_t& y, const color24_t& c);
   void flip();
   void draw(const rgb_image_t& rgbdata);
 };
