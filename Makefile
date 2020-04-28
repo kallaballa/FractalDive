@@ -7,12 +7,15 @@ ESTDIR := /
 PREFIX := /usr/local
 MACHINE := $(shell uname -m)
 UNAME_S := $(shell uname -s)
+LIBDIR := lib
 
-ifeq ($(MACHINE), x86_64)
-  LIBDIR = lib64
+UNAME_P := $(shell uname -p)
+ifeq ($(UNAME_P),x86_64)
+LIBDIR = lib64
+CXXFLAGS += -march=native
 endif
-ifeq ($(MACHINE), i686)
-  LIBDIR = lib
+ifeq ($(UNAME_P),x86)
+CXXFLAGS += -march=native
 endif
 
 ifdef JAVASCRIPT_MT
@@ -39,15 +42,15 @@ EMFLAGS += -ffp-contract=fast -freciprocal-math -fno-signed-zeros --closure 1 --
 EMFLAGS +=  -s INITIAL_MEMORY=33554432 -s ASYNCIFY
 
 ifdef AUTOVECTOR
-EMFLAGS += -msimd128 
+EMFLAGS += -msimd128
 endif
 
 CXXFLAGS += $(EMFLAGS) 
 LDFLAGS += $(EMFLAGS)
-else 
-ifdef AUTOVECTOR
-CXXFLAGS += -mavx
 endif
+
+ifdef AUTOVECTOR
+CXXFLAGS += -D_AUTOVECTOR
 endif
 
 ifdef FIXEDPOINT

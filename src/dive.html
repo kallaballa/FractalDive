@@ -8,9 +8,9 @@
 	<canvas style="width: 1024px; height: 1024px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.25;" id="bgcanvas0" ></canvas>
 	<canvas style="width: 512px; height: 512px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.5;" id="bgcanvas1" ></canvas>
 	<canvas style="width: 256px; height: 256px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); " id="canvas"></canvas>
-
-
+    <textarea style="font-size: 18px; background-color: black; color: white; opacity: 0.5; outline: none; resize: none; border: 0;" cols=24 rows=5 id="stderr"></textarea>
         <script>
+            var stderr = document.getElementById('stderr');
             var canvas = document.getElementById('canvas');
             var bgcanvas0 = document.getElementById('bgcanvas0');
             var bgcanvas1 = document.getElementById('bgcanvas1');
@@ -28,11 +28,11 @@
             var Module = {
 				print: (function() {
 					return function(message) {
-                       console.log(new Error().stack);
+                        stderr.innerHTML += message + '\n';
 					};
 				})(),
 				printErr: function(message) {
-                    console.error(message);
+                    console.log(message)
                 },				
 				canvas: (function() {
 					return document.getElementById('canvas');
@@ -43,3 +43,4 @@
 		<script src="dive.js"></script>
 	</body>
 </html>
+0

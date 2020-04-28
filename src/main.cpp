@@ -38,23 +38,23 @@ fd_float_t entropy(const grey_image_t& greyImage, const size_t& size) {
 	std::map<uint8_t, int32_t> frequencies;
 
 	for (size_t i = 0; i < size; ++i)
-    ++frequencies[greyImage[i]];
+		++frequencies[greyImage[i]];
 
-  fd_float_t infocontent = 0 ;
-  for (const auto& p : frequencies ) {
-     fd_float_t freq = static_cast<fd_float_t>( p.second ) / size;
-     infocontent -= freq * log2( freq ) ;
-  }
+	fd_float_t infocontent = 0;
+	for (const auto& p : frequencies) {
+		fd_float_t freq = static_cast<fd_float_t>(p.second) / size;
+		infocontent -= freq * log2(freq);
+	}
 
-  return infocontent;
+	return infocontent;
 }
 
 fd_float_t numberOfZeroes(const grey_image_t& greyImage, const size_t& size) {
 	assert(size > 0);
 	fd_float_t zeroes = 0;
 	for (size_t i = 0; i < size; i++) {
-			if(greyImage[i] == 0)
-				++zeroes;
+		if (greyImage[i] == 0)
+			++zeroes;
 	}
 	return zeroes / size;
 }
@@ -63,17 +63,18 @@ fd_float_t numberOfColors(const grey_image_t& greyImage, const size_t& size) {
 	assert(size > 0);
 	std::set<uint8_t> clrs;
 	for (size_t i = 0; i < size; i++) {
-			clrs.insert(greyImage[i]);
+		clrs.insert(greyImage[i]);
 	}
 	return (clrs.size() / 255.0);
 }
 
 fd_float_t measureDetail(const grey_image_t& greyImage, const size_t& size) {
 	//return entropy(greyImage,size + ((1.0 - numberOfZeroes(greyImage, size)) * 2)) / 3.0;
-	return (numberOfColors(greyImage, size) + (1.0 - numberOfZeroes(greyImage, size))) / 2.0;
+	return numberOfColors(greyImage, size);
 }
 
-std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_dim_t& numTilesX, const fd_dim_t& numTilesY) {
+std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_dim_t& numTilesX,
+		const fd_dim_t& numTilesY) {
 	const fd_dim_t tileW = std::floor(fd_float_t(renderer.WIDTH_) / numTilesX);
 	const fd_dim_t tileH = std::floor(fd_float_t(renderer.HEIGHT_) / numTilesY);
 	assert(tileW > 1);
@@ -88,21 +89,21 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 	fd_dim_t candidateTy = 0;
 
 	//iterate over tiles
-	for(fd_dim_t ty = 0; ty < numTilesY; ++ty) {
-		for(fd_dim_t tx = 0; tx < numTilesX; ++tx) {
+	for (fd_dim_t ty = 0; ty < numTilesY; ++ty) {
+		for (fd_dim_t tx = 0; tx < numTilesX; ++tx) {
 			const fd_dim_t offY = tileH * ty * renderer.WIDTH_;
 			const fd_dim_t offX = tileW * tx;
 
 			//iterate over pixels of the tile
-			for(fd_dim_t y = 0; y < tileH; ++y) {
-				for(fd_dim_t x = 0; x < tileW; ++x) {
+			for (fd_dim_t y = 0; y < tileH; ++y) {
+				for (fd_dim_t x = 0; x < tileW; ++x) {
 					const size_t pixIdx = (offY + (y * renderer.WIDTH_)) + (offX + x);
 					tile[y * tileW + x] = greyImage[pixIdx];
 				}
 			}
 
 			fd_float_t score = measureDetail(tile, tileW * tileH);
-			if(score > candidateScore) {
+			if (score > candidateScore) {
 				candidateScore = score;
 				candidateTx = tx;
 				candidateTy = ty;
@@ -110,14 +111,13 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 
 		}
 	}
-	//std::cerr << "cand: " << candidateTx << ":" << candidateTy << std::endl;
 	return {(candidateTx * tileW) + (tileW / 2), (candidateTy * tileH) + (tileH / 2)};
 }
 
 bool dive(bool zoom) {
 	fd_float_t detail = measureDetail(renderer.greydata_, renderer.WIDTH_ * renderer.HEIGHT_);
-//	std::cerr << "detail:" << detail << " " << "zoom:" << renderer.getZoom() << std::endl;
-	if(detail < 0.1) {
+	std::cerr << detail << std::endl;
+	if (detail < 0.1) {
 #ifdef _JAVASCRIPT
 		renderer.reset();
 		renderer.render();
@@ -125,11 +125,11 @@ bool dive(bool zoom) {
 #endif
 		return false;
 	}
-	std::pair<fd_coord_t,fd_coord_t> centerOfHighDetail = identifyCenterOfTileOfHighestDetail(5, 5);
+	std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail = identifyCenterOfTileOfHighestDetail(5, 5);
 	fd_coord_t hDiff = centerOfHighDetail.first - (renderer.WIDTH_ / 2);
 	fd_coord_t vDiff = centerOfHighDetail.second - (renderer.HEIGHT_ / 2);
 
-	if(zoom) {
+	if (zoom) {
 		renderer.pan(hDiff / 20, vDiff / 20);
 		renderer.zoomAt(renderer.WIDTH_ / 2, renderer.HEIGHT_ / 2, 1.05, true);
 	}
@@ -139,64 +139,52 @@ bool dive(bool zoom) {
 }
 
 void auto_scale_max_iterations() {
-	std::cerr << "init: " << renderer.getMaxIterations() << std::endl;
-
-  auto start = std::chrono::system_clock::now();
+	auto start = std::chrono::system_clock::now();
 
 	fd_mandelfloat_t zr = 0.0, zi = 0.0;
 	fd_mandelfloat_t cr = 0.5;
 	fd_mandelfloat_t ci = 0.5;
 	fd_mandelfloat_t two = 2.0;
-    for(size_t i = 0; i < 6000000; ++i) {
-    	const fd_mandelfloat_t& temp = zr * zr - zi * zi + cr;
-      zi = two * zr * zi + ci;
-      zr = temp;
+	for (size_t i = 0; i < 6000000; ++i) {
+		const fd_mandelfloat_t& temp = zr * zr - zi * zi + cr;
+		zi = two * zr * zi + ci;
+		zr = temp;
 	}
 
-  //hacky way of convincing the compiler to not optimize that benchmark loop away,
-  //without actually doing something with it
-  __asm__ __volatile__("" :: "m" (zr));
+	//hacky way of convincing the compiler to not optimize that benchmark loop away,
+	//without actually doing something with it
+	__asm__ __volatile__("" :: "m" (zr));
 
-	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-		std::chrono::system_clock::now() - start);
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
 
-  fd_float_t count;
-  std::cerr << "cores: " << ThreadPool::cores() << zr << std::endl;
+	fd_float_t count;
+	if (ThreadPool::cores() > 0)
+		count = fd_float_t(duration.count()) / (ThreadPool::cores() + 1);
+	else
+		count = fd_float_t(duration.count());
 
-  if(ThreadPool::cores() > 0)
-  	count = fd_float_t(duration.count()) / (ThreadPool::cores() + 1);
-  else
-  	count = fd_float_t(duration.count());
-  std::cerr << "count: " << count << std::endl;
-
-  fd_float_t iterations = (5000.0 / count);
+	fd_float_t iterations = (5000.0 / count);
 	renderer.setMaxIterations(std::round(iterations));
-	std::cerr << "benchmarked max_iterations: " << iterations << std::endl;
 }
 
 bool step() {
-		auto start = std::chrono::system_clock::now();
+	auto start = std::chrono::system_clock::now();
+	bool result = dive(true);
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
 
-		bool result = dive(true);
+	int32_t targetMillis = 1000.0 / FPS;
+	int32_t diff = targetMillis - duration.count();
 
-		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::system_clock::now() - start);
-
-
-		int32_t targetMillis = 1000.0 / FPS;
-		int32_t diff = targetMillis - duration.count();
-
-
-		if(diff > 0) {
+	if (diff > 0) {
 #ifndef _JAVASCRIPT
-			std::this_thread::sleep_for(std::chrono::milliseconds(diff));
+		std::this_thread::sleep_for(std::chrono::milliseconds(diff));
 #else
-			emscripten_sleep(diff);
+		emscripten_sleep(diff);
 #endif
-		}	else if(diff < 0)
-			std::cerr << "Underrun: " << diff * -1 << std::endl;
-		//std::cerr << 1000.0 / (duration.count() + diff) << std::endl;
-		return result;
+	} else if (diff < 0)
+		std::cerr << "Underrun: " << std::abs(diff) << std::endl;
+
+	return result;
 }
 
 #ifdef _JAVASCRIPT
@@ -208,19 +196,32 @@ void js_step() {
 void run() {
 	auto_scale_max_iterations();
 
-	std::cerr << renderer.getMaxIterations() << std::endl;
-  while(do_run) {
-  	renderer.pan((rand() % 10) - 20, (rand() % 10) - 20);
-  	renderer.render();
+  std::cout << "Threads:" << ThreadPool::cores() + 1 << std::endl;
+#ifdef _AUTOVECTOR
+  std::cout << "Auto Vector/SIMD: on" << std::endl;
+#else
+  std::cout << "Auto Vector/SIMD: off" << std::endl;
+#endif
+
+#ifdef _FIXEDPOINT
+  std::cout << "Arithmetic: fixed point" <<  std::endl;
+#else
+  std::cout << "Arithmetic: floating point" <<  std::endl;
+#endif
+	std::cout << "Max iterations:" << renderer.getMaxIterations() << std::endl;
+
+	while (do_run) {
+		renderer.pan((rand() % 10) - 20, (rand() % 10) - 20);
+		renderer.render();
 
 #ifdef _JAVASCRIPT
-  	emscripten_set_main_loop(js_step, 0, 1);
+		emscripten_set_main_loop(js_step, 0, 1);
 #else
-		while(do_run && step()) {
+		while (do_run && step()) {
 		}
 #endif
-  	renderer.reset();
-  }
+		renderer.reset();
+	}
 	SDL_Quit();
 }
 
@@ -231,7 +232,7 @@ void sigint_handler(int sig) {
 #endif
 
 int main() {
-	srand (time(NULL));
+	srand(time(NULL));
 #ifndef _JAVASCRIPT
 	signal(SIGINT, sigint_handler);
 #endif

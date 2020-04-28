@@ -77,9 +77,6 @@ void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const uint64_t&
   	size_t pixelindex = (y * WIDTH_ + x);
   	// Apply the color
   	if (!greyonly) {
-  		if(pixelindex >= WIDTH_ * HEIGHT_)
-  			std::cerr << x << " <-> " << y << std::flush << std::endl;
-  		else
   			rgbdata_[pixelindex] = color;
   	}
 
