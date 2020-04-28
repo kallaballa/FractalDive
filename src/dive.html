@@ -3,12 +3,66 @@
 
 <head>
   <title>Endless Fractal Dive Loop</title>
+  <style>
+  body {
+    background-color: black;
+    overflow: hidden;
+  }
+  
+  canvas {
+    position: absolute; 
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%); 
+  }
+
+  textarea {
+    font-size: 18px; 
+    opacity: 0.5; 
+    outline: none; 
+    resize: none; 
+    border: 0; 
+    padding: 10px;
+  }
+ 
+ #bgcanvas0 {
+    width: 1024px; 
+    height: 1024px; 
+    opacity: 0.25;
+ }
+
+ #bgcanvas1 {
+    width: 640px; 
+    height: 640px; 
+    opacity: 0.5;
+ }
+
+ #canvas {
+    width: 256px; 
+    height: 256px; 
+ }
+
+ #stderr {
+    background-color: black; 
+    color: red;
+    float: right;
+    margin-right: auto;
+    margin-left: 0;
+  }
+  
+  #stdout {
+    background-color: black; 
+    color: white;
+  }
+
+  </style>
 </head>
-<body id="body" style="width: 98vw; height:98vh; background-color: black;">
-	<canvas style="width: 1024px; height: 1024px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.25;" id="bgcanvas0" ></canvas>
-	<canvas style="width: 512px; height: 512px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.5;" id="bgcanvas1" ></canvas>
-	<canvas style="width: 256px; height: 256px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); " id="canvas"></canvas>
-    <textarea style="font-size: 18px; background-color: black; color: white; opacity: 0.5; outline: none; resize: none; border: 0;" cols=24 rows=5 id="stderr"></textarea>
+<body>
+	<canvas id="bgcanvas0" ></canvas>
+	<canvas id="bgcanvas1" ></canvas>
+	<canvas id="canvas"></canvas>
+    <textarea cols=26 rows=5 id="stdout"></textarea>
+    <textarea cols=26 rows=5 id="stderr"></textarea>
         <script>
             var stderr = document.getElementById('stderr');
             var canvas = document.getElementById('canvas');
@@ -28,11 +82,15 @@
             var Module = {
 				print: (function() {
 					return function(message) {
-                        stderr.innerHTML += message + '\n';
+                        stdout.innerHTML += '> ' + message + '\n';
+                        stdout.scrollTop = stdout.scrollHeight;
+                        console.log(message);
 					};
 				})(),
 				printErr: function(message) {
-                    console.log(message)
+                    stderr.innerHTML += '> ' + message + '\n';
+                    stderr.scrollTop = stderr.scrollHeight;
+                    console.error(message);
                 },				
 				canvas: (function() {
 					return document.getElementById('canvas');
