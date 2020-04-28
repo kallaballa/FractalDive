@@ -97,7 +97,7 @@ public:
 	size_t size() {
 		return pool_.size();
 	}
-	static size_t cores() {
+	static size_t extra_cores() {
 		size_t numThreads = std::thread::hardware_concurrency();
 #ifdef _JAVASCRIPT
 		numThreads = 1;
@@ -113,8 +113,8 @@ public:
 	static ThreadPool& getInstance() {
 		std::unique_lock<std::mutex> lock(instanceMtx_);
 		if(instance_ == nullptr) {
-			assert(ThreadPool::cores() > 0);
-			instance_ = new ThreadPool(ThreadPool::cores());
+			assert(ThreadPool::extra_cores() > 0);
+			instance_ = new ThreadPool(ThreadPool::extra_cores());
 		}
 
 		return *instance_;

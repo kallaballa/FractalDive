@@ -116,8 +116,8 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 
 bool dive(bool zoom) {
 	fd_float_t detail = measureDetail(renderer.greydata_, renderer.WIDTH_ * renderer.HEIGHT_);
-	std::cerr << detail << std::endl;
-	if (detail < 0.1) {
+
+	if (detail < 0.05) {
 #ifdef _JAVASCRIPT
 		renderer.reset();
 		renderer.render();
@@ -157,13 +157,15 @@ void auto_scale_max_iterations() {
 
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
 
-	fd_float_t count;
-	if (ThreadPool::cores() > 0)
-		count = fd_float_t(duration.count()) / (ThreadPool::cores() + 1);
+	fd_float_t extra_cores = ThreadPool::extra_cores();
+	fd_float_t millis = duration.count();
+	fd_float_t divider;
+	if (extra_cores > 0)
+		divider = (millis / (extra_cores + 1)) + ((millis / 100.0) * (ThreadPool::extra_cores() + 1));
 	else
-		count = fd_float_t(duration.count());
+		divider = millis;
 
-	fd_float_t iterations = (5000.0 / count);
+	fd_float_t iterations = ((WIDTH * HEIGHT / 13.0) / divider);
 	renderer.setMaxIterations(std::round(iterations));
 }
 
@@ -196,7 +198,7 @@ void js_step() {
 void run() {
 	auto_scale_max_iterations();
 
-  std::cout << "Threads:" << ThreadPool::cores() + 1 << std::endl;
+  std::cout << "Threads:" << ThreadPool::extra_cores() + 1 << std::endl;
 #ifdef _AUTOVECTOR
   std::cout << "Auto Vector/SIMD: on" << std::endl;
 #else

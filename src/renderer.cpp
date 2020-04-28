@@ -18,7 +18,7 @@ void Renderer::generatePalette() {
 
 // Generate the fractal image
 void Renderer::render(bool greyonly) {
-	if(ThreadPool::cores() > 0) {
+	if(ThreadPool::extra_cores() > 0) {
   	ThreadPool& tpool = ThreadPool::getInstance();
   	size_t tpsize = tpool.size();
 		// Iterate over the pixels
