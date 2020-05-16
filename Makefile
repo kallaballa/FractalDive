@@ -1,5 +1,5 @@
 CXX      := g++
-CXXFLAGS := -std=c++0x -pedantic -Wall -fno-rtti -fno-exceptions -fno-strict-aliasing 
+CXXFLAGS := -std=c++0x -pedantic -Wall -fno-rtti -fno-exceptions
 LDFLAGS  := -L/opt/local/lib 
 LIBS     := -lm
 .PHONY: all release debian-release info debug clean debian-clean distclean asan
@@ -12,10 +12,15 @@ LIBDIR := lib
 UNAME_P := $(shell uname -p)
 ifeq ($(UNAME_P),x86_64)
 LIBDIR = lib64
-CXXFLAGS += -march=native
+#CXXFLAGS += -march=native
 endif
 ifeq ($(UNAME_P),x86)
-CXXFLAGS += -march=native
+#CXXFLAGS += -march=native
+endif
+
+ifdef AMIGA
+CXXFLAGS += -mcrt=nix13 -DDEBUG -D_AMIGA -D_NO_THREADS -Wa,-march=68030 -Wa,-mcpu=68030 -march=68030 -mtune=68030 -mcpu=68030 -mhard-float -fbbb=+ -Os -w -c 
+LDFLAGS+= -mcrt=nix13
 endif
 
 ifdef JAVASCRIPT_MT
@@ -28,7 +33,7 @@ ifeq ($(UNAME_S), Darwin)
  LDFLAGS += -L/opt/X11/lib/
 else
 ifndef JAVASCRIPT
- CXXFLAGS += -march=native
+# CXXFLAGS += -march=native
 endif
 endif
 
@@ -75,8 +80,16 @@ ifdef JAVASCRIPT
 release: CXXFLAGS += -g0 -O3 -c
 release: dirs
 else
+ifdef AMIGA
+release: shrink
+else
 release: hardcore
 endif
+endif
+
+shrink: CXXFLAGS += -Os -w
+shrink: LDFLAGS += -s
+shrink: dirs
 
 info: CXXFLAGS += -g3 -O0
 info: LDFLAGS += -Wl,--export-dynamic -rdynamic
@@ -95,9 +108,9 @@ endif
 profile: dirs
 
 hardcore: CXXFLAGS += -g0 -Ofast -DNDEBUG
-ifeq ($(UNAME_S), Darwin)
+#ifeq ($(UNAME_S), Darwin)
 hardcore: LDFLAGS += -s
-endif
+#endif
 hardcore: dirs
 
 asan: CXXFLAGS += -g3 -O0 -rdynamic -fno-omit-frame-pointer -fsanitize=address

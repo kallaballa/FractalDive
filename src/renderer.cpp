@@ -2,20 +2,10 @@
 
 #include <cassert>
 #include <cmath>
-#include <complex>
 
 #include "threadpool.hpp"
 
 namespace fractaldive {
-
-void Renderer::generatePalette() {
-	size_t increment = palette24_t::SIZE_ / 256;
-	const color24_t *colors = palette24_t::getColors();
-	for (size_t i = 0; i < 256; i++) {
-		palette_[i] = colors[i * increment];
-	}
-}
-
 // Generate the fractal image
 void Renderer::render(bool greyonly) {
 	if(ThreadPool::extra_cores() > 0) {
@@ -49,7 +39,6 @@ void Renderer::render(bool greyonly) {
 
 // Calculate the color of a specific pixel
 void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const uint64_t& maxiterations, const bool& greyonly) {
-	using std::complex;
 	fd_mandelfloat_t xViewport = (x + offsetx_ + panx_) / (zoom_ / 10);
 	fd_mandelfloat_t yViewport = (y + offsety_ + pany_) / (zoom_ / 10);
 	uint64_t iterations = 0;
@@ -71,7 +60,7 @@ void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const uint64_t&
   	} else {
   		// 254 so we can use 0 as index for black
   		index = std::floor((fd_float_t(iterations) / (maxiterations - 1)) * 254.0);
-  		color = palette_[index];
+  		color = PALETTE[index];
   	}
 
   	size_t pixelindex = (y * WIDTH_ + x);

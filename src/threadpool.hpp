@@ -1,12 +1,14 @@
 #ifndef SRC_THREADPOOL_HPP_
 #define SRC_THREADPOOL_HPP_
 #include <cassert>
-#include <thread>
-#include <iostream>
 #include <deque>
 #include <vector>
+
+#ifndef _NO_THREADS
+#include <thread>
 #include <condition_variable>
 #include <mutex>
+#endif
 
 #include <functional>
 #ifdef _JAVASCRIPT
@@ -14,6 +16,7 @@
 #endif
 namespace fractaldive {
 
+#ifndef _NO_THREADS
 class Semaphore {
 public:
     Semaphore (int count_ = 0)
@@ -146,7 +149,56 @@ public:
 		}
 	}
 };
+#else
+class Semaphore {
+public:
+    Semaphore (int count_ = 0) {}
 
+    inline void notify( int tid ) {
+    }
+
+    inline void wait( int tid ) {
+    }
+  	size_t count() {
+  		return 0;
+ 		}
+private:
+};
+
+class ThreadPool {
+private:
+	static ThreadPool* instance_;
+public:
+	ThreadPool(const size_t size) {
+	}
+
+	~ThreadPool() {
+	}
+
+	size_t size() {
+		return 0;
+	}
+
+	static size_t extra_cores() {
+		return 0;
+	}
+
+	static ThreadPool& getInstance() {
+		if(instance_ == nullptr)
+			instance_ = new ThreadPool(0);
+		return *instance_;
+	}
+
+	void work(const std::function<void()>& func) {
+
+	}
+
+	void join() {
+
+	}
+};
+
+#endif
 
 } /* namespace fractaldive */
 

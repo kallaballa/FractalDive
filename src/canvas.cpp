@@ -1,11 +1,11 @@
 #include "canvas.hpp"
 
-#include <iostream>
 #include "color.hpp"
 
 namespace fractaldive {
 Canvas::Canvas(const fd_dim_t& width, const fd_dim_t& height, bool offscreen) :
   width_(width), height_(height), screen_(NULL), offscreen_(offscreen) {
+
   if (width > 0 && height > 0) {
     if (SDL_Init(SDL_INIT_VIDEO) == -1) {
       printf("Can't init SDL:  %s\n", SDL_GetError());

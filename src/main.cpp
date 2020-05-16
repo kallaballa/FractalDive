@@ -1,14 +1,18 @@
-#include <cstdint>
-#include <cstddef>
-#include <set>
+#include <cwchar>
+#include <cstdio>
 #include <cmath>
-#include <cassert>
+#include <ctime>
+#include <cstdint>
 #include <cstdlib>
-#include <iostream>
+#include <cstddef>
+#include <cassert>
+#include <sys/time.h>
+
 #include <map>
+#include <vector>
+#include <set>
+
 #include <chrono>
-#include <complex>
-#include "threadpool.hpp"
 
 #ifndef _JAVASCRIPT
 #include <csignal>
@@ -16,19 +20,28 @@
 #include <emscripten.h>
 #endif
 
+#ifdef _AMIGA
+#include <new>
+#include <malloc.h>
+#endif
+
+#include "printer.hpp"
+#include "threadpool.hpp"
 #include "types.hpp"
-
-using namespace fractaldive;
-
 #include "renderer.hpp"
 #include "canvas.hpp"
 
+using namespace fractaldive;
 constexpr fd_dim_t WIDTH = 200;
 constexpr fd_dim_t HEIGHT = 200;
-constexpr fd_dim_t FRAME_SIZE = WIDTH * HEIGHT;
 constexpr size_t FPS = 12;
+constexpr fd_dim_t FRAME_SIZE = WIDTH * HEIGHT;
 
+#ifndef _AMIGA
 fd_dim_t max_iterations = 100;
+#else
+fd_dim_t max_iterations = 10;
+#endif
 
 fractaldive::Renderer renderer(WIDTH, HEIGHT, max_iterations);
 fractaldive::Canvas canvas(WIDTH, HEIGHT, false);
@@ -70,7 +83,7 @@ fd_float_t numberOfColors(const grey_image_t& greyImage, const size_t& size) {
 
 fd_float_t measureDetail(const grey_image_t& greyImage, const size_t& size) {
 	//return entropy(greyImage,size + ((1.0 - numberOfZeroes(greyImage, size)) * 2)) / 3.0;
-	return numberOfColors(greyImage, size);
+	return (numberOfColors(greyImage, size)  + ((1.0 - numberOfZeroes(greyImage, size)) * 2)) / 3.0;;
 }
 
 std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_dim_t& numTilesX,
@@ -114,10 +127,10 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 	return {(candidateTx * tileW) + (tileW / 2), (candidateTy * tileH) + (tileH / 2)};
 }
 
-bool dive(bool zoom) {
+bool dive(bool zoom, bool benchmark) {
 	fd_float_t detail = measureDetail(renderer.greydata_, renderer.WIDTH_ * renderer.HEIGHT_);
 
-	if (detail < 0.05) {
+	if (!benchmark && detail < 0.05) {
 #ifdef _JAVASCRIPT
 		renderer.reset();
 		renderer.render();
@@ -139,39 +152,32 @@ bool dive(bool zoom) {
 }
 
 void auto_scale_max_iterations() {
+#ifndef _AMIGA
+	Printer& printer = Printer::getInstance();
 	auto start = std::chrono::system_clock::now();
-
-	fd_mandelfloat_t zr = 0.0, zi = 0.0;
-	fd_mandelfloat_t cr = 0.5;
-	fd_mandelfloat_t ci = 0.5;
-	fd_mandelfloat_t two = 2.0;
-	for (size_t i = 0; i < 6000000; ++i) {
-		const fd_mandelfloat_t& temp = zr * zr - zi * zi + cr;
-		zi = two * zr * zi + ci;
-		zr = temp;
+	for (size_t i = 0; i < 100; ++i) {
+		dive(false,true);
 	}
 
-	//hacky way of convincing the compiler to not optimize that benchmark loop away,
-	//without actually doing something with it
-	__asm__ __volatile__("" :: "m" (zr));
-
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
+	renderer.reset();
 
-	fd_float_t extra_cores = ThreadPool::extra_cores();
-	fd_float_t millis = duration.count();
-	fd_float_t divider;
-	if (extra_cores > 0)
-		divider = (millis / (extra_cores + 1)) + ((millis / 100.0) * (ThreadPool::extra_cores() + 1));
-	else
-		divider = millis;
-
-	fd_float_t iterations = ((WIDTH * HEIGHT / 13.0) / divider);
-	renderer.setMaxIterations(std::round(iterations));
+	printer.printErr(duration.count());
+	fd_float_t fpsMillis = 1000.0 / FPS;
+	fd_float_t millisRatio = (pow(duration.count(),1.20) / fpsMillis);
+	fd_float_t iterations = (max_iterations / millisRatio) * 60.0;
+#ifdef _JAVASCRIPT_MT
+	if(ThreadPool::extra_cores() > 1)
+		iterations = (iterations * ThreadPool::extra_cores()) / 2.5;
+#endif
+	renderer.setMaxIterations(round(iterations));
+#endif
 }
 
 bool step() {
+	Printer& printer = Printer::getInstance();
 	auto start = std::chrono::system_clock::now();
-	bool result = dive(true);
+	bool result = dive(true,false);
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
 
 	int32_t targetMillis = 1000.0 / FPS;
@@ -179,12 +185,12 @@ bool step() {
 
 	if (diff > 0) {
 #ifndef _JAVASCRIPT
-		std::this_thread::sleep_for(std::chrono::milliseconds(diff));
-#else
-		emscripten_sleep(diff);
+//		std::this_thread::sleep_for(std::chrono::milliseconds(diff));
+//#else
+//		emscripten_sleep(diff);
 #endif
 	} else if (diff < 0)
-		std::cerr << "Underrun: " << std::abs(diff) << std::endl;
+		printer.printErr("Underrun: ", std::abs(diff));
 
 	return result;
 }
@@ -197,27 +203,27 @@ void js_step() {
 
 void run() {
 	auto_scale_max_iterations();
-
-  std::cout << "Threads:" << ThreadPool::extra_cores() + 1 << std::endl;
+	Printer& printer = Printer::getInstance();
+	printer.print("Threads:", ThreadPool::extra_cores() + 1);
 #ifdef _AUTOVECTOR
-  std::cout << "Auto Vector/SIMD: on" << std::endl;
+  printer.print("Auto Vector/SIMD: on");
 #else
-  std::cout << "Auto Vector/SIMD: off" << std::endl;
+  printer.print("Auto Vector/SIMD: off");
 #endif
 
 #ifdef _FIXEDPOINT
-  std::cout << "Arithmetic: fixed point" <<  std::endl;
+  printer.print("Arithmetic: fixed point");
 #else
-  std::cout << "Arithmetic: floating point" <<  std::endl;
+  printer.print("Arithmetic: floating point");
 #endif
-	std::cout << "Max iterations:" << renderer.getMaxIterations() << std::endl;
+	printer.print("Max iterations:", renderer.getMaxIterations());
 
 	while (do_run) {
 		renderer.pan((rand() % 10) - 20, (rand() % 10) - 20);
 		renderer.render();
 
 #ifdef _JAVASCRIPT
-		emscripten_set_main_loop(js_step, 0, 1);
+		emscripten_set_main_loop(js_step, FPS, 1);
 #else
 		while (do_run && step()) {
 		}
@@ -228,16 +234,65 @@ void run() {
 }
 
 #ifndef _JAVASCRIPT
+#ifndef _AMIGA
 void sigint_handler(int sig) {
 	do_run = false;
 }
 #endif
+#endif
+
+#ifdef _AMIGA //_AMIGA
+extern "C" int _gettimeofday( struct timeval *tv, void *tz )
+{
+	return 0;
+}
+
+extern "C" _sig_func_ptr signal (int __sig, _sig_func_ptr __handler) {
+	return 0;
+}
+
+void* operator new(std::size_t size) {
+    return malloc(size);
+}
+
+void* operator new[](std::size_t size) {
+    return malloc(size);
+}
+
+void operator delete(void* ptr) {
+    free(ptr);
+}
+
+void operator delete[](void* ptr) {
+    free(ptr);
+}
+
+void* operator new(std::size_t size, const std::nothrow_t&) {
+    return malloc(size);
+}
+
+void* operator new[](std::size_t size, const std::nothrow_t&) {
+    return malloc(size);
+}
+
+void operator delete(void* ptr, const std::nothrow_t&) {
+    free(ptr);
+}
+
+void operator delete[](void* ptr, const std::nothrow_t&) {
+    free(ptr);
+}
+#endif
+
+
 
 int main() {
 	srand(time(NULL));
 #ifndef _JAVASCRIPT
+#ifndef _AMIGA
 	signal(SIGINT, sigint_handler);
 #endif
+#endif
 	run();
-	return 0;
+	return pow(time(NULL), 2);
 }

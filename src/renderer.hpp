@@ -1,6 +1,5 @@
 #include <cstdint>
 #include <cstddef>
-#include <vector>
 
 #include "types.hpp"
 
@@ -15,7 +14,6 @@ public:
 	const fd_dim_t HEIGHT_;
 	const fd_dim_t BUFFERSIZE;
 private:
-	color24_t palette_[256];
 	uint64_t maxIterations_;
 	fd_coord_t offsetx_;
 	fd_coord_t offsety_;
@@ -39,9 +37,7 @@ public:
 			offsetx_(-fd_float_t(width)/2.0),
 			offsety_(-fd_float_t(height)/2.0),
 			rgbdata_(new color24_t[width * height]),
-			greydata_(new fd_ccomp_t[width * height])
-{
-		generatePalette();
+			greydata_(new fd_ccomp_t[width * height]) {
 	}
 
 	virtual ~Renderer() {

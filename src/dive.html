@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Endless Fractal Dive Loop</title>
+  <title>Endless Fractal Dive Loop!</title>
   <style>
   body {
     background-color: black;
@@ -39,7 +39,7 @@
 
  #canvas {
     width: 256px; 
-    height: 256px; 
+    height: 256px;
  }
 
  #stderr {
@@ -53,6 +53,7 @@
   #stdout {
     background-color: black; 
     color: white;
+    overflow: hidden;
   }
 
   </style>
@@ -65,6 +66,7 @@
     <textarea cols=26 rows=5 id="stderr"></textarea>
         <script>
             var stderr = document.getElementById('stderr');
+            var stdout = document.getElementById('stdout');
             var canvas = document.getElementById('canvas');
             var bgcanvas0 = document.getElementById('bgcanvas0');
             var bgcanvas1 = document.getElementById('bgcanvas1');
@@ -82,8 +84,7 @@
             var Module = {
 				print: (function() {
 					return function(message) {
-                        stdout.innerHTML += '> ' + message + '\n';
-                        stdout.scrollTop = stdout.scrollHeight;
+                        stdout.innerHTML += message + '\n';
                         console.log(message);
 					};
 				})(),

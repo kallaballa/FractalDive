@@ -1,14 +1,10 @@
 #ifndef CANVAS_H_
 #define CANVAS_H_
 
-#include <algorithm>
-#include <string>
+#include <cwchar>
 #include <SDL/SDL.h>
-#include <vector>
 
 #include "types.hpp"
-
-using std::string;
 
 namespace fractaldive {
 class Canvas {
