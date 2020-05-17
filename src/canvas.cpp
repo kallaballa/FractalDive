@@ -13,8 +13,13 @@ Canvas::Canvas(const fd_dim_t& width, const fd_dim_t& height, bool offscreen) :
     }
     atexit(SDL_Quit);
 
-    if(!offscreen)
-      screen_ = SDL_SetVideoMode(width, height, BYTES_PER_PIXEL * 8, SDL_SWSURFACE);
+    if(!offscreen) {
+#ifndef _AMIGA
+    	screen_ = SDL_SetVideoMode(width, height, BYTES_PER_PIXEL * 8, SDL_SWSURFACE);
+#else
+    	screen_ = SDL_SetVideoMode(width, height, BYTES_PER_PIXEL * 8, SDL_SWSURFACE | SDL_FULLSCREEN);
+#endif
+    }
     else
       screen_ = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, BYTES_PER_PIXEL * 8, 0, 0, 0, 0);
 

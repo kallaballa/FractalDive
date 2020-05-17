@@ -1,3 +1,4 @@
+
 #include <cwchar>
 #include <cstdio>
 #include <cmath>
@@ -6,6 +7,7 @@
 #include <cstdlib>
 #include <cstddef>
 #include <cassert>
+#include <unistd.h>
 #include <sys/time.h>
 
 #include <map>
@@ -21,8 +23,7 @@
 #endif
 
 #ifdef _AMIGA
-#include <new>
-#include <malloc.h>
+#include "amiga.hpp"
 #endif
 
 #include "printer.hpp"
@@ -32,16 +33,23 @@
 #include "canvas.hpp"
 
 using namespace fractaldive;
+#ifndef _AMIGA
 constexpr fd_dim_t WIDTH = 200;
 constexpr fd_dim_t HEIGHT = 200;
-constexpr size_t FPS = 12;
-constexpr fd_dim_t FRAME_SIZE = WIDTH * HEIGHT;
+#else
+constexpr fd_dim_t WIDTH = 50;
+constexpr fd_dim_t HEIGHT = 50;
+#endif
 
 #ifndef _AMIGA
-fd_dim_t max_iterations = 100;
+constexpr size_t FPS = 12;
 #else
-fd_dim_t max_iterations = 10;
+constexpr size_t FPS = 6;
 #endif
+
+constexpr fd_dim_t FRAME_SIZE = WIDTH * HEIGHT;
+
+fd_dim_t max_iterations = 100;
 
 fractaldive::Renderer renderer(WIDTH, HEIGHT, max_iterations);
 fractaldive::Canvas canvas(WIDTH, HEIGHT, false);
@@ -152,10 +160,15 @@ bool dive(bool zoom, bool benchmark) {
 }
 
 void auto_scale_max_iterations() {
-#ifndef _AMIGA
 	Printer& printer = Printer::getInstance();
 	auto start = std::chrono::system_clock::now();
-	for (size_t i = 0; i < 100; ++i) {
+#ifndef _AMIGA
+	fd_float_t prescale = 1;
+#else
+	fd_float_t prescale = 0.2;
+#endif
+
+	for (size_t i = 0; i < std::ceil(100.0 * prescale); ++i) {
 		dive(false,true);
 	}
 
@@ -164,14 +177,13 @@ void auto_scale_max_iterations() {
 
 	printer.printErr(duration.count());
 	fd_float_t fpsMillis = 1000.0 / FPS;
-	fd_float_t millisRatio = (pow(duration.count(),1.20) / fpsMillis);
+	fd_float_t millisRatio = (pow(duration.count() * (1.0 / prescale), 1.20) / fpsMillis);
 	fd_float_t iterations = (max_iterations / millisRatio) * 60.0;
 #ifdef _JAVASCRIPT_MT
 	if(ThreadPool::extra_cores() > 1)
 		iterations = (iterations * ThreadPool::extra_cores()) / 2.5;
 #endif
 	renderer.setMaxIterations(round(iterations));
-#endif
 }
 
 bool step() {
@@ -179,15 +191,18 @@ bool step() {
 	auto start = std::chrono::system_clock::now();
 	bool result = dive(true,false);
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
-
 	int32_t targetMillis = 1000.0 / FPS;
 	int32_t diff = targetMillis - duration.count();
 
 	if (diff > 0) {
 #ifndef _JAVASCRIPT
-//		std::this_thread::sleep_for(std::chrono::milliseconds(diff));
-//#else
-//		emscripten_sleep(diff);
+#ifndef _AMIGA
+#ifndef _NO_THREADS
+		std::this_thread::sleep_for(std::chrono::milliseconds(targetMillis));
+#else
+		usleep(1000.0 / FPS);
+#endif
+#endif
 #endif
 	} else if (diff < 0)
 		printer.printErr("Underrun: ", std::abs(diff));
@@ -241,51 +256,6 @@ void sigint_handler(int sig) {
 #endif
 #endif
 
-#ifdef _AMIGA //_AMIGA
-extern "C" int _gettimeofday( struct timeval *tv, void *tz )
-{
-	return 0;
-}
-
-extern "C" _sig_func_ptr signal (int __sig, _sig_func_ptr __handler) {
-	return 0;
-}
-
-void* operator new(std::size_t size) {
-    return malloc(size);
-}
-
-void* operator new[](std::size_t size) {
-    return malloc(size);
-}
-
-void operator delete(void* ptr) {
-    free(ptr);
-}
-
-void operator delete[](void* ptr) {
-    free(ptr);
-}
-
-void* operator new(std::size_t size, const std::nothrow_t&) {
-    return malloc(size);
-}
-
-void* operator new[](std::size_t size, const std::nothrow_t&) {
-    return malloc(size);
-}
-
-void operator delete(void* ptr, const std::nothrow_t&) {
-    free(ptr);
-}
-
-void operator delete[](void* ptr, const std::nothrow_t&) {
-    free(ptr);
-}
-#endif
-
-
-
 int main() {
 	srand(time(NULL));
 #ifndef _JAVASCRIPT
@@ -294,5 +264,5 @@ int main() {
 #endif
 #endif
 	run();
-	return pow(time(NULL), 2);
+	return 0;
 }
