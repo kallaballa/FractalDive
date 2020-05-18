@@ -10,16 +10,19 @@ UNAME_S := $(shell uname -s)
 LIBDIR := lib
 
 UNAME_P := $(shell uname -p)
+
 ifeq ($(UNAME_P),x86_64)
 LIBDIR = lib64
-#CXXFLAGS += -march=native
 endif
-ifeq ($(UNAME_P),x86)
-#CXXFLAGS += -march=native
+
+ifndef JAVASCRIPT
+ifndef AMIGA
+CXXFLAGS += -march=native
+endif
 endif
 
 ifdef AMIGA
-CXXFLAGS += -mcrt=nix13 -DDEBUG -D_AMIGA -D_NO_THREADS -Wa,-march=68030 -Wa,-mcpu=68030 -march=68030 -mtune=68030 -mcpu=68030 -mhard-float -fbbb=+ -Os -w -c 
+CXXFLAGS += -mcrt=nix13 -DDEBUG -D_AMIGA -D_NO_THREADS -Wa,-march=68020 -Wa,-mcpu=68020 -march=68020 -mtune=68020 -mcpu=68020 -mhard-float -fbbb=+ -Os -w -c 
 LDFLAGS+= -mcrt=nix13
 endif
 
