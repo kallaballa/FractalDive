@@ -163,9 +163,11 @@ void auto_scale_max_iterations() {
 	Printer& printer = Printer::getInstance();
 	auto start = std::chrono::system_clock::now();
 #ifndef _AMIGA
-	fd_float_t prescale = 1;
+	fd_float_t prescale = 1.0;
+	fd_float_t postscale = 1.0;
 #else
-	fd_float_t prescale = 0.2;
+	fd_float_t prescale = 0.1;
+	fd_float_t postscale = 7;
 #endif
 
 	for (size_t i = 0; i < std::ceil(100.0 * prescale); ++i) {
@@ -177,8 +179,8 @@ void auto_scale_max_iterations() {
 
 	printer.printErr(duration.count());
 	fd_float_t fpsMillis = 1000.0 / FPS;
-	fd_float_t millisRatio = (pow(duration.count() * (1.0 / prescale), 1.20) / fpsMillis);
-	fd_float_t iterations = (max_iterations / millisRatio) * 60.0;
+	fd_float_t millisRatio = (pow(duration.count() * postscale, 1.20) / fpsMillis);
+	fd_float_t iterations = (max_iterations / millisRatio) * 55.0;
 #ifdef _JAVASCRIPT_MT
 	if(ThreadPool::extra_cores() > 1)
 		iterations = (iterations * ThreadPool::extra_cores()) / 2.5;
@@ -198,7 +200,7 @@ bool step() {
 #ifndef _JAVASCRIPT
 #ifndef _AMIGA
 #ifndef _NO_THREADS
-		std::this_thread::sleep_for(std::chrono::milliseconds(targetMillis));
+		std::this_thread::sleep_for(std::chrono::milliseconds(diff));
 #else
 		usleep(1000.0 / FPS);
 #endif

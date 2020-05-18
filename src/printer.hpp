@@ -41,7 +41,7 @@ public:
 
 	void print() {
 #ifdef _AMIGA
-		printf("%s", "\n");
+		printf("\n");
 #else
 		std::cout << std::endl;
 #endif
@@ -52,7 +52,7 @@ public:
 #ifdef _AMIGA
 		buffer_.clear();
 		buffer_ << t << ' ';
-		printf("%s", buffer_.str().c_str());
+		printf(buffer_.str().c_str());
 		print(tail...);
 #else
 		std::cout << t << ' ';
@@ -62,7 +62,7 @@ public:
 
 	void printErr() {
 #ifdef _AMIGA
-		printf("%s", "\n");
+		printf("\n");
 #else
 		std::cerr << std::endl;
 #endif
@@ -73,7 +73,7 @@ public:
 #ifdef _AMIGA
 		buffer_.clear();
 		buffer_ << t << ' ';
-		printf("Error: %s", buffer_.str().c_str());
+		printf(buffer_.str().c_str());
 		print(tail...);
 #else
 		std::cerr << t << ' ';

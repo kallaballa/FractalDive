@@ -1,14 +1,14 @@
 #include "canvas.hpp"
-
+#include "printer.hpp"
 #include "color.hpp"
 
 namespace fractaldive {
 Canvas::Canvas(const fd_dim_t& width, const fd_dim_t& height, bool offscreen) :
   width_(width), height_(height), screen_(NULL), offscreen_(offscreen) {
-
+	Printer& printer = Printer::getInstance();
   if (width > 0 && height > 0) {
     if (SDL_Init(SDL_INIT_VIDEO) == -1) {
-      printf("Can't init SDL:  %s\n", SDL_GetError());
+    	printer.print("Can't init SDL: ", SDL_GetError());
       exit(1);
     }
     atexit(SDL_Quit);
@@ -24,7 +24,7 @@ Canvas::Canvas(const fd_dim_t& width, const fd_dim_t& height, bool offscreen) :
       screen_ = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, BYTES_PER_PIXEL * 8, 0, 0, 0, 0);
 
     if (screen_ == NULL) {
-      printf("Can't set video mode: %s\n", SDL_GetError());
+    	printer.print("Can't set video mode: ", SDL_GetError());
       exit(1);
     }
   }
