@@ -22,7 +22,7 @@ endif
 endif
 
 ifdef AMIGA
-CXXFLAGS += -mcrt=nix13 -DDEBUG -D_AMIGA -D_NO_THREADS -Wa,-march=68020 -Wa,-mcpu=68020 -march=68020 -mtune=68020 -mcpu=68020 -mhard-float -fbbb=+ -Os -w -c 
+CXXFLAGS += -mcrt=nix13 -DDEBUG -D_AMIGA -D_NO_THREADS -Wa,-march=68020 -Wa,-mcpu=68020 -march=68020 -mtune=68020 -mcpu=68020 -mhard-float -fbbb=+
 LDFLAGS+= -mcrt=nix13
 endif
 
@@ -83,11 +83,11 @@ ifdef JAVASCRIPT
 release: CXXFLAGS += -g0 -O3 -c
 release: dirs
 else
-ifdef AMIGA
-release: shrink
-else
+#ifdef AMIGA
+#release: shrink
+#else
 release: hardcore
-endif
+#endif
 endif
 
 shrink: CXXFLAGS += -Os -w
@@ -110,7 +110,7 @@ profile: CXXFLAGS += --profiling
 endif
 profile: dirs
 
-hardcore: CXXFLAGS += -g0 -Ofast -DNDEBUG
+hardcore: CXXFLAGS += -g0 -Ofast
 #ifeq ($(UNAME_S), Darwin)
 hardcore: LDFLAGS += -s
 #endif
