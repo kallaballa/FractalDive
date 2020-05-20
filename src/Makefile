@@ -35,6 +35,7 @@ info: ${TARGET}
 profile: ${TARGET}
 hardcore: ${TARGET}
 asan: ${TARGET}
+shrink: ${TARGET}
 
 ${TARGET}: ${OBJS} 
 	${CXX} ${LDFLAGS} -o $@ $^ ${LIBS} 
