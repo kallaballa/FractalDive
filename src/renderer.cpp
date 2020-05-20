@@ -4,13 +4,14 @@
 #include <cmath>
 
 #include "threadpool.hpp"
+#include "printer.hpp"
 
 namespace fractaldive {
 // Generate the fractal image
 void Renderer::render(bool greyonly) {
-	if(ThreadPool::extra_cores() > 0) {
-  	ThreadPool& tpool = ThreadPool::getInstance();
-  	size_t tpsize = tpool.size();
+	if (ThreadPool::extra_cores() > 0) {
+		ThreadPool& tpool = ThreadPool::getInstance();
+		size_t tpsize = tpool.size();
 		// Iterate over the pixels
 		fd_dim_t sliceHeight = std::floor(fd_float_t(HEIGHT_) / tpsize);
 		fd_dim_t remainder = (HEIGHT_ % sliceHeight);
@@ -37,45 +38,55 @@ void Renderer::render(bool greyonly) {
 	}
 }
 
+inline fd_mandelfloat_t square(const fd_mandelfloat_t& n) {
+	return n * n;
+}
+
 // Calculate the color of a specific pixel
 void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const uint64_t& maxiterations, const bool& greyonly) {
 	fd_mandelfloat_t xViewport = (x + offsetx_ + panx_) / (zoom_ / 10);
 	fd_mandelfloat_t yViewport = (y + offsety_ + pany_) / (zoom_ / 10);
+
 	uint64_t iterations = 0;
 	fd_mandelfloat_t zr = 0.0, zi = 0.0;
-	fd_mandelfloat_t cr = xViewport/WIDTH_;
-	fd_mandelfloat_t ci = yViewport/HEIGHT_;
-	fd_mandelfloat_t two = 2.0;
+	fd_mandelfloat_t zrsqr = 0;
+	fd_mandelfloat_t zisqr = 0;
+	fd_mandelfloat_t cr = xViewport / WIDTH_;
+	fd_mandelfloat_t ci = yViewport / HEIGHT_;
 	fd_mandelfloat_t four = 4.0;
-    while (iterations < maxIterations_ && zr * zr + zi * zi < four) {
-    	const fd_mandelfloat_t& temp = zr * zr - zi * zi + cr;
-      zi = two * zr * zi + ci;
-      zr = temp;
-      ++iterations;
-    }
-    color24_t color;
-  	size_t index = 0;
-  	if (iterations == maxiterations) {
-  		color = {0, 0, 0}; // Black
-  	} else {
-  		// 254 so we can use 0 as index for black
-  		index = std::floor((fd_float_t(iterations) / (maxiterations - 1)) * 254.0);
-  		color = PALETTE[index];
-  	}
 
-  	size_t pixelindex = (y * WIDTH_ + x);
-  	// Apply the color
-  	if (!greyonly) {
-  			rgbdata_[pixelindex] = color;
-  	}
+	while (iterations < maxIterations_ && zrsqr + zisqr <= four) {
+		zi = square(zr + zi) - zrsqr - zisqr;
+		zi += ci;
+		zr = zrsqr - zisqr + cr;
+		zrsqr = square(zr);
+		zisqr = square(zi);
+		++iterations;
+	}
 
-  	//cheap greyscale. we don't need perceptual acuity to measure detail.
-  	if (iterations == maxiterations) {
-  		greydata_[pixelindex] = 0;
-  	} else {
-  		assert(index < 256);
-  		greydata_[pixelindex] = index + 1;
-  	}
+	color24_t color;
+	size_t index = 0;
+	if (iterations == maxiterations) {
+		color = {0, 0, 0}; // Black
+	} else {
+		// 254 so we can use 0 as index for black
+		index = std::floor((fd_float_t(iterations) / (maxiterations - 1)) * 254.0);
+		color = PALETTE[index];
+	}
+
+	size_t pixelindex = (y * WIDTH_ + x);
+	// Apply the color
+	if (!greyonly) {
+		rgbdata_[pixelindex] = color;
+	}
+
+	//cheap greyscale. we don't need perceptual acuity to measure detail.
+	if (iterations == maxiterations) {
+		greydata_[pixelindex] = 0;
+	} else {
+		assert(index < 256);
+		greydata_[pixelindex] = index + 1;
+	}
 }
 
 // Zoom the fractal

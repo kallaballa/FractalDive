@@ -100,6 +100,7 @@ public:
 	size_t size() {
 		return pool_.size();
 	}
+
 	static size_t extra_cores() {
 		size_t numThreads = std::thread::hardware_concurrency();
 #ifdef _JAVASCRIPT

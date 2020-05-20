@@ -37,8 +37,8 @@ using namespace fractaldive;
 constexpr fd_dim_t WIDTH = 200;
 constexpr fd_dim_t HEIGHT = 200;
 #else
-constexpr fd_dim_t WIDTH = 50;
-constexpr fd_dim_t HEIGHT = 50;
+constexpr fd_dim_t WIDTH = 30;
+constexpr fd_dim_t HEIGHT = 30;
 #endif
 
 #ifndef _AMIGA
@@ -138,7 +138,7 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 bool dive(bool zoom, bool benchmark) {
 	fd_float_t detail = measureDetail(renderer.greydata_, renderer.WIDTH_ * renderer.HEIGHT_);
 
-	if (!benchmark && detail < 0.05) {
+	if (!benchmark && detail < 0.1) {
 #ifdef _JAVASCRIPT
 		renderer.reset();
 		renderer.render();
@@ -166,8 +166,8 @@ void auto_scale_max_iterations() {
 	fd_float_t prescale = 1.0;
 	fd_float_t postscale = 1.0;
 #else
-	fd_float_t prescale = 0.1;
-	fd_float_t postscale = 7;
+	fd_float_t prescale = 0.01;
+	fd_float_t postscale = 1.0 / prescale;
 #endif
 
 	for (size_t i = 0; i < std::ceil(100.0 * prescale); ++i) {
@@ -177,7 +177,7 @@ void auto_scale_max_iterations() {
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
 	renderer.reset();
 
-	printer.printErr(duration.count());
+	printer.printErr("Duration: " + duration.count());
 	fd_float_t fpsMillis = 1000.0 / FPS;
 	fd_float_t millisRatio = (pow(duration.count() * postscale, 1.20) / fpsMillis);
 	fd_float_t iterations = (max_iterations / millisRatio) * 55.0;
@@ -185,7 +185,7 @@ void auto_scale_max_iterations() {
 	if(ThreadPool::extra_cores() > 1)
 		iterations = (iterations * ThreadPool::extra_cores()) / 2.5;
 #endif
-	renderer.setMaxIterations(round(iterations));
+	renderer.setMaxIterations(std::max(round(iterations), 10.0));
 }
 
 bool step() {
@@ -197,14 +197,16 @@ bool step() {
 	int32_t diff = targetMillis - duration.count();
 
 	if (diff > 0) {
-#ifndef _JAVASCRIPT
-#ifndef _AMIGA
-#ifndef _NO_THREADS
-		std::this_thread::sleep_for(std::chrono::milliseconds(diff));
+#ifdef _JAVASCRIPT
+		emscripten_sleep(diff);
 #else
-		usleep(1000.0 / FPS);
-#endif
-#endif
+	#ifndef _AMIGA
+		#ifndef _NO_THREADS
+	std::this_thread::sleep_for(std::chrono::milliseconds(diff));
+		#else
+	usleep(diff);
+		#endif
+	#endif
 #endif
 	} else if (diff < 0)
 		printer.printErr("Underrun: ", std::abs(diff));
@@ -240,7 +242,7 @@ void run() {
 		renderer.render();
 
 #ifdef _JAVASCRIPT
-		emscripten_set_main_loop(js_step, FPS, 1);
+		emscripten_set_main_loop(js_step, 0, 1);
 #else
 		while (do_run && step()) {
 		}

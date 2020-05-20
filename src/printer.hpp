@@ -50,7 +50,7 @@ public:
 	template<typename T, typename ...TAIL>
 	void print(const T &t, TAIL ... tail) {
 #ifdef _AMIGA
-		buffer_.clear();
+		buffer_.str("");
 		buffer_ << t << ' ';
 		printf(buffer_.str().c_str());
 		print(tail...);
@@ -71,7 +71,7 @@ public:
 	template<typename T, typename ...TAIL>
 	void printErr(const T &t, TAIL ... tail) {
 #ifdef _AMIGA
-		buffer_.clear();
+		buffer_.str("");
 		buffer_ << t << ' ';
 		printf(buffer_.str().c_str());
 		print(tail...);
