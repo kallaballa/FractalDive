@@ -10,7 +10,7 @@
 namespace fractaldive {
 
 Printer* Printer::instance_ = nullptr;
-#ifndef _AMIGA
+#ifndef _NO_THREADS
 std::mutex Printer::instanceMtx_;
 #endif
 

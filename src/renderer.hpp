@@ -24,6 +24,7 @@ private:
 	fd_float_t zoom_ = 2;
 
 	void generatePalette();
+	uint16_t mandel(const fd_coord_t& x, const fd_coord_t& y, const uint64_t& maxiterations);
 	void iterate(const fd_coord_t& x, const fd_coord_t& y, const uint64_t& maxiterations, const bool& greyonly);
 public:
 	rgb_image_t rgbdata_;

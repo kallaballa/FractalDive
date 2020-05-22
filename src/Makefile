@@ -8,7 +8,7 @@ ifdef JAVASCRIPT_MT
 TARGET := dive.js
 endif
 
-SRCS  := main.cpp renderer.cpp canvas.cpp threadpool.cpp printer.cpp   
+SRCS  := main.cpp renderer.cpp canvas.cpp threadpool.cpp printer.cpp timetracker.cpp   
 ifndef JAVASCRIPT
 ifndef JAVASCRIPT_MT
 ifndef AMIGA
@@ -36,6 +36,7 @@ profile: ${TARGET}
 hardcore: ${TARGET}
 asan: ${TARGET}
 shrink: ${TARGET}
+assembler: ${TARGET}
 
 ${TARGET}: ${OBJS} 
 	${CXX} ${LDFLAGS} -o $@ $^ ${LIBS} 

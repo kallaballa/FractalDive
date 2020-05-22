@@ -2,7 +2,7 @@ CXX      := g++
 CXXFLAGS := -std=c++0x -pedantic -Wall -fno-rtti -fno-exceptions
 LDFLAGS  := -L/opt/local/lib 
 LIBS     := -lm
-.PHONY: all release debian-release info debug clean debian-clean distclean asan
+.PHONY: all release debian-release info debug clean debian-clean distclean asan shrink
 ESTDIR := /
 PREFIX := /usr/local
 MACHINE := $(shell uname -m)
@@ -21,9 +21,17 @@ CXXFLAGS += -march=native
 endif
 endif
 
+
+
 ifdef AMIGA
-CXXFLAGS += -mcrt=nix13 -DDEBUG -D_AMIGA -D_NO_THREADS -Wa,-march=68020 -Wa,-mcpu=68020 -march=68020 -mtune=68020 -mcpu=68020 -mhard-float -fbbb=+
+FIXEDPOINT=1
+NOTHREADS=1
+CXXFLAGS += -mhard-float -mcrt=nix13 -D_AMIGA -Wa,-march=${AMIGA} -Wa,-mcpu=${AMIGA} -march=${AMIGA} -mtune=${AMIGA} -mcpu=${AMIGA} -fbbb=+
 LDFLAGS+= -mcrt=nix13
+endif
+
+ifdef NOTHREADS
+CXXFLAGS += -D_NO_THREADS
 endif
 
 ifdef JAVASCRIPT_MT
@@ -61,8 +69,13 @@ ifdef AUTOVECTOR
 CXXFLAGS += -D_AUTOVECTOR
 endif
 
+
 ifdef FIXEDPOINT
+ifdef AMIGA
+CXXFLAGS +=-msoft-float -D_FIXEDPOINT
+else
 CXXFLAGS += -D_FIXEDPOINT
+endif
 endif
 
 ifdef X86
@@ -79,16 +92,8 @@ all: release
 ifneq ($(UNAME_S), Darwin)
 release: LDFLAGS += -s
 endif
-ifdef JAVASCRIPT
 release: CXXFLAGS += -g0 -O3 -c
 release: dirs
-else
-#ifdef AMIGA
-#release: shrink
-#else
-release: hardcore
-#endif
-endif
 
 shrink: CXXFLAGS += -Os -w
 shrink: LDFLAGS += -s
@@ -102,11 +107,14 @@ debug: CXXFLAGS += -g3 -O0 -rdynamic
 debug: LDFLAGS += -Wl,--export-dynamic -rdynamic
 debug: dirs
 
-profile: CXXFLAGS += -g3 -O1 
-profile: LDFLAGS += -Wl,--export-dynamic -rdynamic
+profile: CXXFLAGS += -g3 -O3 
+profile: LDFLAGS += -Wl,--export-dynamic
 ifdef JAVASCRIPT
 profile: LDFLAGS += --profiling
 profile: CXXFLAGS += --profiling
+endif
+ifndef AMIGA
+profile: CXXFLAGS += -rdynamic
 endif
 profile: dirs
 

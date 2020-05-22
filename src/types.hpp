@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <limits>
+#define _FIXEDPOINT 1
 
 #ifdef _FIXEDPOINT
 #include "MFixedPoint/FpF.hpp"
@@ -12,11 +13,15 @@
 #include "color.hpp"
 
 namespace fractaldive {
-	typedef int32_t fd_coord_t;
-	typedef size_t fd_dim_t;
+	typedef int16_t fd_coord_t;
+	typedef uint16_t fd_dim_t;
 	typedef float fd_float_t;
 #ifdef _FIXEDPOINT
+	#ifdef _AMIGA
+	typedef mn::MFixedPoint::FpF16<8> fd_mandelfloat_t;
+	#else
 	typedef mn::MFixedPoint::FpF32<16> fd_mandelfloat_t;
+	#endif
 #else
 	typedef float fd_mandelfloat_t;
 #endif

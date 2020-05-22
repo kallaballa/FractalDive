@@ -28,7 +28,7 @@ void Renderer::render(bool greyonly) {
 				}
 			});
 		}
-		tpool.join();
+		//tpool.join();
 	} else {
 		for (fd_dim_t y = 0; y < HEIGHT_; y++) {
 			for (fd_dim_t x = 0; x < WIDTH_; x++) {
@@ -42,12 +42,11 @@ inline fd_mandelfloat_t square(const fd_mandelfloat_t& n) {
 	return n * n;
 }
 
-// Calculate the color of a specific pixel
-void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const uint64_t& maxiterations, const bool& greyonly) {
+inline uint16_t Renderer::mandel(const fd_coord_t& x, const fd_coord_t& y, const uint64_t& maxiterations) {
 	fd_mandelfloat_t xViewport = (x + offsetx_ + panx_) / (zoom_ / 10);
 	fd_mandelfloat_t yViewport = (y + offsety_ + pany_) / (zoom_ / 10);
 
-	uint64_t iterations = 0;
+	uint16_t iterations = 0;
 	fd_mandelfloat_t zr = 0.0, zi = 0.0;
 	fd_mandelfloat_t zrsqr = 0;
 	fd_mandelfloat_t zisqr = 0;
@@ -64,13 +63,18 @@ void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const uint64_t&
 		++iterations;
 	}
 
-	color24_t color;
+	return iterations;
+}
+
+// Calculate the color of a specific pixel
+void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const uint64_t& maxiterations, const bool& greyonly) {
+	const uint64_t& iterations = mandel(x, y, maxiterations);
+
+	color24_t color(0,0,0);
 	size_t index = 0;
-	if (iterations == maxiterations) {
-		color = {0, 0, 0}; // Black
-	} else {
+	if (iterations != maxiterations) {
 		// 254 so we can use 0 as index for black
-		index = std::floor((fd_float_t(iterations) / (maxiterations - 1)) * 254.0);
+		index = 1 + std::floor((fd_float_t(iterations) / (maxiterations - 1)) * 254.0);
 		color = PALETTE[index];
 	}
 
@@ -85,7 +89,7 @@ void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const uint64_t&
 		greydata_[pixelindex] = 0;
 	} else {
 		assert(index < 256);
-		greydata_[pixelindex] = index + 1;
+		greydata_[pixelindex] = index;
 	}
 }
 

@@ -474,7 +474,7 @@ public:
         return stream;
     }
 
-private:
+public:
 
     /// \brief		The fixed-point number is stored in this basic data type.
     BaseType rawVal_;

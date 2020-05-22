@@ -2,6 +2,7 @@
 #define SRC_COLOR_HPP_
 
 #include <cstdint>
+#include <limits>
 
 namespace fractaldive {
 
@@ -9,15 +10,27 @@ template<typename T> struct Color {
 	constexpr Color() : r_(0), g_(0), b_(0) {
 	}
 
+	constexpr Color(const Color& other) : r_(other.r_), g_(other.g_), b_(other.b_) {
+	}
+
 	constexpr Color(const T& r, const T& g, const T& b) : r_(r), g_(g), b_(b) {
 	}
 	constexpr Color(const uint32_t& rgb) : r_(rgb >> 16 & 0xFF), g_(rgb >> 8 & 0xFF), b_(rgb & 0xFF) {
 	}
 
+
+	void operator=(const Color& other) {
+		r_ = other.r_;
+		g_ = other.g_;
+		b_ = other.b_;
+	}
+
 	T r_;
 	T g_;
 	T b_;
+	const T a_ = 0xFF;
 };
+
 
 	constexpr static Color<uint8_t> PALETTE[256] = {
 			Color<uint8_t>(206),

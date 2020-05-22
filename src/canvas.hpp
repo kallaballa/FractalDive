@@ -13,14 +13,15 @@ private:
   fd_dim_t height_;
 	class SDL_Surface *screen_;
   bool offscreen_;
+  fd_dim_t scale_;
 #ifdef _JAVASCRIPT
   const uint8_t BYTES_PER_PIXEL = 4;
 #else
-  const uint8_t BYTES_PER_PIXEL = 3;
+  const uint8_t BYTES_PER_PIXEL = 4;
 #endif
 
 public:
-  Canvas(const fd_dim_t& width, const fd_dim_t& height, bool offscreen = false);
+  Canvas(const fd_dim_t& width, const fd_dim_t& height, const bool& offscreen = false, const fd_dim_t& scale = 1);
   virtual ~Canvas() {};
   void putpixel(const fd_coord_t& x, const fd_coord_t& y, const color24_t& c);
   void flip();
