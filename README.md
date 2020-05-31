@@ -29,39 +29,39 @@ There are many build targets. The default is "release" but on some platforms you
 
 ## JavaScript/WebAsm
 To build for Javascript to need em++ > 1.39.1. The following builds might need specific browsers or even special browser configurations. In src/index.html you can an example of how to select the right javascript build to load by using feature checking.
-
+```
 make clean && JAVASCRIPT=1 make -j2 hardcore
-
+```
 ### Multi-Threaded 
-
+```
 make clean && JAVASCRIPT_MT=1 make -j2 hardcode
-
+```
 ### Using simd instructions
-
+```
 make clean && AUTOVECTOR=1 JAVASCRIPT=1 make -j2 hardcore
-
+```
 ### Using multi-threading and simd instructions
-
+```
 make clean && AUTOVECTOR=1 JAVASCRIPT_MT=1 make -j2 hardcore
-
+```
 ## Linux/MacOSX (x86 and armv7)
-
+```
 make clean && AUTOVECTOR=1 make -j2 hardcore
-
+```
 ### Without multi-threading
-
+```
 make clean && NOTHREADS=1 AUTOVECTOR=1 make -j2 hardcode
-
+```
 ## Amiga/m68k
 
 For m68k you need amiga-gcc (https://github.com/kallaballa/amiga-gcc/releases/tag/latest-20200516174914).
 
 ### Build for 68000
-
+```
 make clean; AMIGA=68020 make CXX=m68k-amigaos-g++ LD=m68k-amigaos-ld hardcore
+```
 
 ### Build for 68020
-
+```
 make clean; AMIGA=68020 make CXX=m68k-amigaos-g++ LD=m68k-amigaos-ld hardcore
-
-
+```
