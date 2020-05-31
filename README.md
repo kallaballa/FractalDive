@@ -8,7 +8,7 @@ List of tested platforms are:
 - Many kinds of browsers on mobile and desktop. Example: http://www.metastage.at/dive-mt/dive.html
 - x86 Linux and MacOSX
 - armv7 Linux
-- Amiga 500 / 1200 (https://gfycat.com/simplebonyfairyfly) / 4000 (https://gfycat.com/adolescentkindamericanredsquirrel)
+- Amiga 1200 (https://gfycat.com/simplebonyfairyfly) / 4000 (https://gfycat.com/adolescentkindamericanredsquirrel)
 
 The list of supported platforms probably is way longer.
 
