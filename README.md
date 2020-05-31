@@ -52,4 +52,16 @@ make clean && AUTOVECTOR=1 make -j2 hardcore
 
 make clean && NOTHREADS=1 AUTOVECTOR=1 make -j2 hardcode
 
+## Amiga/m68k
+
+For m68k you need amiga-gcc (https://github.com/kallaballa/amiga-gcc/releases/tag/latest-20200516174914).
+
+### Build for 68000
+
+make clean; AMIGA=68020 make CXX=m68k-amigaos-g++ LD=m68k-amigaos-ld hardcore
+
+### Build for 68020
+
+make clean; AMIGA=68020 make CXX=m68k-amigaos-g++ LD=m68k-amigaos-ld hardcore
+
 
