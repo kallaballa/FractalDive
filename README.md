@@ -58,7 +58,7 @@ For m68k you need amiga-gcc (https://github.com/kallaballa/amiga-gcc/releases/ta
 
 ### Build for 68000
 ```
-make clean; AMIGA=68020 make CXX=m68k-amigaos-g++ LD=m68k-amigaos-ld hardcore
+make clean; AMIGA=68000 make CXX=m68k-amigaos-g++ LD=m68k-amigaos-ld hardcore
 ```
 
 ### Build for 68020
