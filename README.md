@@ -1,8 +1,8 @@
-Note: While i think this code might by very interesting to a lot of people, this is strictly an educational fun-project.
+Note: While i think this code might by very interesting to a lot of people, this is strictly an educational fun-project. It also is still a work-in-progress and in some respects not optimal.
 
 This is an attempt at implementing a highly optimized realtime mandelbrot fractal zoom in a highly platform independent fashion using modern C++. I started this project because I have a tattoo of the formular for the mandebrot set on my left arm and people kept asking what it is - so instead of describing it in my own words, every time, i decided to write this demo. At the prospect of optimizing javascript code (and fighting its nature) i decided to write in C++ and bow to the power of llvm by using emscripten :). And hey, If I'm writing it in C++ why not have it run on a bunch of platforms? :D
 
-My most important guideline is a quick and nice out-of-box experience. Depending on platform capabilities a number of optional features is available, the most important being: threading, auto vectorization, fixed/floating point.
+My most important guideline is a quick and nice out-of-box experience and therefore I implemented (a rather naive) automatic scaling of the zoom depth. Depending on platform capabilities a number of optional features is available, the most important being: threading, auto vectorization, fixed/floating point.
 
 List of tested platforms are:
 - Many kinds of browsers on mobile and desktop.
