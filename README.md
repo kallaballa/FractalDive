@@ -28,7 +28,7 @@ There are many build targets. The default is "release" but on some platforms you
 * "shrink": optimize for size
 
 ## JavaScript/WebAsm
-To build for Javascript to need em++ > 1.39.1. The following builds might need specific browsers or even special browser configurations. In src/index.html you can an example of how to select the right javascript build to load by using feature checking.
+To build for Javascript you need em++ > 1.39.1. The following builds might need specific browsers or even special browser configurations. In src/index.html you can an example of how to select the right javascript build to load by using feature checking.
 ```
 make clean && JAVASCRIPT=1 make -j2 hardcore
 ```
