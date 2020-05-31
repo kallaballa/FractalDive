@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <cstddef>
+#include <cmath>
 
 #include "types.hpp"
 
@@ -14,7 +15,7 @@ public:
 	const fd_dim_t HEIGHT_;
 	const fd_dim_t BUFFERSIZE;
 private:
-	uint64_t maxIterations_;
+	fd_iter_count_t maxIterations_;
 	fd_coord_t offsetx_;
 	fd_coord_t offsety_;
 
@@ -23,27 +24,32 @@ private:
 	fd_coord_t pany_ = 0;
 	fd_float_t zoom_ = 2;
 
-	void generatePalette();
-	uint16_t mandel(const fd_coord_t& x, const fd_coord_t& y, const uint64_t& maxiterations);
-	void iterate(const fd_coord_t& x, const fd_coord_t& y, const uint64_t& maxiterations, const bool& greyonly);
+	fd_iter_count_t mandelbrot(const fd_coord_t& x, const fd_coord_t& y);
+	void iterate(const fd_coord_t& x, const fd_coord_t& y, const bool& shadowonly);
 public:
-	rgb_image_t rgbdata_;
-	grey_image_t greydata_;
+	image_t imgdata_;
+	shadow_image_t shadowdata_;
 
-	Renderer(const fd_dim_t& width, const fd_dim_t& height, const uint64_t& maxIterations) :
+	Renderer(const fd_dim_t& width, const fd_dim_t& height, const fd_iter_count_t& maxIterations) :
 			WIDTH_(width),
 			HEIGHT_(height),
 			BUFFERSIZE(width * height),
 			maxIterations_(maxIterations),
 			offsetx_(-fd_float_t(width)/2.0),
 			offsety_(-fd_float_t(height)/2.0),
-			rgbdata_(new color24_t[width * height]),
-			greydata_(new fd_ccomp_t[width * height]) {
+			imgdata_(new fd_image_comp_t[width * height]),
+#ifndef _NO_SHADOW
+			shadowdata_(new fd_shadow_comp_t[width * height]) {
+#else
+			shadowdata_(imgdata_) {
+#endif
 	}
 
 	virtual ~Renderer() {
-		delete[] rgbdata_;
-		delete[] greydata_;
+		delete[] imgdata_;
+#ifndef _NO_SHADOW
+		delete[] shadowdata_;
+#endif
 	}
 
 	void reset() {
@@ -54,7 +60,7 @@ public:
 		zoom_ = 2;
 	}
 
-	void render(bool greyonly = false);
+	void render(bool shadowonly = false);
 	void zoomAt(const fd_coord_t& x, const fd_coord_t& y, const fd_float_t& factor, const bool& zoomin);
 	void pan(const fd_coord_t& x, const fd_coord_t& y);
 
@@ -62,11 +68,11 @@ public:
 		return zoom_;
 	}
 
-	uint64_t getMaxIterations() const {
+	fd_iter_count_t getMaxIterations() const {
 		return maxIterations_;
 	}
 
-	void setMaxIterations(const uint64_t& mi) {
+	void setMaxIterations(const fd_iter_count_t& mi) {
 		maxIterations_ = mi;
 	}
 };

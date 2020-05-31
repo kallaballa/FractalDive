@@ -26,8 +26,21 @@ endif
 ifdef AMIGA
 FIXEDPOINT=1
 NOTHREADS=1
+NOSHADOW=1
 CXXFLAGS += -mhard-float -mcrt=nix13 -D_AMIGA -Wa,-march=${AMIGA} -Wa,-mcpu=${AMIGA} -march=${AMIGA} -mtune=${AMIGA} -mcpu=${AMIGA} -fbbb=+
 LDFLAGS+= -mcrt=nix13
+endif
+
+ifndef TIMETRACK
+CXXFLAGS += -D_NO_TIMETRACK
+endif
+
+ifdef  
+CXXFLAGS += -D_NO_SHADOW
+endif
+
+ifdef NOSHADOW 
+CXXFLAGS += -D_NO_SHADOW
 endif
 
 ifdef NOTHREADS

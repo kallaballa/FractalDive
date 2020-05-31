@@ -12,7 +12,10 @@
 #include <map>
 #include <vector>
 #include <set>
+#ifndef _AMIGA
 #include <chrono>
+typedef std::chrono::high_resolution_clock highres_clock;
+#endif
 
 #ifndef _JAVASCRIPT
 #include <csignal>
@@ -49,17 +52,37 @@ constexpr size_t FPS = 1;
 
 constexpr fd_dim_t FRAME_SIZE = WIDTH * HEIGHT;
 
-fd_dim_t max_iterations = 100;
+fd_iter_count_t max_iterations = 100;
 
 fractaldive::Renderer renderer(WIDTH, HEIGHT, max_iterations);
-#ifdef _AMIGA
-fractaldive::Canvas canvas(WIDTH, HEIGHT, false, 1);
-#else
-fractaldive::Canvas canvas(WIDTH, HEIGHT, false, 1);
-#endif
+fractaldive::Canvas canvas(WIDTH, HEIGHT, false);
+
 bool do_run = true;
 
-fd_float_t entropy(const grey_image_t& greyImage, const size_t& size) {
+inline uint32_t get_milliseconds() {
+	return SDL_GetTicks();
+}
+
+#ifndef _AMIGA
+inline uint64_t get_microseconds() {
+	return std::chrono::duration_cast<std::chrono::microseconds>(highres_clock::now().time_since_epoch()).count();
+}
+#else
+inline uint64_t get_microseconds() {
+	assert(false);
+	return 0;
+}
+#endif
+
+inline void sleep_millis(uint32_t millis) {
+#ifdef _JAVASCRIPT
+		emscripten_sleep(millis);
+#else
+		SDL_Delay(millis);
+#endif
+}
+
+fd_float_t entropy(const shadow_image_t& greyImage, const size_t& size) {
 	std::map<uint8_t, int32_t> frequencies;
 
 	for (size_t i = 0; i < size; ++i)
@@ -74,7 +97,7 @@ fd_float_t entropy(const grey_image_t& greyImage, const size_t& size) {
 	return infocontent;
 }
 
-fd_float_t numberOfZeroes(const grey_image_t& greyImage, const size_t& size) {
+fd_float_t numberOfZeroes(const shadow_image_t& greyImage, const size_t& size) {
 	assert(size > 0);
 	fd_float_t zeroes = 0;
 	for (size_t i = 0; i < size; i++) {
@@ -84,21 +107,33 @@ fd_float_t numberOfZeroes(const grey_image_t& greyImage, const size_t& size) {
 	return zeroes / size;
 }
 
-fd_float_t numberOfColors(const grey_image_t& greyImage, const size_t& size) {
+fd_float_t numberOfColors(const shadow_image_t& greyImage, const size_t& size) {
 	assert(size > 0);
-	std::set<uint8_t> clrs;
+	std::set<fd_shadow_comp_t> clrs;
 	for (size_t i = 0; i < size; i++) {
 		clrs.insert(greyImage[i]);
 	}
-	return (clrs.size() / 255.0);
+	return (fd_float_t(clrs.size()) / size);
 }
 
-fd_float_t measureDetail(const grey_image_t& greyImage, const size_t& size) {
+fd_float_t numberOfChanges(const shadow_image_t& greyImage, const size_t& size) {
+	size_t numChanges = 0;
+	fd_shadow_comp_t last = 0;
+
+	for (size_t i = 0; i < size; i++) {
+		if(last != greyImage[i])
+			++numChanges;
+		last = greyImage[i];
+	}
+	return (fd_float_t(numChanges) / size);
+}
+
+fd_float_t measureDetail(const shadow_image_t& greyImage, const size_t& size) {
 //#ifdef AMIGA
 //	//identifies areas of interest better at a low resolution
 //	return entropy(greyImage,size + ((1.0 - numberOfZeroes(greyImage, size)) * 2)) / 3.0;
 //#else
-	return numberOfColors(greyImage, size)  + ((1.0 - numberOfZeroes(greyImage, size)) * 2) / 3.0;
+	return numberOfChanges(greyImage, size);
 //#endif
 }
 
@@ -109,8 +144,8 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 	assert(tileW > 1);
 	assert(tileH > 1);
 
-	const grey_image_t& greyImage = renderer.greydata_;
-	fd_ccomp_t tile[FRAME_SIZE];
+	const auto& shadowImage = renderer.shadowdata_;
+	fd_shadow_comp_t tile[FRAME_SIZE];
 
 	std::vector<fd_float_t> tileScores;
 	fd_float_t candidateScore = 0;
@@ -127,7 +162,7 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 			for (fd_dim_t y = 0; y < tileH; ++y) {
 				for (fd_dim_t x = 0; x < tileW; ++x) {
 					const size_t pixIdx = (offY + (y * renderer.WIDTH_)) + (offX + x);
-					tile[y * tileW + x] = greyImage[pixIdx];
+					tile[y * tileW + x] = shadowImage[pixIdx];
 				}
 			}
 
@@ -145,10 +180,11 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 
 bool dive(bool zoom, bool benchmark) {
 	TimeTracker& tt = TimeTracker::getInstance();
-
-	fd_float_t detail = measureDetail(renderer.greydata_, renderer.WIDTH_ * renderer.HEIGHT_);
-
-	if (!benchmark && detail < 0.1) {
+	fd_float_t detail;
+	tt.execute("measureDetail", [&](){
+		detail = measureDetail(renderer.shadowdata_, renderer.WIDTH_ * renderer.HEIGHT_);
+	});
+	if (!benchmark && detail < 0.0001) {
 #ifdef _JAVASCRIPT
 		renderer.reset();
 		renderer.render();
@@ -158,14 +194,23 @@ bool dive(bool zoom, bool benchmark) {
 	}
 	std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
 	tt.execute("centerofHighDetail", [&](){
-		centerOfHighDetail = identifyCenterOfTileOfHighestDetail(5, 5);
+#ifndef _AMIGA
+		centerOfHighDetail = identifyCenterOfTileOfHighestDetail(3, 3);
+#else
+		centerOfHighDetail = identifyCenterOfTileOfHighestDetail(3, 3);
+#endif
 	});
 
 	fd_coord_t hDiff = centerOfHighDetail.first - (renderer.WIDTH_ / 2);
 	fd_coord_t vDiff = centerOfHighDetail.second - (renderer.HEIGHT_ / 2);
 
 	if (zoom) {
+#ifndef _AMIGA
 		renderer.pan(hDiff / 20, vDiff / 20);
+#else
+		renderer.pan(hDiff / 10, vDiff / 10);
+#endif
+
 		renderer.zoomAt(renderer.WIDTH_ / 2, renderer.HEIGHT_ / 2, 1.05, true);
 	}
 	tt.execute("render", [&](){
@@ -173,7 +218,7 @@ bool dive(bool zoom, bool benchmark) {
 	});
 
 	tt.execute("draw", [&](){
-		canvas.draw(renderer.rgbdata_);
+		canvas.draw(renderer.imgdata_);
 	});
 
 	return true;
@@ -181,58 +226,57 @@ bool dive(bool zoom, bool benchmark) {
 
 void auto_scale_max_iterations() {
 	Printer& printer = Printer::getInstance();
-	auto start = SDL_GetTicks();
+	auto start = get_milliseconds();
 #ifndef _AMIGA
 	fd_float_t prescale = 1.0;
-	fd_float_t postscale = 1.0;
 #else
 	fd_float_t prescale = 0.02;
-	fd_float_t postscale = 1.0 / prescale;
 #endif
+
+#ifndef _NO_TIMETRACK
+	prescale /= 10.0;
+#endif
+
+	fd_float_t postscale = 1.0 / prescale;
 
 	for (size_t i = 0; i < std::ceil(100.0 * prescale); ++i) {
 		dive(false,true);
 	}
 
-	auto duration = SDL_GetTicks() - start;
+	auto duration = get_milliseconds() - start;
 	renderer.reset();
 
 	printer.printErr("Duration: ", duration);
 	fd_float_t fpsMillis = 1000.0 / FPS;
 	fd_float_t millisRatio = (pow(duration * postscale, 1.20) / fpsMillis);
-	fd_float_t iterations = (max_iterations / millisRatio) * 55.0;
-#ifdef _JAVASCRIPT_MT
-	if(ThreadPool::extra_cores() > 1)
-		iterations = (iterations * ThreadPool::extra_cores()) / 2.5;
+#ifndef _FIXEDPOINT
+	fd_iter_count_t iterations = (max_iterations / millisRatio) * 55.0;
+#else
+	fd_iter_count_t iterations = (max_iterations.ToFloat() / millisRatio) * 55.0;
 #endif
+#ifdef _JAVASCRIPT_MT
+		iterations = (iterations * ThreadPool::cores());
+#endif
+
+#ifndef _FIXEDPOINT
 	renderer.setMaxIterations(fmax(round(iterations), 3.0));
+#else
+	renderer.setMaxIterations(fmax(round(iterations.ToFloat()), 3.0));
+#endif
 }
 
 bool step() {
 	Printer& printer = Printer::getInstance();
-	TimeTracker& tt = TimeTracker::getInstance();
-	auto start = SDL_GetTicks();
-	bool result = false;
-	tt.execute("dive", [&](){
-		result = dive(true,false);
-	});
 
-	auto duration = SDL_GetTicks() - start;
+	auto start = get_milliseconds();
+	bool result = dive(true,false);
+	auto duration = get_milliseconds() - start;
+
 	int32_t targetMillis = 1000.0 / FPS;
 	int32_t diff = targetMillis - duration;
 
 	if (diff > 0) {
-#ifdef _JAVASCRIPT
-		emscripten_sleep(diff);
-#else
-	#ifndef _AMIGA
-		#ifndef _NO_THREADS
-	std::this_thread::sleep_for(std::chrono::milliseconds(diff));
-		#else
-	usleep(diff);
-		#endif
-	#endif
-#endif
+		sleep_millis(diff);
 	} else if (diff < 0)
 		printer.printErr("Underrun: ", std::abs(diff));
 
@@ -242,14 +286,16 @@ bool step() {
 #ifdef _JAVASCRIPT
 void js_step() {
 	step();
+#ifndef _NO_TIMETRACK
+			printer.printErr(tt.str());
+			tt.epoch();
+#endif
 }
 #endif
 
-void run() {
-	auto_scale_max_iterations();
-	TimeTracker& tt = TimeTracker::getInstance();
+void printInfo() {
 	Printer& printer = Printer::getInstance();
-	printer.print("Threads:", ThreadPool::extra_cores() + 1);
+	printer.print("Threads:", ThreadPool::cores());
 #ifdef _AUTOVECTOR
   printer.print("Auto Vector/SIMD: on");
 #else
@@ -262,6 +308,16 @@ void run() {
   printer.print("Arithmetic: floating point");
 #endif
 	printer.print("Max iterations:", renderer.getMaxIterations());
+}
+
+void run() {
+	auto_scale_max_iterations();
+	printInfo();
+
+#ifndef _NO_TIMETRACK
+	TimeTracker& tt = TimeTracker::getInstance();
+	Printer& printer = Printer::getInstance();
+#endif
 
 	while (do_run) {
 		renderer.pan((rand() % 10) - 20, (rand() % 10) - 20);
@@ -272,11 +328,15 @@ void run() {
 #else
 		bool stepResult = true;
 		while (do_run && stepResult) {
+#ifndef _NO_TIMETRACK
 			tt.execute("step", [&](){
 				stepResult = step();
 			});
 			printer.printErr(tt.str());
-			tt.newGame();
+			tt.epoch();
+#else
+			stepResult = step();
+#endif
 		}
 #endif
 		renderer.reset();

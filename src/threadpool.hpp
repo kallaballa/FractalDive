@@ -101,24 +101,25 @@ public:
 		return pool_.size();
 	}
 
-	static size_t extra_cores() {
-		size_t numThreads = std::thread::hardware_concurrency();
+	static size_t cores() {
+		size_t numThreads = 0;
 #ifdef _JAVASCRIPT
 		numThreads = 1;
 	#ifdef _JAVASCRIPT_MT
 		numThreads = emscripten_num_logical_cores();
 	#endif
+#else
+		numThreads = std::thread::hardware_concurrency();
 #endif
-		assert(numThreads > 0);
 
-		return numThreads - 1; //reserve a core for main thread
+		return numThreads;
 	}
 
 	static ThreadPool& getInstance() {
 		std::unique_lock<std::mutex> lock(instanceMtx_);
 		if(instance_ == nullptr) {
-			assert(ThreadPool::extra_cores() > 0);
-			instance_ = new ThreadPool(ThreadPool::extra_cores());
+			assert(ThreadPool::cores() > 1);
+			instance_ = new ThreadPool(ThreadPool::cores());
 		}
 
 		return *instance_;
@@ -180,7 +181,7 @@ public:
 		return 0;
 	}
 
-	static size_t extra_cores() {
+	static size_t cores() {
 		return 0;
 	}
 

@@ -13,19 +13,16 @@ private:
   fd_dim_t height_;
 	class SDL_Surface *screen_;
   bool offscreen_;
-  fd_dim_t scale_;
-#ifdef _JAVASCRIPT
-  const uint8_t BYTES_PER_PIXEL = 4;
-#else
-  const uint8_t BYTES_PER_PIXEL = 4;
-#endif
-
+  const int BYTES_PER_PIXEL = FD_IMAGE_DEPTH_IN_BYTES;
 public:
-  Canvas(const fd_dim_t& width, const fd_dim_t& height, const bool& offscreen = false, const fd_dim_t& scale = 1);
+  Canvas(const fd_dim_t& width, const fd_dim_t& height, const bool& offscreen = false);
   virtual ~Canvas() {};
-  void putpixel(const fd_coord_t& x, const fd_coord_t& y, const color24_t& c);
   void flip();
-  void draw(const rgb_image_t& rgbdata);
+#ifndef _NO_SHADOW
+	void draw(const image_t& image);
+#else
+	void draw(const shadow_image_t& image);
+#endif
 };
 }
 #endif /* CANVAS_H_ */

@@ -5,48 +5,52 @@
 
 #include "threadpool.hpp"
 #include "printer.hpp"
+#include "timetracker.hpp"
+
 
 namespace fractaldive {
 // Generate the fractal image
-void Renderer::render(bool greyonly) {
-	if (ThreadPool::extra_cores() > 0) {
-		ThreadPool& tpool = ThreadPool::getInstance();
-		size_t tpsize = tpool.size();
-		// Iterate over the pixels
-		fd_dim_t sliceHeight = std::floor(fd_float_t(HEIGHT_) / tpsize);
-		fd_dim_t remainder = (HEIGHT_ % sliceHeight);
-		fd_dim_t extra = 0;
-		for (size_t i = 0; i < tpsize; ++i) {
-			if (i == (tpsize - 1) && remainder > 0)
-				extra = remainder;
+void Renderer::render(bool shadowonly) {
+	TimeTracker::getInstance().execute("render", "mandelbrot", [&](){
+		if (ThreadPool::cores() > 1) {
+			ThreadPool& tpool = ThreadPool::getInstance();
+			size_t tpsize = tpool.size();
+			// Iterate over the pixels
+			fd_dim_t sliceHeight = std::floor(fd_float_t(HEIGHT_) / tpsize);
+			fd_dim_t remainder = (HEIGHT_ % sliceHeight);
+			fd_dim_t extra = 0;
+			for (size_t i = 0; i < tpsize; ++i) {
+				if (i == (tpsize - 1) && remainder > 0)
+					extra = remainder;
 
-			tpool.work([=]() {
-				for (fd_dim_t y = sliceHeight * i; y < (sliceHeight * (i + 1)) + extra; y++) {
-					for (fd_dim_t x = 0; x < WIDTH_; x++) {
-						iterate(x, y, maxIterations_, greyonly);
+				tpool.work([=]() {
+					for (fd_dim_t y = sliceHeight * i; y < (sliceHeight * (i + 1)) + extra; y++) {
+						for (fd_dim_t x = 0; x < WIDTH_; x++) {
+							iterate(x, y, shadowonly);
+						}
 					}
+				});
+			}
+			tpool.join();
+		} else {
+			for (fd_dim_t y = 0; y < HEIGHT_; y++) {
+				for (fd_dim_t x = 0; x < WIDTH_; x++) {
+					iterate(x, y, shadowonly);
 				}
-			});
-		}
-		//tpool.join();
-	} else {
-		for (fd_dim_t y = 0; y < HEIGHT_; y++) {
-			for (fd_dim_t x = 0; x < WIDTH_; x++) {
-				iterate(x, y, maxIterations_, greyonly);
 			}
 		}
-	}
+	});
 }
 
 inline fd_mandelfloat_t square(const fd_mandelfloat_t& n) {
 	return n * n;
 }
 
-inline uint16_t Renderer::mandel(const fd_coord_t& x, const fd_coord_t& y, const uint64_t& maxiterations) {
+inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_t& y) {
+	fd_iter_count_t iterations = 0;
 	fd_mandelfloat_t xViewport = (x + offsetx_ + panx_) / (zoom_ / 10);
 	fd_mandelfloat_t yViewport = (y + offsety_ + pany_) / (zoom_ / 10);
 
-	uint16_t iterations = 0;
 	fd_mandelfloat_t zr = 0.0, zi = 0.0;
 	fd_mandelfloat_t zrsqr = 0;
 	fd_mandelfloat_t zisqr = 0;
@@ -60,37 +64,65 @@ inline uint16_t Renderer::mandel(const fd_coord_t& x, const fd_coord_t& y, const
 		zr = zrsqr - zisqr + cr;
 		zrsqr = square(zr);
 		zisqr = square(zi);
-		++iterations;
+		iterations+=1;
 	}
 
 	return iterations;
 }
 
 // Calculate the color of a specific pixel
-void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const uint64_t& maxiterations, const bool& greyonly) {
-	const uint64_t& iterations = mandel(x, y, maxiterations);
+void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const bool& shadowonly) {
+	TimeTracker& tt = TimeTracker::getInstance();
 
-	color24_t color(0,0,0);
-	size_t index = 0;
-	if (iterations != maxiterations) {
-		// 254 so we can use 0 as index for black
-		index = 1 + std::floor((fd_float_t(iterations) / (maxiterations - 1)) * 254.0);
-		color = PALETTE[index];
-	}
+	fd_iter_count_t iterations = 0;
+	tt.execute("render", "mandelbrot", [&](){
+	 iterations = mandelbrot(x, y);
+	});
 
-	size_t pixelindex = (y * WIDTH_ + x);
-	// Apply the color
-	if (!greyonly) {
-		rgbdata_[pixelindex] = color;
-	}
+	tt.execute("render", "coloring", [&](){
+#ifndef _NO_SHADOW
+		fd_image_comp_t color(0,0,0);
+		size_t index = 0;
+		if (iterations != maxIterations_) {
+			// 254 so we can use 0 as index for black
+	#ifndef _FIXEDPOINT
+			index = iterations / maxIterations_ * 254;
+	#else
+			index = (iterations / maxIterations_ * 254.0).ToInt<uint8_t>();
+	#endif
+			color = PALETTE[index];
+		}
 
-	//cheap greyscale. we don't need perceptual acuity to measure detail.
-	if (iterations == maxiterations) {
-		greydata_[pixelindex] = 0;
-	} else {
-		assert(index < 256);
-		greydata_[pixelindex] = index;
-	}
+
+		size_t pixelindex = (y * WIDTH_ + x);
+		// Apply the color
+		if (!shadowonly) {
+			imgdata_[pixelindex] = color;
+		}
+		std::numeric_limits<fd_image_comp_t>::max();
+		//cheap greyscale. we don't need perceptual acuity to measure detail.
+		if (iterations == maxIterations_) {
+			shadowdata_[pixelindex] = 0;
+		} else {
+			assert(index < 256);
+			shadowdata_[pixelindex] = index;
+		}
+#else
+		size_t pixelindex = (y * WIDTH_ + x);
+		// Apply the color
+		if (!shadowonly) {
+			if (iterations == maxIterations_) {
+				imgdata_[pixelindex] = 0;
+			} else {
+	#ifndef _FIXEDPOINT
+				imgdata_[pixelindex] = (iterations / maxIterations_) * std::numeric_limits<fd_image_comp_t>::max();
+	#else
+				imgdata_[pixelindex] = iterations.GetRawVal();
+	#endif
+			}
+		}
+#endif
+	});
 }
 
 // Zoom the fractal
