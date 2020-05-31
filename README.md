@@ -5,10 +5,10 @@ This is an attempt at implementing a highly optimized realtime mandelbrot fracta
 My most important guideline is a quick and nice out-of-box experience and therefore I implemented (a rather naive) automatic scaling of the zoom depth. Depending on platform capabilities a number of optional features is available, the most important being: threading, auto vectorization, fixed/floating point.
 
 List of tested platforms are:
-- Many kinds of browsers on mobile and desktop.
+- Many kinds of browsers on mobile and desktop. Example: http://www.metastage.at/dive-mt/dive.html
 - x86 Linux and MacOSX
 - armv7 Linux
-- Amiga 500/1200/4000
+- Amiga 500/1200 (https://gfycat.com/simplebonyfairyfly)/4000(https://gfycat.com/adolescentkindamericanredsquirrel)
 
 The list of supported platforms probably is way longer.
 
