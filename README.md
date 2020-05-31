@@ -20,15 +20,15 @@ The only direct dependency is SDL1. You don't have to install SDL1 when compilin
 
 There are many build targets. The default is "release" but on some platforms you can squeeze out a little performance by using "hardcore".
 
-"debug": optimize the build for interactive debugging.
-info: retain minimal debug information but try to stay highly optimized
-profile: optimized the build for profiling
-hardcore: use non-standard, inaccurate and sometimes unsafe compiler options to squeeze out more performance.
-asan: compile and optimize for AddressSanitizer (https://en.wikipedia.org/wiki/AddressSanitizer)
-shrink: optimize for size
+* "debug": optimize the build for interactive debugging.
+* "info": retain minimal debug information but try to stay highly optimized
+* "profile": optimized the build for profiling
+* "hardcore": use non-standard, inaccurate and sometimes unsafe compiler options to squeeze out more performance.
+* "asan": compile and optimize for AddressSanitizer (https://en.wikipedia.org/wiki/AddressSanitizer)
+* "shrink": optimize for size
 
 ## JavaScript/WebAsm
-To build for Javascript to need em++ > 1.39.13
+To build for Javascript to need em++ > 1.39.1. The following builds might need specific browsers or even special browser configurations. In src/index.html you can an example of how to select the right javascript build to load by using feature checking.
 
 make clean && JAVASCRIPT=1 make -j2 hardcore
 
@@ -43,5 +43,13 @@ make clean && AUTOVECTOR=1 JAVASCRIPT=1 make -j2 hardcore
 ### Using multi-threading and simd instructions
 
 make clean && AUTOVECTOR=1 JAVASCRIPT_MT=1 make -j2 hardcore
+
+## Linux/MacOSX (x86 and armv7)
+
+make clean && AUTOVECTOR=1 make -j2 hardcore
+
+### Without multi-threading
+
+make clean && NOTHREADS=1 AUTOVECTOR=1 make -j2 hardcode
 
 
