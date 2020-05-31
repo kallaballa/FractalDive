@@ -27,7 +27,7 @@ There are many build targets. The default is "release" but on some platforms you
 * "asan": compile and optimize for AddressSanitizer (https://en.wikipedia.org/wiki/AddressSanitizer)
 * "shrink": optimize for size
 
-## JavaScript/WebAsm
+## JavaScript/WASM
 To build for Javascript you need em++ > 1.39.1. The following builds might need specific browsers or even special browser configurations. In src/index.html you can an example of how to select the right javascript build to load by using feature checking.
 ```
 make clean && JAVASCRIPT=1 make -j2 hardcore
