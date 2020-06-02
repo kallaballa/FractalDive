@@ -30,19 +30,19 @@ There are many build targets. The default is "release" but on some platforms you
 ## JavaScript/WASM
 To build for Javascript you need em++ > 1.39.1. The following builds might need specific browsers or even special browser configurations. In src/index.html you can an example of how to select the right javascript build to load by using feature checking.
 ```
-make clean && JAVASCRIPT=1 make -j2 hardcore
+make clean && JAVASCRIPT=1 make -j2
 ```
 ### Multi-Threaded 
 ```
-make clean && JAVASCRIPT_MT=1 make -j2 hardcode
+make clean && JAVASCRIPT_MT=1 make -j2
 ```
 ### Using simd instructions
 ```
-make clean && AUTOVECTOR=1 JAVASCRIPT=1 make -j2 hardcore
+make clean && AUTOVECTOR=1 JAVASCRIPT=1 make -j2
 ```
 ### Using multi-threading and simd instructions
 ```
-make clean && AUTOVECTOR=1 JAVASCRIPT_MT=1 make -j2 hardcore
+make clean && AUTOVECTOR=1 JAVASCRIPT_MT=1 make -j2
 ```
 ## Linux/MacOSX (x86 and armv7)
 ```
