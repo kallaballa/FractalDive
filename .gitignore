@@ -11,3 +11,4 @@ src/dive.js
 src/dive.wasm
 src/dive.worker.js
 cachegrind.out.*
+web/
