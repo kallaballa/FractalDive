@@ -1,11 +1,26 @@
 <html>
 	<body id="body" style="width: 98vw; height:98vh; background-color: black;">
-
+    <script src="wasm-detect.js"></script>
 	<script>
-            if(typeof Atomics !== 'undefined')
-                window.location.href = "/dive-mt/dive.html"
-            else
-                window.location.href = "/dive/dive.html" 
+            var threading = typeof Atomics !== 'undefined' && typeof SharedArrayBuffer !== 'undefined';
+                
+//             wasmFeatureDetect.simd().then(simdSupported => {
+//                 if (simdSupported) {
+//                     if(threading) {
+//                         alert(0);
+//                         window.location.href = "/dive-mt-simd/dive.html"
+//                     } else {
+//                         alert(1);
+//                         window.location.href = "/dive-simd/dive.html" 
+//                     }
+//                 } else {
+                    if(threading) {
+                        window.location.href = "/dive-mt/dive.html"
+                    } else {
+                        window.location.href = "/dive/dive.html"
+                    }
+//                 }
+//             });
 	</script>
 	</body>
 </html>
