@@ -57,10 +57,26 @@
     overflow: hidden;
     visibility: hidden;
   }
+  
+  #debugBtn {
+    position: fixed;
+    top: calc(100vh - 70px);
+    left: 0;
+    color: #222222;
+    width: 70px;
+    height: 70px;
+    background: none!important;
+    background-color: black;
+    border: none;
+    padding: 0!important;
+    
+  }
 
   </style>
+
 </head>
 <body>
+    <button id="debugBtn">debug</button>
 	<canvas id="bgcanvas0" ></canvas>
 	<canvas id="bgcanvas1" ></canvas>
 	<canvas id="canvas"></canvas>
@@ -100,8 +116,23 @@
 				})()
 			};
            window.requestAnimationFrame(copyToBg);
+           
+            var btn = document.getElementById("debugBtn");
+            var err = document.getElementById("stderr");
+            var out = document.getElementById("stdout");
+            err.style.visibility = "hidden";
+            out.style.visibility = "hidden";
+            
+            btn.onclick = function() {
+                if(err.style.visibility = "" || err.style.visibility === "hidden") {
+                    out.style.visibility = "visible";
+                    err.style.visibility = "visible";
+                } else { 
+                    out.style.visibility = "hidden";
+                    err.style.visibility = "hidden";
+                }
+            }
 		</script>
 		<script src="dive.js"></script>
 	</body>
 </html>
-0
