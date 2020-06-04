@@ -20,21 +20,24 @@ void Renderer::render(const bool& shadowonly) {
 			fd_dim_t sliceHeight = std::floor(fd_float_t(HEIGHT_) / tpsize);
 			fd_dim_t remainder = (HEIGHT_ % sliceHeight);
 			fd_dim_t extra = 0;
+			std::vector<std::future<void>> futures;
 			for (size_t i = 0; i < tpsize; ++i) {
 				if (i == (tpsize - 1) && remainder > 0)
 					extra = remainder;
 
 				//start a worker thread
-				tpool.work([=]() {
+				futures.push_back(tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra, const bool& shadowonly) {
 					for (fd_dim_t y = sliceHeight * i; y < (sliceHeight * (i + 1)) + extra; y++) {
-						for (fd_dim_t x = 0; x < WIDTH_; x++) {
+						for (fd_dim_t x = 0; x < width; x++) {
 							iterate(x, y, shadowonly);
 						}
 					}
-				});
+				}, i, WIDTH_, sliceHeight, extra, shadowonly));
 			}
 			//FIXME: waiting for all worker threads is not working correctly
-			tpool.join();
+			for(auto& f : futures) {
+				f.get();
+			}
 		} else {
 			for (fd_dim_t y = 0; y < HEIGHT_; y++) {
 				for (fd_dim_t x = 0; x < WIDTH_; x++) {
@@ -62,7 +65,7 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	fd_mandelfloat_t four = 4.0;
 
 	//Algebraically optimized version that uses addition/subtraction as often as possible while reducing multiplications
-	//and limiting multiplications to squaring only. this pretty nicely compiles to ams on Linux x86_64 (+simd), WASM (+simd) and m68k (000/020/030)
+	//and limiting multiplications to squaring only. this pretty nicely compiles to asm on Linux x86_64 (+simd), WASM (+simd) and m68k (000/020/030)
 	//because types are chosen very carefully in "types.hpp"
 	while (iterations < maxIterations_ && zrsqr + zisqr <= four) {
 		zi = square(zr + zi) - zrsqr - zisqr;

@@ -59,6 +59,7 @@ fractaldive::Canvas canvas(WIDTH, HEIGHT, false);
 
 bool do_run = true;
 
+
 inline uint32_t get_milliseconds() {
 	return SDL_GetTicks();
 }
@@ -222,7 +223,6 @@ bool dive(bool zoom, bool benchmark) {
 }
 //automatic benchmark and
 void auto_scale_max_iterations() {
-	Printer& printer = Printer::getInstance();
 	auto start = get_milliseconds();
 #ifndef _AMIGA
 	fd_float_t prescale = 1.0;
@@ -240,10 +240,9 @@ void auto_scale_max_iterations() {
 		dive(false,true);
 	}
 
-	auto duration = get_milliseconds() - start;
+	auto duration = (get_milliseconds() - start) * 2.0;
 	renderer.reset();
 
-	printer.printErr("Duration: ", duration);
 	fd_float_t fpsMillis = 1000.0 / FPS;
 	fd_float_t millisRatio = (pow(duration * postscale, 1.20) / fpsMillis);
 #ifndef _FIXEDPOINT
@@ -264,8 +263,6 @@ void auto_scale_max_iterations() {
 }
 
 bool step() {
-	Printer& printer = Printer::getInstance();
-
 	auto start = get_milliseconds();
 	bool result = dive(true,false);
 	auto duration = get_milliseconds() - start;
@@ -276,7 +273,7 @@ bool step() {
 	if (diff > 0) {
 		sleep_millis(diff);
 	} else if (diff < 0)
-		printer.printErr("Underrun: ", std::abs(diff));
+		printErr("Underrun: ", std::abs(diff));
 
 	return result;
 }
@@ -285,27 +282,26 @@ bool step() {
 void js_step() {
 	step();
 #ifndef _NO_TIMETRACK
-			printer.printErr(tt.str());
+			printErr(tt.str());
 			tt.epoch();
 #endif
 }
 #endif
 
 void printInfo() {
-	Printer& printer = Printer::getInstance();
-	printer.print("Threads:", ThreadPool::cores());
+	print("Threads:", ThreadPool::cores());
 #ifdef _AUTOVECTOR
-  printer.print("Auto Vector/SIMD: on");
+  print("Auto Vector/SIMD: on");
 #else
-  printer.print("Auto Vector/SIMD: off");
+  print("Auto Vector/SIMD: off");
 #endif
 
 #ifdef _FIXEDPOINT
-  printer.print("Arithmetic: fixed point");
+  print("Arithmetic: fixed point");
 #else
-  printer.print("Arithmetic: floating point");
+  print("Arithmetic: floating point");
 #endif
-	printer.print("Max iterations:", renderer.getMaxIterations());
+	print("Max iterations:", renderer.getMaxIterations());
 }
 
 void run() {
@@ -314,7 +310,6 @@ void run() {
 
 #ifndef _NO_TIMETRACK
 	TimeTracker& tt = TimeTracker::getInstance();
-	Printer& printer = Printer::getInstance();
 #endif
 
 	while (do_run) {
@@ -330,7 +325,7 @@ void run() {
 			tt.execute("step", [&](){
 				stepResult = step();
 			});
-			printer.printErr(tt.str());
+			printErr(tt.str());
 			tt.epoch();
 #else
 			stepResult = step();

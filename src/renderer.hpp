@@ -23,10 +23,6 @@ private:
 	fd_coord_t panx_ = 0;
 	fd_coord_t pany_ = 0;
 	fd_float_t zoom_ = 2;
-	void colorPixelByPalette(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t iterations, const bool& shadowonly);
-	inline fd_mandelfloat_t square(const fd_mandelfloat_t& n) const;
-	inline fd_iter_count_t mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const;
-	void iterate(const fd_coord_t& x, const fd_coord_t& y, const bool& shadowonly);
 public:
 	image_t imgdata_;
 	shadow_image_t shadowdata_;
@@ -52,6 +48,11 @@ public:
 		delete[] shadowdata_;
 #endif
 	}
+
+	void colorPixelByPalette(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t iterations, const bool& shadowonly);
+	inline fd_mandelfloat_t square(const fd_mandelfloat_t& n) const;
+	inline fd_iter_count_t mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const;
+	void iterate(const fd_coord_t& x, const fd_coord_t& y, const bool& shadowonly);
 
 	void reset() {
 	  offsetx_ = -fd_float_t(WIDTH_)/2.0;

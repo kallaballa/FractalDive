@@ -7,12 +7,11 @@
 namespace fractaldive {
 Canvas::Canvas(const fd_dim_t& width, const fd_dim_t& height, const bool& offscreen) :
   width_(width), height_(height), screen_(NULL), offscreen_(offscreen) {
-	Printer& printer = Printer::getInstance();
 	assert(BYTES_PER_PIXEL > 1); //SDL doesn't support 8bit images. It interpretes 8bit as paletted image
 
 	if (width > 0 && height > 0) {
     if (SDL_Init(SDL_INIT_VIDEO) == -1) {
-    	printer.printErr("Can't init SDL: ", SDL_GetError());
+    	printErr("Can't init SDL: ", SDL_GetError());
       exit(1);
     }
     atexit(SDL_Quit);
@@ -28,7 +27,7 @@ Canvas::Canvas(const fd_dim_t& width, const fd_dim_t& height, const bool& offscr
       screen_ = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, BYTES_PER_PIXEL * 8, 0, 0, 0, 0);
 
     if (screen_ == NULL) {
-    	printer.printErr("Can't set video mode: ", SDL_GetError());
+    	printErr("Can't set video mode: ", SDL_GetError());
       exit(1);
     }
   }

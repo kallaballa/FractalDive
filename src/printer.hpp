@@ -82,6 +82,16 @@ public:
 	}
 };
 
+template<typename T, typename ...TAIL>
+	void print(const T &t, TAIL ... tail) {
+		Printer::getInstance().print(t, tail...);
+}
+
+template<typename T, typename ...TAIL>
+	void printErr(const T &t, TAIL ... tail) {
+		Printer::getInstance().printErr(t, tail...);
+}
+
 } /* namespace fractaldive */
 
 #endif /* SRC_PRINTER_HPP_ */
