@@ -1,123 +1,45 @@
 #ifndef SRC_THREADPOOL_HPP_
 #define SRC_THREADPOOL_HPP_
+
 #include <cassert>
-#include <deque>
-#include <vector>
 
-#ifndef _NO_THREADS
-#include <thread>
-#include <condition_variable>
-#include <mutex>
-#endif
-
-#include <functional>
 #ifdef _JAVASCRIPT
 #include <emscripten/threading.h>
 #endif
+
+#include <vector>
+#include <queue>
+#include <memory>
+#ifndef _NO_THREADS
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <future>
+#endif
+#include <functional>
+#include <stdexcept>
+
 namespace fractaldive {
 
 #ifndef _NO_THREADS
-class Semaphore {
-public:
-    Semaphore (int count_ = 0)
-    : count_(count_) {}
-
-    inline void notify( int tid ) {
-        std::unique_lock<std::mutex> lock(mtx);
-        count_++;
-//        std::cout << "thread " << tid <<  " notify" << std::endl;
-        //notify the waiting thread
-        cv.notify_one();
-    }
-
-    inline void wait( int tid ) {
-        std::unique_lock<std::mutex> lock(mtx);
-        while(count_ == 0) {
-//        		std::cout << "thread " << tid << " wait" << std::endl;
-            //wait on the mutex until notify is called
-            cv.wait(lock);
-//            std::cout << "thread " << tid << " run" << std::endl;
-        }
-        count_--;
-    }
-  	size_t count() {
-  		return count_;
- 		}
-private:
-    std::mutex mtx;
-    std::condition_variable cv;
-    int count_;
-};
-
 class ThreadPool {
-private:
-	static ThreadPool* instance_;
-	static std::mutex instanceMtx_;
-	std::mutex queueMtx_;
-	std::mutex runningMtx_;
-	std::vector<std::thread*> pool_;
-	std::deque<std::function<void()>> work_queue_;
-	Semaphore workSema_;
-	Semaphore joinSema_;
-	std::vector<bool> running_;
 public:
-	ThreadPool(const size_t size) :
-		queueMtx_(),
-		pool_(size),
-		work_queue_(),
-		workSema_(0),
-		joinSema_(0),
-		running_(size, false) {
-		for(size_t i = 0; i < pool_.size(); ++i) {
-			pool_[i] = new std::thread([&,i](){
-				while(true) {
-					workSema_.wait(i+1);
-					runningMtx_.lock();
-					running_[i] = true;
-					runningMtx_.unlock();
-
-					queueMtx_.lock();
-					std::function<void()> func = work_queue_.front();
-					work_queue_.pop_front();
-					queueMtx_.unlock();
-					func();
-					runningMtx_.lock();
-					running_[i] = false;
-					runningMtx_.unlock();
-
-					joinSema_.notify(i+1);
-				}
-			});
-		}
-	}
-
-	~ThreadPool() {
-		for(size_t i = 0; i < pool_.size(); ++i) {
-			delete pool_[i];
-		}
-	}
-
-	size_t size() {
-		return pool_.size();
-	}
-
 	static size_t cores() {
 		size_t numThreads = 0;
 #ifdef _JAVASCRIPT
 		numThreads = 1;
-	#ifdef _JAVASCRIPT_MT
+#ifdef _JAVASCRIPT_MT
 		numThreads = emscripten_num_logical_cores();
-	#endif
+#endif
 #else
 		numThreads = std::thread::hardware_concurrency();
 #endif
-
 		return numThreads;
 	}
 
 	static ThreadPool& getInstance() {
 		std::unique_lock<std::mutex> lock(instanceMtx_);
-		if(instance_ == nullptr) {
+		if (instance_ == nullptr) {
 			assert(ThreadPool::cores() > 1);
 			instance_ = new ThreadPool(ThreadPool::cores());
 		}
@@ -125,83 +47,119 @@ public:
 		return *instance_;
 	}
 
-	void work(const std::function<void()>& func) {
-		queueMtx_.lock();
-		work_queue_.push_back(func);
-		queueMtx_.unlock();
-		workSema_.notify(0);
-	}
+	// the constructor just launches some amount of workers
+	inline ThreadPool(size_t threads) :
+			stop(false) {
+		for (size_t i = 0; i < threads; ++i)
+			workers.emplace_back([this]
+			{
+				for(;;)
+				{
+					std::function<void()> task;
 
-	void join() {
-		bool running = true;
-		while(true) {
-			running = false;
-			runningMtx_.lock();
-			for(size_t i = 0; i < running_.size(); ++i) {
-				if(running_[i]) {
-					running = true;
-					break;
+					{
+						std::unique_lock<std::mutex> lock(this->queue_mutex);
+						this->condition.wait(lock,
+								[this] {return this->stop || !this->tasks.empty();});
+						if(this->stop && this->tasks.empty())
+						return;
+						task = std::move(this->tasks.front());
+						this->tasks.pop();
+					}
+
+					task();
 				}
-			}
-			runningMtx_.unlock();
-			if(running == false)
-				return;
+			});
+	}
 
-			joinSema_.wait(0);
+	// add new work item to the pool
+	template<class F, class ... Args>
+	auto enqueue(F&& f, Args&&... args)
+	-> std::future<typename std::result_of<F(Args...)>::type> {
+		using return_type = typename std::result_of<F(Args...)>::type;
+
+		auto task = std::make_shared<std::packaged_task<return_type()> >(
+				std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+
+		std::future<return_type> res = task->get_future();
+		{
+			std::unique_lock<std::mutex> lock(queue_mutex);
+
+			// don't allow enqueueing after stopping the pool
+			if (stop)
+				assert(false);
+
+			tasks.emplace([task]() {(*task)();});
 		}
-	}
-};
-#else
-class Semaphore {
-public:
-    Semaphore (int count_ = 0) {}
-
-    inline void notify( int tid ) {
-    }
-
-    inline void wait( int tid ) {
-    }
-  	size_t count() {
-  		return 0;
- 		}
-private:
-};
-
-class ThreadPool {
-private:
-	static ThreadPool* instance_;
-public:
-	ThreadPool(const size_t size) {
+		condition.notify_one();
+		return res;
 	}
 
-	~ThreadPool() {
+	// the destructor joins all threads
+	inline ~ThreadPool() {
+		{
+			std::unique_lock<std::mutex> lock(queue_mutex);
+			stop = true;
+		}
+		condition.notify_all();
+		for (std::thread &worker : workers)
+			worker.join();
 	}
 
 	size_t size() {
-		return 0;
+		return workers.size();
 	}
+private:
+	// need to keep track of threads so we can join them
+	std::vector<std::thread> workers;
+	// the task queue
+	std::queue<std::function<void()> > tasks;
 
+	// synchronization
+	std::mutex queue_mutex;
+	std::condition_variable condition;
+	bool stop;
+	static ThreadPool* instance_;
+	static std::mutex instanceMtx_;
+};
+#else
+class ThreadPool {
+public:
 	static size_t cores() {
 		return 0;
 	}
 
 	static ThreadPool& getInstance() {
-		if(instance_ == nullptr)
+		std::unique_lock<std::mutex> lock(instanceMtx_);
+		if (instance_ == nullptr) {
 			instance_ = new ThreadPool(0);
+		}
 		return *instance_;
 	}
 
-	void work(const std::function<void()>& func) {
-
+	inline ThreadPool(size_t threads) :	{
 	}
 
-	void join() {
-
+	template<class F, class ... Args>
+	auto enqueue(F&& f, Args&&... args)
+	-> std::future<typename std::result_of<F(Args...)>::type> {
+		using return_type = typename std::result_of<F(Args...)>::type;
+		std::future<return_type> res;
+		assert(false);
+		return res;
 	}
+
+	inline ~ThreadPool() {
+	}
+
+	size_t size() {
+		return 0;
+	}
+private:
+	static ThreadPool* instance_;
+	static std::mutex instanceMtx_;
 };
-
 #endif
-
 } /* namespace fractaldive */
 
 #endif /* SRC_THREADPOOL_HPP_ */
