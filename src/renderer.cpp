@@ -10,12 +10,13 @@
 
 namespace fractaldive {
 // Generate the fractal image
-void Renderer::render(bool shadowonly) {
+void Renderer::render(const bool& shadowonly) {
 	TimeTracker::getInstance().execute("render", "mandelbrot", [&](){
 		if (ThreadPool::cores() > 1) {
+			//use a thread pool to reduce thread start overhead
 			ThreadPool& tpool = ThreadPool::getInstance();
 			size_t tpsize = tpool.size();
-			// Iterate over the pixels
+			//slice the image into vertical stripes
 			fd_dim_t sliceHeight = std::floor(fd_float_t(HEIGHT_) / tpsize);
 			fd_dim_t remainder = (HEIGHT_ % sliceHeight);
 			fd_dim_t extra = 0;
@@ -23,6 +24,7 @@ void Renderer::render(bool shadowonly) {
 				if (i == (tpsize - 1) && remainder > 0)
 					extra = remainder;
 
+				//start a worker thread
 				tpool.work([=]() {
 					for (fd_dim_t y = sliceHeight * i; y < (sliceHeight * (i + 1)) + extra; y++) {
 						for (fd_dim_t x = 0; x < WIDTH_; x++) {
@@ -31,6 +33,7 @@ void Renderer::render(bool shadowonly) {
 					}
 				});
 			}
+			//FIXME: waiting for all worker threads is not working correctly
 			tpool.join();
 		} else {
 			for (fd_dim_t y = 0; y < HEIGHT_; y++) {
@@ -42,11 +45,11 @@ void Renderer::render(bool shadowonly) {
 	});
 }
 
-inline fd_mandelfloat_t square(const fd_mandelfloat_t& n) {
+inline fd_mandelfloat_t Renderer::square(const fd_mandelfloat_t& n) const {
 	return n * n;
 }
 
-inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_t& y) {
+inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const {
 	fd_iter_count_t iterations = 0;
 	fd_mandelfloat_t xViewport = (x + offsetx_ + panx_) / (zoom_ / 10);
 	fd_mandelfloat_t yViewport = (y + offsety_ + pany_) / (zoom_ / 10);
@@ -58,6 +61,9 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	fd_mandelfloat_t ci = yViewport / HEIGHT_;
 	fd_mandelfloat_t four = 4.0;
 
+	//Algebraically optimized version that uses addition/subtraction as often as possible while reducing multiplications
+	//and limiting multiplications to squaring only. this pretty nicely compiles to ams on Linux x86_64 (+simd), WASM (+simd) and m68k (000/020/030)
+	//because types are chosen very carefully in "types.hpp"
 	while (iterations < maxIterations_ && zrsqr + zisqr <= four) {
 		zi = square(zr + zi) - zrsqr - zisqr;
 		zi += ci;
@@ -70,29 +76,22 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	return iterations;
 }
 
-// Calculate the color of a specific pixel
-void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const bool& shadowonly) {
-	TimeTracker& tt = TimeTracker::getInstance();
-
-	fd_iter_count_t iterations = 0;
-	tt.execute("render", "mandelbrot", [&](){
-	 iterations = mandelbrot(x, y);
-	});
-
-	tt.execute("render", "coloring", [&](){
+void Renderer::colorPixelByPalette(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t iterations, const bool& shadowonly) {
 #ifndef _NO_SHADOW
 		fd_image_comp_t color(0,0,0);
 		size_t index = 0;
 		if (iterations != maxIterations_) {
-			// 254 so we can use 0 as index for black
 	#ifndef _FIXEDPOINT
+			// 254 so we can use 0 as index for black
 			index = iterations / maxIterations_ * 254;
 	#else
+			// 254.0 so we can use 0 as index for black
 			index = (iterations / maxIterations_ * 254.0).ToInt<uint8_t>();
 	#endif
-			color = PALETTE[index];
+			if (!shadowonly) {
+				color = PALETTE[index];
+			}
 		}
-
 
 		size_t pixelindex = (y * WIDTH_ + x);
 		// Apply the color
@@ -122,24 +121,37 @@ void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const bool& sha
 			}
 		}
 #endif
+}
+
+// Calculate the color of a specific pixel. first find out how many iterations (<= maxIterations_) it takes and than color the pixel according to some kind of palette.
+void Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const bool& shadowonly) {
+	TimeTracker& tt = TimeTracker::getInstance();
+
+	fd_iter_count_t iterations = 0;
+	tt.execute("render", "mandelbrot", [&](){
+	 iterations = mandelbrot(x, y);
+	});
+
+	tt.execute("render", "coloring", [&](){
+		colorPixelByPalette(x,y,iterations,shadowonly);
 	});
 }
 
 // Zoom the fractal
 void Renderer::zoomAt(const fd_coord_t& x, const fd_coord_t& y, const fd_float_t& factor, const bool& zoomin) {
 	if (zoomin) {
-// Zoom in
+		// Zoom in
 		zoom_ *= factor;
 		panx_ = factor * (x + offsetx_ + panx_);
 		pany_ = factor * (y + offsety_ + pany_);
 	} else {
-// Zoom out
+		// Zoom out
 		zoom_ /= factor;
 		panx_ = (x + offsetx_ + panx_) / factor;
 		pany_ = (y + offsety_ + pany_) / factor;
 	}
 }
-
+// Pan the fractal
 void Renderer::pan(const fd_coord_t& x, const fd_coord_t& y) {
 	panx_ += x;
 	pany_ += y;

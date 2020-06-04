@@ -129,12 +129,9 @@ fd_float_t numberOfChanges(const shadow_image_t& greyImage, const size_t& size) 
 }
 
 fd_float_t measureDetail(const shadow_image_t& greyImage, const size_t& size) {
-//#ifdef AMIGA
-//	//identifies areas of interest better at a low resolution
-//	return entropy(greyImage,size + ((1.0 - numberOfZeroes(greyImage, size)) * 2)) / 3.0;
-//#else
+//identifies areas of interest better at a low resolution but is significantly more costly
+//return entropy(greyImage,size + ((1.0 - numberOfZeroes(greyImage, size)) * 2)) / 3.0;
 	return numberOfChanges(greyImage, size);
-//#endif
 }
 
 std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_dim_t& numTilesX,
@@ -223,7 +220,7 @@ bool dive(bool zoom, bool benchmark) {
 
 	return true;
 }
-
+//automatic benchmark and
 void auto_scale_max_iterations() {
 	Printer& printer = Printer::getInstance();
 	auto start = get_milliseconds();
@@ -254,6 +251,7 @@ void auto_scale_max_iterations() {
 #else
 	fd_iter_count_t iterations = (max_iterations.ToFloat() / millisRatio) * 55.0;
 #endif
+
 #ifdef _JAVASCRIPT_MT
 		iterations = (iterations * ThreadPool::cores());
 #endif

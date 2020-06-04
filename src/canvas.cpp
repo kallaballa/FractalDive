@@ -47,6 +47,10 @@ void Canvas::flip() {
 	if (SDL_MUSTLOCK(screen_))
 		SDL_LockSurface(screen_);
 
+	/* in cases where image_t actually is a "Color<T>" pointer this is undefined behaviour,
+	 * but we seem to get away with it because there is not rtti.
+	 * let's use it till it breaks and rework the "constexpr Color" approach. :)
+	 */
 	memcpy(static_cast<void*>(screen_->pixels), static_cast<void*>(image), width_ * height_ * BYTES_PER_PIXEL);
 
 	flip();
