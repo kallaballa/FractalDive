@@ -2,7 +2,11 @@
 <html>
 
 <head>
-  <title>Endless Fractal Dive Loop!</title>
+  <title>The Benoit Mandelbrot Experience</title>
+  <meta name="description" content="A demonstration of the beauty of the mandelbrot set implemented as a real-time zoom.">
+  <meta name="keywords" content="mandelbrot, fractal, zoom, realtime, FractalDive, C++, cross-platform, platform independent, optimization">
+  <meta name="author" content="amir@viel-zu.org">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
   body {
     background-color: black;
@@ -24,6 +28,10 @@
     border: 0; 
     padding: 10px;
   }
+ 
+ #content {
+ 
+ }
  
  #bgcanvas0 {
     width: 1024px; 
@@ -58,6 +66,25 @@
     visibility: hidden;
   }
   
+  
+  #infoBtn {
+    position: fixed;
+    top: 0;
+    left: 0;
+    color: rgba(200,200,200,0.8);
+    width: 90px;
+    height: 90px;
+    background: none!important;
+    background-color: black;
+    border: 1px solid #DDDDff;
+    border-radius: 5px;
+    font-size: 16px;
+    padding: 5px;
+    margin: 5px;
+    
+    
+  }
+  
   #debugBtn {
     position: fixed;
     top: calc(100vh - 70px);
@@ -71,17 +98,61 @@
     padding: 0!important;
     
   }
-
+  
+  #info {
+    background-color: rgba(255,255,255,0.0);
+    width: 70vw;
+    height: 70vh;
+    z-index: 1000;
+    margin: auto;
+    position: relative;
+  }
+  
+  #infotext {
+    color: #333333;
+    background-color: rgba(255,255,255,0.8);
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+    padding: 1vw;
+  }
+  
+  .paddedHeading {
+    line-height: 2.1em;
+  }
+  
+  @media only screen and (max-device-width : 480px) {
+    #info {
+        width: 95vw;
+    }
+    #infotext {
+        font-size: 2em;
+    }
+  }
   </style>
 
 </head>
 <body>
+    <button id="infoBtn">Tell me a bit about what i see</button>
     <button id="debugBtn">debug</button>
-	<canvas id="bgcanvas0" ></canvas>
-	<canvas id="bgcanvas1" ></canvas>
-	<canvas id="canvas"></canvas>
-    <textarea cols=26 rows=5 id="stdout"></textarea>
-    <textarea cols=26 rows=5 id="stderr"></textarea>
+    <div id="content">
+        <canvas id="bgcanvas0" ></canvas>
+        <canvas id="bgcanvas1" ></canvas>
+        <canvas id="canvas"></canvas>
+        <textarea cols=26 rows=5 id="stdout"></textarea>
+        <textarea cols=26 rows=5 id="stderr"></textarea>
+        <div id="info">
+        <div id="infotext"><b>A little story</b><br/>I created this page because I have the following formular tattooed on my arm: <img src="formula.svg"/>.
+            People kept asking me about it and I tried to convey a vague sense of what it is in words... no more! The main purpose of this page is to demonstrate the beauty of the mandelbrot set.<br/><br/>
+            <b class="paddedHeading">A little explanation</b><br/>
+            In short: The mandelbrot set is a subset of the <a href="https://www.mathsisfun.com/numbers/complex-numbers.html">complex numbers</a> limited in a funny way. Interpreted in the right way it is a fractal. There are interesting applications for fractal mathematics but most people like them for their visual properties - the closer you look the more shapes emerge, all bearing a certain similarity. If you like math you are going to figure out the <a href="https://plus.maths.org/content/what-mandelbrot-set">basics</a> quickly. The zoom could theoretically go on forever (if you ignore that computers have limits) but because the goal is to have a steady animation the zoom depth is automatically limited to what your computer can handle. Everything is calculated in real-time and no zoom is like the other.<br/><br/>
+            <b class="paddedHeading">A little tech</b><br/>
+            This demo has been implemented using modern C++ and it's goal is to be highly optimized while being highly portable. Check it out on <a href="https://github.com/kallaballa/FractalDive">github</a>. It has been tested on many kinds of browsers, Linux (x86/armv7), MacOS and Amiga (1200/4000). In some respects it is still far from optimal.
+        </div>
+        </dive>
+    </div>
         <script>
             var stderr = document.getElementById('stderr');
             var stdout = document.getElementById('stdout');
@@ -116,14 +187,26 @@
 				})()
 			};
            window.requestAnimationFrame(copyToBg);
-           
-            var btn = document.getElementById("debugBtn");
+
+            var infoBtn = document.getElementById("infoBtn");
+            var debugBtn = document.getElementById("debugBtn");
             var err = document.getElementById("stderr");
             var out = document.getElementById("stdout");
+            var info = document.getElementById("info");
+
             err.style.visibility = "hidden";
             out.style.visibility = "hidden";
+            info.style.visibility = "hidden";
+
+            infoBtn.onclick = function() {
+                if(info.style.visibility === "hidden") {
+                    info.style.visibility = "visible";
+                } else { 
+                    info.style.visibility = "hidden";
+                }
+            }
             
-            btn.onclick = function() {
+            debugBtn.onclick = function() {
                 if(err.style.visibility = "" || err.style.visibility === "hidden") {
                     out.style.visibility = "visible";
                     err.style.visibility = "visible";
