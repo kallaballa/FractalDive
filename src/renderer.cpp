@@ -154,9 +154,33 @@ void Renderer::zoomAt(const fd_coord_t& x, const fd_coord_t& y, const fd_float_t
 		pany_ = (y + offsety_ + pany_) / factor;
 	}
 }
+
+std::deque<fd_coord_t> panHistoryX(5);
+std::deque<fd_coord_t> panHistoryY(5);
+
+std::pair<fd_coord_t, fd_coord_t> filter(const fd_coord_t& x, const fd_coord_t& y) {
+	panHistoryX.pop_back();
+	panHistoryY.pop_back();
+	panHistoryX.push_front(x);
+	panHistoryY.push_front(y);
+
+	fd_coord_t xhtotal = 0;
+	for(const auto& xh : panHistoryX) {
+		xhtotal += xh;
+	}
+
+	fd_coord_t yhtotal = 0;
+	for(const auto& yh : panHistoryY) {
+		yhtotal += yh;
+	}
+
+	return {xhtotal / 5.0, yhtotal / 5.0};
+}
+
 // Pan the fractal
 void Renderer::pan(const fd_coord_t& x, const fd_coord_t& y) {
-	panx_ += x;
-	pany_ += y;
+	auto ft = filter(x,y);
+	panx_ += ft.first;
+	pany_ += ft.second;
 }
 } /* namespace fractaldive */

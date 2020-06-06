@@ -14,8 +14,8 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include <future>
 #endif
+#include <future>
 #include <functional>
 #include <stdexcept>
 
@@ -130,14 +130,11 @@ public:
 	}
 
 	static ThreadPool& getInstance() {
-		std::unique_lock<std::mutex> lock(instanceMtx_);
-		if (instance_ == nullptr) {
-			instance_ = new ThreadPool(0);
-		}
+		assert(false);
 		return *instance_;
 	}
 
-	inline ThreadPool(size_t threads) :	{
+	inline ThreadPool(size_t threads)	{
 	}
 
 	template<class F, class ... Args>

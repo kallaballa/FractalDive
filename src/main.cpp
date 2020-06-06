@@ -45,7 +45,7 @@ constexpr fd_dim_t HEIGHT = 30;
 #endif
 
 #ifndef _AMIGA
-constexpr size_t FPS = 12;
+constexpr size_t FPS = 24;
 #else
 constexpr size_t FPS = 1;
 #endif
@@ -206,10 +206,10 @@ bool dive(bool zoom, bool benchmark) {
 #ifndef _AMIGA
 		renderer.pan(hDiff / 20, vDiff / 20);
 #else
-		renderer.pan(hDiff / 10, vDiff / 10);
+		renderer.pan(hDiff / 20, vDiff / 20);
 #endif
-
-		renderer.zoomAt(renderer.WIDTH_ / 2, renderer.HEIGHT_ / 2, 1.05, true);
+		fd_float_t zf = 0.60 / FPS;
+		renderer.zoomAt(renderer.WIDTH_ / 2, renderer.HEIGHT_ / 2, 1.0 + zf, true);
 	}
 	tt.execute("render", [&](){
 		renderer.render();
@@ -240,19 +240,19 @@ void auto_scale_max_iterations() {
 		dive(false,true);
 	}
 
-	auto duration = (get_milliseconds() - start) * 2.0;
+	auto duration = get_milliseconds() - start;
 	renderer.reset();
 
 	fd_float_t fpsMillis = 1000.0 / FPS;
 	fd_float_t millisRatio = (pow(duration * postscale, 1.20) / fpsMillis);
 #ifndef _FIXEDPOINT
-	fd_iter_count_t iterations = (max_iterations / millisRatio) * 55.0;
+	fd_iter_count_t iterations = (max_iterations / millisRatio) * 20.0;
 #else
-	fd_iter_count_t iterations = (max_iterations.ToFloat() / millisRatio) * 55.0;
+	fd_iter_count_t iterations = (max_iterations.ToFloat() / millisRatio) * 20.0;
 #endif
 
 #ifdef _JAVASCRIPT_MT
-		iterations = (iterations * ThreadPool::cores());
+		iterations = (iterations * (ThreadPool::cores() - 1));
 #endif
 
 #ifndef _FIXEDPOINT
