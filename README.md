@@ -5,7 +5,7 @@ This is an attempt at implementing a highly optimized realtime mandelbrot fracta
 My most important guideline is a quick and nice out-of-box experience and therefore I implemented (a rather naive) automatic scaling of the iteration depth and the program automatically selects areas of interest. Depending on platform capabilities a number of optional features is available, the most important being: threading, auto vectorization, fixed/floating point.
 
 List of tested platforms are:
-- Many kinds of browsers on mobile and desktop. Example: http://www.metastage.at/dive-select.html
+- Many kinds of browsers on mobile and desktop. Example: http://viel-zu.org/
 - x86 Linux and MacOSX
 - armv7 Linux
 - Amiga 1200 (https://gfycat.com/simplebonyfairyfly) / 4000 (https://gfycat.com/adolescentkindamericanredsquirrel)
