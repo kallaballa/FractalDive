@@ -9,7 +9,7 @@
 
 namespace fractaldive {
 
-constexpr uint8_t PAN_HIST_LENGTH = 5;
+constexpr uint8_t PAN_HIST_LENGTH = 10;
 class Renderer {
 public:
 	const fd_dim_t WIDTH_;

@@ -155,22 +155,20 @@ void Renderer::zoomAt(const fd_coord_t& x, const fd_coord_t& y, const fd_float_t
 	}
 }
 
-std::deque<fd_coord_t> panHistoryX(5);
-std::deque<fd_coord_t> panHistoryY(5);
 
-std::pair<fd_coord_t, fd_coord_t> filter(const fd_coord_t& x, const fd_coord_t& y) {
-	panHistoryX.pop_back();
-	panHistoryY.pop_back();
-	panHistoryX.push_front(x);
-	panHistoryY.push_front(y);
+std::pair<fd_coord_t, fd_coord_t> Renderer::smoothPan(const fd_coord_t& x, const fd_coord_t& y) {
+	panHistoryX_.pop_back();
+	panHistoryY_.pop_back();
+	panHistoryX_.push_front(x);
+	panHistoryY_.push_front(y);
 
 	fd_coord_t xhtotal = 0;
-	for(const auto& xh : panHistoryX) {
+	for(const auto& xh : panHistoryX_) {
 		xhtotal += xh;
 	}
 
 	fd_coord_t yhtotal = 0;
-	for(const auto& yh : panHistoryY) {
+	for(const auto& yh : panHistoryY_) {
 		yhtotal += yh;
 	}
 
@@ -179,7 +177,7 @@ std::pair<fd_coord_t, fd_coord_t> filter(const fd_coord_t& x, const fd_coord_t& 
 
 // Pan the fractal
 void Renderer::pan(const fd_coord_t& x, const fd_coord_t& y) {
-	auto ft = filter(x,y);
+	auto ft = smoothPan(x,y);
 	panx_ += ft.first;
 	pany_ += ft.second;
 }
