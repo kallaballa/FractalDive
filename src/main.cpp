@@ -47,7 +47,7 @@ constexpr fd_dim_t HEIGHT = 30;
 #ifndef _AMIGA
 constexpr size_t FPS = 24;
 #else
-constexpr size_t FPS = 1;
+constexpr size_t FPS = 6;
 #endif
 
 constexpr fd_dim_t FRAME_SIZE = WIDTH * HEIGHT;
@@ -173,6 +173,9 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 
 		}
 	}
+
+	candidateTx = rand() % 2 ? rand() % numTilesX : candidateTx;
+	candidateTy = rand() % 2 ? rand() % numTilesY : candidateTy;
 	return {(candidateTx * tileW) + (tileW / 2), (candidateTy * tileH) + (tileH / 2)};
 }
 
@@ -203,11 +206,7 @@ bool dive(bool zoom, bool benchmark) {
 	fd_coord_t vDiff = centerOfHighDetail.second - (renderer.HEIGHT_ / 2);
 
 	if (zoom) {
-#ifndef _AMIGA
 		renderer.pan(hDiff / 20, vDiff / 20);
-#else
-		renderer.pan(hDiff / 20, vDiff / 20);
-#endif
 		fd_float_t zf = 0.60 / FPS;
 		renderer.zoomAt(renderer.WIDTH_ / 2, renderer.HEIGHT_ / 2, 1.0 + zf, true);
 	}
@@ -246,9 +245,9 @@ void auto_scale_max_iterations() {
 	fd_float_t fpsMillis = 1000.0 / FPS;
 	fd_float_t millisRatio = (pow(duration * postscale, 1.20) / fpsMillis);
 #ifndef _FIXEDPOINT
-	fd_iter_count_t iterations = (max_iterations / millisRatio) * 20.0;
+	fd_iter_count_t iterations = (max_iterations / millisRatio) * 50.0;
 #else
-	fd_iter_count_t iterations = (max_iterations.ToFloat() / millisRatio) * 20.0;
+	fd_iter_count_t iterations = (max_iterations.ToFloat() / millisRatio) * 50.0;
 #endif
 
 #ifdef _JAVASCRIPT_MT
@@ -313,7 +312,7 @@ void run() {
 #endif
 
 	while (do_run) {
-		renderer.pan((rand() % 10) - 20, (rand() % 10) - 20);
+		renderer.pan((rand() % WIDTH / 16) - (WIDTH / 8), (rand() % WIDTH / 16) - (WIDTH / 8));
 		renderer.render();
 
 #ifdef _JAVASCRIPT
@@ -337,6 +336,11 @@ void run() {
 	SDL_Quit();
 }
 
+//does report true for 0
+bool is_power_of_two(const fd_coord_t& x) {
+    return (x & (x - 1)) == 0;
+}
+
 #ifndef _JAVASCRIPT
 #ifndef _AMIGA
 void sigint_handler(int sig) {
@@ -346,6 +350,11 @@ void sigint_handler(int sig) {
 #endif
 
 int main() {
+	assert(WIDTH >= 16 && is_power_of_two(WIDTH));
+	assert(HEIGHT >= 16 && is_power_of_two(HEIGHT));
+	assert(max_iterations > 3);
+	assert(FPS > 0);
+
 	srand(time(NULL));
 #ifndef _JAVASCRIPT
 #ifndef _AMIGA
