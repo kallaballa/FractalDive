@@ -18,10 +18,11 @@ public:
   Canvas(const fd_dim_t& width, const fd_dim_t& height, const bool& offscreen = false);
   virtual ~Canvas() {};
   void flip();
+  void blur(image_t& image);
 #ifndef _NO_SHADOW
-	void draw(const image_t& image);
+	void draw(image_t& image);
 #else
-	void draw(const shadow_image_t& image);
+	void draw(shadow_image_t& image);
 #endif
 };
 }
