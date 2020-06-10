@@ -39,7 +39,7 @@ namespace fractaldive {
 	//usually we use a (cheaply generated) greyscale "shadow" of the color24_t image for the area of interest search.
 	typedef uint8_t fd_shadow_comp_t;
 	typedef fd_shadow_comp_t* shadow_image_t;
-	typedef Color<fd_shadow_comp_t> fd_image_comp_t;
+	typedef uint32_t fd_image_comp_t;
 	constexpr int FD_IMAGE_DEPTH_IN_BYTES = 4;
 	constexpr int FD_SHADOW_DEPTH_IN_BYTES = 1;
 	typedef fd_mandelfloat_t fd_iter_count_t;

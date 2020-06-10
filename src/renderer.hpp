@@ -55,10 +55,10 @@ public:
 #endif
 	}
 
-	void colorPixelByPalette(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t iterations, const bool& shadowonly);
+	void colorPixelByPalette(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t& iterations, const bool& shadowonly);
 	inline fd_mandelfloat_t square(const fd_mandelfloat_t& n) const;
 	inline fd_iter_count_t mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const;
-	void iterate(const fd_coord_t& x, const fd_coord_t& y, const bool& shadowonly);
+	fd_iter_count_t iterate(const fd_coord_t& x, const fd_coord_t& y, const bool& shadowonly);
 
 	void reset() {
 	  offsetx_ = -fd_float_t(WIDTH_)/2.0;
