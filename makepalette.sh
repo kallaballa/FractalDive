@@ -16,14 +16,11 @@ function findClosestColors() {
         fi
     done
 }
-echo "Color Color::PALETTE[] = {"
-
 while [ -n "$CANDIDATE" ]; do
+    HEX="$CANDIDATE"
     RGB="`echo "obase=10; ibase=16; $CANDIDATE" | bc`"
-    echo -e "\tColor($RGB),"
+    echo -e "\t0x00${HEX},"
     SORTED="`echo "$SORTED" | fgrep -v "$CANDIDATE"`"
     CANDIDATE="`findClosestColors "$SORTED" "$CANDIDATE" | tail -n 1`"
-done | sed '$ s/.$//'
-
-echo "};"
+done | sed '$ s/.$//' | head -n255
 
