@@ -37,24 +37,24 @@ namespace fractaldive {
 
 #ifndef _NO_SHADOW
 	//usually we use a (cheaply generated) greyscale "shadow" of the color24_t image for the area of interest search.
-	typedef uint8_t fd_shadow_comp_t;
-	typedef fd_shadow_comp_t* shadow_image_t;
-	typedef uint32_t fd_image_comp_t;
+	typedef uint8_t fd_shadow_pix_t;
+	typedef fd_shadow_pix_t* shadow_image_t;
+	typedef uint32_t fd_image_pix_t;
 	constexpr int FD_IMAGE_DEPTH_IN_BYTES = 4;
 	constexpr int FD_SHADOW_DEPTH_IN_BYTES = 1;
 	typedef fd_mandelfloat_t fd_iter_count_t;
 #else
 	//_NO_SHADOW basically that Renderer::imgdata_ and Renderer::shadowdata_ are the same (uint16_t) pointer and that a very simple palette algorithm is used
 	//8bit samples don't perform better on m68k 020/030 with a P96 (Zorro III) and on powerful platforms.
-	typedef uint16_t fd_shadow_comp_t;
-	typedef fd_shadow_comp_t* shadow_image_t;
-	typedef uint16_t fd_image_comp_t;
+	typedef uint16_t fd_shadow_pix_t;
+	typedef fd_shadow_pix_t* shadow_image_t;
+	typedef uint16_t fd_image_pix_t;
 	constexpr int FD_IMAGE_DEPTH_IN_BYTES = 2;
 	constexpr int FD_SHADOW_DEPTH_IN_BYTES = 2;
 	typedef fd_mandelfloat_t fd_iter_count_t;
 #endif
 
-	typedef fd_image_comp_t* image_t;
+	typedef fd_image_pix_t* image_t;
 }
 
 #endif /* SRC_TYPES_HPP_ */

@@ -109,7 +109,7 @@ fd_float_t numberOfZeroes(const shadow_image_t& greyImage, const size_t& size) {
 
 fd_float_t numberOfColors(const shadow_image_t& greyImage, const size_t& size) {
 	assert(size > 0);
-	std::set<fd_shadow_comp_t> clrs;
+	std::set<fd_shadow_pix_t> clrs;
 	for (size_t i = 0; i < size; i++) {
 		clrs.insert(greyImage[i]);
 	}
@@ -118,7 +118,7 @@ fd_float_t numberOfColors(const shadow_image_t& greyImage, const size_t& size) {
 
 fd_float_t numberOfChanges(const shadow_image_t& greyImage, const size_t& size) {
 	size_t numChanges = 0;
-	fd_shadow_comp_t last = 0;
+	fd_shadow_pix_t last = 0;
 
 	for (size_t i = 0; i < size; i++) {
 		if(last != greyImage[i])
@@ -142,7 +142,7 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 	assert(tileH > 1);
 
 	const auto& shadowImage = renderer.shadowdata_;
-	fd_shadow_comp_t tile[FRAME_SIZE];
+	fd_shadow_pix_t tile[FRAME_SIZE];
 
 	std::vector<fd_float_t> tileScores;
 	fd_float_t candidateScore = 0;

@@ -296,7 +296,10 @@ constexpr static uint32_t PALETTE[256] = {
 
 template<typename T>
 static void get_color_from_palette(T& color, const uint8_t& index) {
-	color = T(PALETTE[index]);
+	if(index == 0)
+		color = T(0);
+	else
+		color = T(PALETTE[index]);
 }
 } /* namespace fractaldive */
 

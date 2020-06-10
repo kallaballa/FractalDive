@@ -40,9 +40,9 @@ public:
 			offsety_(-fd_float_t(height)/2.0),
 			panHistoryX_(PAN_HIST_LENGTH),
 			panHistoryY_(PAN_HIST_LENGTH),
-			imgdata_(new fd_image_comp_t[width * height]),
+			imgdata_(new fd_image_pix_t[width * height]),
 #ifndef _NO_SHADOW
-			shadowdata_(new fd_shadow_comp_t[width * height]) {
+			shadowdata_(new fd_shadow_pix_t[width * height]) {
 #else
 			shadowdata_(imgdata_) {
 #endif
@@ -55,10 +55,11 @@ public:
 #endif
 	}
 
-	void colorPixelByPalette(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t& iterations, const bool& shadowonly);
+	size_t calculatePaletteIndex(const fd_iter_count_t& iterations,	const fd_iter_count_t& maxIterations) const;
+	void colorPixelAt(const fd_coord_t& x, const fd_coord_t& y, const size_t& index, const bool& shadowOnly);
 	inline fd_mandelfloat_t square(const fd_mandelfloat_t& n) const;
 	inline fd_iter_count_t mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const;
-	fd_iter_count_t iterate(const fd_coord_t& x, const fd_coord_t& y, const bool& shadowonly);
+	fd_iter_count_t iterate(const fd_coord_t& x, const fd_coord_t& y) const;
 
 	void reset() {
 	  offsetx_ = -fd_float_t(WIDTH_)/2.0;

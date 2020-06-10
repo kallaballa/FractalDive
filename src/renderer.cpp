@@ -11,7 +11,7 @@
 namespace fractaldive {
 
 // Generate the fractal image
-void Renderer::render(const bool& shadowonly) {
+void Renderer::render(const bool& shadowOnly) {
 	TimeTracker::getInstance().execute("render", "mandelbrot", [&](){
 		if (ThreadPool::cores() > 1) {
 			//use a thread pool to reduce thread start overhead
@@ -27,13 +27,13 @@ void Renderer::render(const bool& shadowonly) {
 					extra = remainder;
 
 				//start a worker thread
-				futures.push_back(tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra, const bool& shadowonly) {
+				futures.push_back(tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra, const bool& shadowOnly) {
 					for (fd_dim_t y = sliceHeight * i; y < (sliceHeight * (i + 1)) + extra; y++) {
 						for (fd_dim_t x = 0; x < width; x++) {
-							colorPixelByPalette(x,y,iterate(x, y, shadowonly),shadowonly);
+							colorPixelAt(x, y, calculatePaletteIndex(iterate(x, y), maxIterations_), shadowOnly);
 						}
 					}
-				}, i, WIDTH_, sliceHeight, extra, shadowonly));
+				}, i, WIDTH_, sliceHeight, extra, shadowOnly));
 			}
 			for(auto& f : futures) {
 				f.get();
@@ -41,7 +41,7 @@ void Renderer::render(const bool& shadowonly) {
 		} else {
 			for (fd_dim_t y = 0; y < HEIGHT_; y++) {
 				for (fd_dim_t x = 0; x < WIDTH_; x++) {
-					colorPixelByPalette(x,y,iterate(x, y, shadowonly),shadowonly);
+					colorPixelAt(x, y, calculatePaletteIndex(iterate(x, y), maxIterations_), shadowOnly);
 				}
 			}
 		}
@@ -81,55 +81,53 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	return iterations;
 }
 
-void Renderer::colorPixelByPalette(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t& iterations, const bool& shadowonly) {
-#ifndef _NO_SHADOW
-		fd_image_comp_t color;
-		size_t index = 0;
-		if (iterations != maxIterations_) {
-	#ifndef _FIXEDPOINT
-			// 254 so we can use 0 as index for black
-			index = fd_mandelfloat_t(iterations) / maxIterations_ * 254;
-	#else
-			// 254.0 so we can use 0 as index for black
-			index = (iterations / maxIterations_ * 254.0).ToInt<uint8_t>();
-	#endif
-			if (!shadowonly) {
-				get_color_from_palette(color,index);
-			}
-		}
+size_t Renderer::calculatePaletteIndex(const fd_iter_count_t& iterations,	const fd_iter_count_t& maxIterations) const {
+	size_t index = 0;
+	if (iterations < maxIterations) {
+#ifndef _FIXEDPOINT
+		// 254 so we can use 0 as index for black
+		index = fd_mandelfloat_t(iterations) / maxIterations * 254 + 1;
+#else
+		// 254.0 so we can use 0 as index for black
+		index = (iterations / maxIterations_ * 254.0).ToInt<uint8_t>() + 1;
+#endif
+	}
 
+	return index;
+}
+
+void Renderer::colorPixelAt(const fd_coord_t& x, const fd_coord_t& y, const size_t& index, const bool& shadowOnly) {
+#ifndef _NO_SHADOW
+		fd_image_pix_t color;
+		get_color_from_palette(color, index);
 		size_t pixelindex = (y * WIDTH_ + x);
-		// Apply the color
-		if (!shadowonly) {
+
+		// Apply the argb color
+		if (!shadowOnly) {
 			imgdata_[pixelindex] = color;
 		}
-		std::numeric_limits<fd_image_comp_t>::max();
+
 		//cheap greyscale. we don't need perceptual acuity to measure detail.
-		if (iterations == maxIterations_) {
-			shadowdata_[pixelindex] = 0;
-		} else {
-			assert(index < 256);
-			shadowdata_[pixelindex] = index;
-		}
+		assert(index < 256);
+		shadowdata_[pixelindex] = index;
 #else
 		size_t pixelindex = (y * WIDTH_ + x);
 		// Apply the color
-		if (!shadowonly) {
-			if (iterations == maxIterations_) {
+			if (index == 0) {
 				imgdata_[pixelindex] = 0;
 			} else {
 	#ifndef _FIXEDPOINT
-				imgdata_[pixelindex] = (iterations / maxIterations_) * std::numeric_limits<fd_image_comp_t>::max();
+				imgdata_[pixelindex] = (iterations / maxIterations_) * std::numeric_limits<fd_image_pix_t>::max();
 	#else
 				imgdata_[pixelindex] = iterations.GetRawVal();
 	#endif
 			}
-		}
 #endif
 }
 
+
 // Calculate the color of a specific pixel. first find out how many iterations (<= maxIterations_) it takes and than color the pixel according to some kind of palette.
-fd_iter_count_t Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y, const bool& shadowonly) {
+fd_iter_count_t Renderer::iterate(const fd_coord_t& x, const fd_coord_t& y) const {
 	TimeTracker& tt = TimeTracker::getInstance();
 
 	fd_iter_count_t iterations = 0;
