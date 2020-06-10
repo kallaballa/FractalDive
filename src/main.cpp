@@ -37,8 +37,8 @@ typedef std::chrono::high_resolution_clock highres_clock;
 
 using namespace fractaldive;
 #ifndef _AMIGA
-constexpr fd_dim_t WIDTH = 200;
-constexpr fd_dim_t HEIGHT = 200;
+constexpr fd_dim_t WIDTH = 256;
+constexpr fd_dim_t HEIGHT = 256;
 #else
 constexpr fd_dim_t WIDTH = 30;
 constexpr fd_dim_t HEIGHT = 30;
@@ -56,7 +56,6 @@ fd_iter_count_t max_iterations = 100;
 
 fractaldive::Renderer renderer(WIDTH, HEIGHT, max_iterations);
 fractaldive::Canvas canvas(WIDTH, HEIGHT, false);
-fractaldive::Snapshot snap(FRAME_SIZE);
 bool do_run = true;
 
 
@@ -208,7 +207,6 @@ bool dive(bool zoom, bool benchmark) {
 	if (zoom) {
 		renderer.pan(hDiff / 20, vDiff / 20);
 		fd_float_t zf = 0.60 / FPS;
-		renderer.updateSnapshot(snap);
 		renderer.zoomAt(renderer.WIDTH_ / 2, renderer.HEIGHT_ / 2, 1.0 + zf, true);
 	}
 	tt.execute("render", [&](){
