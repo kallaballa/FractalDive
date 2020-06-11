@@ -54,16 +54,16 @@ inline fd_mandelfloat_t Renderer::square(const fd_mandelfloat_t& n) const {
 }
 
 inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const  {
-#if 0
+#if 1
 	fd_iter_count_t iterations = 0;
-	fd_mandelfloat_t xViewport = (x + offsetx_ + panx_) / (zoom_ / 10.0);
-	fd_mandelfloat_t yViewport = (y + offsety_ + pany_) / (zoom_ / 10.0);
+	fd_mandelfloat_t x0 = (x + offsetx_ + panx_) / (zoom_ / 10.0);
+	fd_mandelfloat_t y0 = (y + offsety_ + pany_) / (zoom_ / 10.0);
 
 	fd_mandelfloat_t zr = 0.0, zi = 0.0;
 	fd_mandelfloat_t zrsqr = 0;
 	fd_mandelfloat_t zisqr = 0;
-	fd_mandelfloat_t cr = xViewport / width_; //0.0 - 1.0
-	fd_mandelfloat_t ci = yViewport / height_; //0.0 - 1.0
+	fd_mandelfloat_t pointr = x0 / width_; //0.0 - 1.0
+	fd_mandelfloat_t pointi = y0 / height_; //0.0 - 1.0
 	fd_mandelfloat_t four = 4.0;
 
 	//Algebraically optimized version that uses addition/subtraction as often as possible while reducing multiplications
@@ -72,12 +72,12 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	while (iterations < maxIterations_ && zrsqr + zisqr <= four) {
 		//zi = (square(zr + zi) - zrsqr) - zisqr; //equals line below as a consequence of binomial expansion
 		zi = (zr + zr) * zi;
-		zi += ci;
-		zr = (zrsqr - zisqr) + cr;
+		zi += pointi;
+		zr = (zrsqr - zisqr) + pointr;
 
 		zrsqr = square(zr);
 		zisqr = square(zi);
-		iterations+=1;
+		++iterations;
 	}
 #else
 	float x0 = (x + offsetx_ + panx_) / (zoom_ / 10);
