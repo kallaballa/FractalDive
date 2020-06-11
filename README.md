@@ -69,8 +69,8 @@ make clean; AMIGA=68020 make CXX=m68k-amigaos-g++ LD=m68k-amigaos-ld hardcore
 
 ## Core algorithm
 
-The program naturally spends most of the time in the mandelbrot fraktal rendering algorithm so that is also where i put most of the optimization work.
-I found that there are many apects to consider in order to get high performance with C++ code only. I will outline the most important considerations and optimizations using the following code as a starting point:
+The program naturally spends most of the time in the mandelbrot fraktal rendering algorithm so that this where i put most of the work.
+I found that there are many apects to consider in order to get cross-platform and high performance code with C++ only. I will outline the most important considerations and optimizations using the following code as a starting point:
 
 ```
 float x0 = (x + offsetx_ + panx_) / (zoom_ / 10);
@@ -83,3 +83,13 @@ while (abs (z) < 2 && iterations < maxIterations_) {
     ++iterations;
 }
 ```
+
+### Mind the compiler backend
+Compiler backends (the part of the compiler that generates machine code) may differ greatly. That is because while C++ is very thoroughly specified as a programming language, its exact behaviour as a result of machine specifics is often undefined. e.g. What is the complexity of std::pow on any given machine for decimals and floats? How many instructions does it take to multiply a uint32_t? How about register allocation?
+Also, what kind of optimizations can or will be applied may be very different. Therefore an important goal of the optimizations efforts is to seek an optimized version of the algorithm that yields in high performance for all targets.
+
+### Precision
+For zooms much deeper, than what we can calculate in real-time, precision is a real issue. But knowing that we can't zoom that deep we can use very low precision arithmetic (floating and fixed-point).
+
+### Types
+The chosen datatypes for the algorithm heavily affect performance. e.g.: On a machine with only 8bit registers any operation on a 64-bit integer is very costly. Also certain platform specific automatic optimizations (e.g. vectorization and simd instructions) require very strategically chosen datatypes. At the moment all significant type definitions reside in "types.hpp" and are configured by passing compiler flags.
