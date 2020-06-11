@@ -70,9 +70,13 @@ make clean; AMIGA=68020 make CXX=m68k-amigaos-g++ LD=m68k-amigaos-ld hardcore
 ## Core algorithm
 
 The program naturally spends most of the time in the mandelbrot fraktal rendering algorithm so that this where i put most of the work.
-I found that there are many apects to consider in order to get cross-platform and high performance code with C++ only. I will outline the most important considerations and optimizations using the following code as a starting point:
+I found that there are many apects to consider in order to get cross-platform and high performance code with C++ only. I will outline the most important considerations and optimizations using the following code snippets.
 
+## Code
+
+### Before
 ```
+uint32_t iterations = 0;
 float x0 = (x + offsetx_ + panx_) / (zoom_ / 10);
 float y0 = (y + offsety_ + pany_) / (zoom_ / 10);
 std::complex<float> point(x0/width_, y0/height_);
@@ -84,6 +88,30 @@ while (abs (z) < 2 && iterations < maxIterations_) {
 }
 ```
 
+### After
+```
+fd_iter_count_t iterations = 0;
+fd_mandelfloat_t xViewport = (x + offsetx_ + panx_) / (zoom_ / 10.0);
+fd_mandelfloat_t yViewport = (y + offsety_ + pany_) / (zoom_ / 10.0);
+
+fd_mandelfloat_t zr = 0.0, zi = 0.0;
+fd_mandelfloat_t zrsqr = 0;
+fd_mandelfloat_t zisqr = 0;
+fd_mandelfloat_t cr = xViewport / width_; //0.0 - 1.0
+fd_mandelfloat_t ci = yViewport / height_; //0.0 - 1.0
+fd_mandelfloat_t four = 4.0;
+
+while (iterations < maxIterations_ && zrsqr + zisqr <= four) {
+    zi = (zr + zr) * zi;
+    zi += ci;
+    zr = (zrsqr - zisqr) + cr;
+
+    zrsqr = square(zr);
+    zisqr = square(zi);
+    iterations+=1;
+}
+```
+## Considerations
 ### Mind the compiler backend
 Compiler backends (the part of the compiler that generates machine code) may differ greatly. That is because while C++ is very thoroughly specified as a programming language, its exact behaviour as a result of machine specifics is often undefined. e.g. What is the complexity of std::pow on any given machine for decimals and floats? How many instructions does it take to multiply a uint32_t? How about register allocation?
 Also, what kind of optimizations can or will be applied may be very different. Therefore an important goal of the optimizations efforts is to seek an optimized version of the algorithm that yields in high performance for all targets.
