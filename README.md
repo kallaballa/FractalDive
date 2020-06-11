@@ -89,7 +89,7 @@ Compiler backends (the part of the compiler that generates machine code) may dif
 Also, what kind of optimizations can or will be applied may be very different. Therefore an important goal of the optimizations efforts is to seek an optimized version of the algorithm that yields in high performance for all targets.
 
 ### Precision
-For zooms much deeper, than what we can calculate in real-time, precision is a real issue. But knowing that we can't zoom that deep we can use very low precision arithmetic (floating and fixed-point).
+For zooms much deeper, than what we can calculate in real-time, precision is a real issue. But knowing that we can't zoom that deep we can use very low precision arithmetic (floating and fixed-point). Also all kinds of approximations and other optimizations that affect precision should be considered as long as they don't impair "beauty".
 
 ### Types
 The chosen datatypes for the algorithm heavily affect performance. e.g.: On a machine with only 8bit registers any operation on a 64-bit integer is very costly. Also certain platform specific automatic optimizations (e.g. vectorization and simd instructions) require very strategically chosen datatypes. At the moment all significant type definitions reside in "types.hpp" and are configured by passing compiler flags.
