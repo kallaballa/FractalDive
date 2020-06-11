@@ -23,7 +23,7 @@ private:
 	// Pan and zoom parameters
 	fd_coord_t panx_ = 0;
 	fd_coord_t pany_ = 0;
-	fd_float_t zoom_ = 2;
+	fd_float_t zoom_ = 1.5;
 	// used for smoothing automatic panning
 	std::deque<fd_coord_t> panHistoryX_;
 	std::deque<fd_coord_t> panHistoryY_;
@@ -56,7 +56,7 @@ public:
 	}
 
 	size_t calculatePaletteIndex(const fd_iter_count_t& iterations,	const fd_iter_count_t& maxIterations) const;
-	void colorPixelAt(const fd_coord_t& x, const fd_coord_t& y, const size_t& index, const bool& shadowOnly);
+	void colorPixelAt(const fd_coord_t& x, const fd_coord_t& y, const size_t& index, const fd_iter_count_t& iterations, const bool& shadowOnly);
 	inline fd_mandelfloat_t square(const fd_mandelfloat_t& n) const;
 	inline fd_iter_count_t mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const;
 	fd_iter_count_t iterate(const fd_coord_t& x, const fd_coord_t& y) const;
@@ -66,7 +66,7 @@ public:
 		offsety_ = -fd_float_t(width_)/2.0;
 		panx_ = 0;
 		pany_ = 0;
-		zoom_ = 2;
+		zoom_ = 1.5;
 	}
 
 	void render(const bool& shadowonly = false);
@@ -84,6 +84,7 @@ public:
 	void setMaxIterations(const fd_iter_count_t& mi) {
 		maxIterations_ = mi;
 	}
+	void initSmoothPan(const fd_coord_t& x, const fd_coord_t& y);
 
 private:
 	std::pair<fd_coord_t, fd_coord_t> smoothPan(const fd_coord_t& x, const fd_coord_t& y);

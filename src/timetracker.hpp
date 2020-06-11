@@ -7,10 +7,15 @@
 #include <sstream>
 #include <limits>
 #include <iomanip>
+#include <iostream>
+#include <algorithm>
+#include <cassert>
 
 #ifndef _NO_THREADS
 #include <mutex>
 #endif
+
+#include "util.hpp"
 
 namespace fractaldive {
 
@@ -20,57 +25,35 @@ using std::string;
 using std::map;
 
 struct TimeInfo {
-	long totalCnt_ = 0;
-	long totalTime_ = 0;
-	long gameCnt_ = 0;
-	long gameTime_ = 0;
-	long last_ = 0;
-	float mean_ = 0;
-	float variance_ = 0;
-	map<string, TimeInfo> children_;
+	fd_highres_tick_t totalCnt_ = 0;
+	fd_highres_tick_t totalTime_ = 0;
+	double mean_ = 0;
+	double variance_ = 0;
 
 	void updateVariance(size_t t)
 	{
-		float oldMean = mean_;
+		double oldMean = mean_;
 		mean_ = mean_ + (t - mean_) / (totalCnt_);
 		variance_ = (variance_ + (t - mean_) + (t -oldMean)) / (totalCnt_);
 	}
 
-	void add(size_t t) {
-		last_ = t;
+	void add(fd_highres_tick_t t) {
 		totalTime_ += t;
-    gameTime_ += t;
 		++totalCnt_;
-    ++gameCnt_;
     updateVariance(t);
 
-		if(totalCnt_ == std::numeric_limits<long>::max() || totalTime_ == std::numeric_limits<long>::max()) {
+		if(totalCnt_ > (std::numeric_limits<fd_highres_tick_t>::max() - 1) || totalTime_ > (std::numeric_limits<fd_highres_tick_t>::max() - 1)) {
 			totalCnt_ = 0;
 			totalTime_ = 0;
 		}
-
-    if(gameCnt_ == std::numeric_limits<long>::max() || gameTime_ == std::numeric_limits<long>::max()) {
-      gameCnt_ = 0;
-      gameTime_ = 0;
-    }
-	}
-
-	void newGame() {
-	  gameCnt_ = 0;
-	  gameTime_ = 0;
 	}
 
 	string str() const {
 		stringstream ss;
-		ss << std::fixed << std::setprecision(4) << std::setfill(' ') << std::setw(9) << totalTime_ << " /" << std::setfill(' ') << std::setw(9) << totalCnt_ << " = " << std::setfill(' ') << std::setw(9) << float(totalTime_)/totalCnt_ << " ~ " << std::setfill(' ') << std::setw(9) << variance_;
+		ss << std::fixed << std::setprecision(4) << std::setfill(' ') << std::setw(9) << totalTime_ << " /" << std::setfill(' ') << std::setw(9) << totalCnt_ << " = " << std::setfill(' ') << std::setw(9) << double(totalTime_)/totalCnt_ << " ~ " << std::setfill(' ') << std::setw(9) << variance_;
 		return ss.str();
 	}
 };
-
-inline std::ostream& operator<<(ostream& os, TimeInfo& ti) {
-	os << ti.str();
-	return os;
-}
 
 class TimeTracker {
 private:
@@ -93,30 +76,15 @@ public:
 	template<typename F> void execute(const string& name, F const &func)
 	{
 #ifndef _NO_TIMETRACK
-		auto start = SDL_GetTicks();
+		auto start = get_highres_tick();
 		func();
-		auto duration = SDL_GetTicks() - start;
 
 #ifndef _NO_THREADS
 		std::unique_lock<std::mutex> lock(mapMtx);
 #endif
-		tiMap_[name].add(duration);
-#else
-		func();
-#endif
-	}
-
-	template<typename F> void execute(const string& parentName, const string& name, F const &func)
-	{
-#ifndef _NO_TIMETRACK
-		auto start = SDL_GetTicks();
-		func();
-		auto duration = SDL_GetTicks() - start;
-
-#ifndef _NO_THREADS
-		std::unique_lock<std::mutex> lock(mapMtx);
-#endif
-		tiMap_[parentName].children_[name].add(duration);
+		TimeInfo& ti = tiMap_[name];
+		auto duration = (get_highres_tick() - start);
+		ti.add(duration);
 #else
 		func();
 #endif
@@ -125,12 +93,12 @@ public:
 	template<typename F> size_t measure(F const &func)
 	{
 #ifndef _NO_TIMETRACK
-		auto start = SDL_GetTicks();
+		auto start = get_highres_tick();
 		func();
-		auto duration = SDL_GetTicks() - start;
+		auto duration = get_highres_tick() - start;
 		return duration;
 #else
-		func();
+		assert(false);
 		return 0;
 #endif
 	}
@@ -153,13 +121,39 @@ public:
 		std::unique_lock<std::mutex> lock(mapMtx);
 #endif
 		stringstream ss;
-		ss << "Time tracking info: <name>: <total> / <count> = <mean> ~ <variance>" << std::endl;
-		for(std::pair<string,TimeInfo> it : tiMap_) {
-			ss << pad_string("    " + it.first + ":", 25) << it.second << std::endl;
-			for(auto itc : it.second.children_) {
-				ss << pad_string("        " + itc.first + ":", 25) << itc.second << std::endl;
-			}
+		size_t lenLongestName = 0;
+		size_t accumTime = 0;
+
+		for(const auto& it : tiMap_) {
+			lenLongestName = std::max(it.first.size(), lenLongestName);
+			accumTime += it.second.totalTime_;
 		}
+
+		size_t depth = 0;
+		map<string, size_t> keyDepthMap_;
+		map<size_t, fd_highres_tick_t> depthTotalMap_;
+
+		for(const auto& it : tiMap_) {
+			depth = std::count(it.first.begin(), it.first.end(), '.');
+			keyDepthMap_[it.first] = depth;
+			depthTotalMap_[depth] += it.second.totalTime_;
+		}
+
+		for(const auto& it : tiMap_) {
+			depth = keyDepthMap_[it.first];
+			fd_highres_tick_t depthTotal = depthTotalMap_[depth];
+//			fd_highres_tick_t parentDepthTotal;
+//			if(depth > 0)
+//				parentDepthTotal = depthTotalMap_[depth - 1];
+//			else
+//				parentDepthTotal = depthTotal;
+
+			double spent =  double(it.second.totalTime_) / double(depthTotal);
+//			double loss = ((double(parentDepthTotal) / depthTotal) - 1.0) * 100.0;
+			double loss = 0;
+			ss << pad_string("    " + it.first + ":", lenLongestName + 6) << spent << " (" << loss << "%)" << std::endl;
+		}
+
 		ss << std::endl;
 
 		return ss.str();
@@ -167,18 +161,10 @@ public:
 		return "";
 	}
 
-	const map<string, TimeInfo>& getMap() {
-		return tiMap_;
-	}
-
-	void reset() {
-		tiMap_.clear();
-	}
-
 	static TimeTracker& getInstance() {
-		if(instance_ == NULL)
+		if(instance_ == nullptr) {
 			instance_ = new TimeTracker();
-
+		}
 		return *instance_;
 	}
 
@@ -190,12 +176,10 @@ public:
   }
 
   static void epoch() {
-    for(auto pair : instance_->tiMap_) {
-      pair.second.newGame();
-      for(auto pairc : pair.second.children_) {
-        pairc.second.newGame();
-      }
-    }
+#ifndef _NO_THREADS
+		std::unique_lock<std::mutex> lock(instance_->mapMtx);
+#endif
+  	instance_->tiMap_.clear();
   }
 };
 

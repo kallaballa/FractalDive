@@ -9,6 +9,10 @@
 #include "MFixedPoint/FpF.hpp"
 #endif
 
+#ifndef _AMIGA
+#include <chrono>
+#endif
+
 #include "color.hpp"
 
 namespace fractaldive {
@@ -55,6 +59,14 @@ namespace fractaldive {
 #endif
 
 	typedef fd_image_pix_t* image_t;
+
+
+#ifndef _AMIGA
+	typedef std::chrono::high_resolution_clock highres_clock;
+	typedef std::chrono::microseconds::rep fd_highres_tick_t;
+#else
+	typedef uint32_t fd_highres_tick_t;
+#endif
 }
 
 #endif /* SRC_TYPES_HPP_ */
