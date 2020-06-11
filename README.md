@@ -65,3 +65,21 @@ make clean; AMIGA=68000 make CXX=m68k-amigaos-g++ LD=m68k-amigaos-ld hardcore
 ```
 make clean; AMIGA=68020 make CXX=m68k-amigaos-g++ LD=m68k-amigaos-ld hardcore
 ```
+# Optimizations
+
+## Core algorithm
+
+The program naturally spends most of the time in the mandelbrot fraktal rendering algorithm so that is also where i put most of the optimization work.
+I found that there are many apects to consider in order to get high performance with C++ code only. I will outline the most important considerations and optimizations using the following code as a starting point:
+
+```
+float x0 = (x + offsetx_ + panx_) / (zoom_ / 10);
+float y0 = (y + offsety_ + pany_) / (zoom_ / 10);
+std::complex<float> point(x0/width_, y0/height_);
+std::complex<float> z(0, 0);
+size_t iterations = 0;
+while (abs (z) < 2 && iterations < maxIterations_) {
+    z = z * z + point;
+    ++iterations;
+}
+```
