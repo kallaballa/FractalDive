@@ -229,10 +229,21 @@ public:
         return *this;
     }
 
-    FpF& operator -= (FpF r) {
-        rawVal_ -= r.rawVal_;
-        return *this;
-    }
+		FpF& operator -=(FpF r) {
+			rawVal_ -= r.rawVal_;
+			return *this;
+		}
+
+		FpF operator ++() {
+			(*this) += 1;
+			return FpF(this->GetRawVal());
+		}
+
+		FpF operator ++(int) {
+			BaseType raw = this->GetRawVal();
+			(*this) += 1;
+			return FpF(raw);
+		}
 
     /// \brief		Overlaod for '*=' operator.
     /// \details	Uses intermediatary casting to int64_t to prevent overflows.
@@ -318,15 +329,15 @@ public:
         return rawVal_ == r.rawVal_;
     }
 
-    bool operator != (const FpF &r) {
+    bool operator != (const FpF &r) const {
         return !(*this == r);
     }
 
-    bool operator < (const FpF &r) {
+    bool operator < (const FpF &r) const {
         return rawVal_ < r.rawVal_;
     }
 
-    bool operator > (const FpF &r) {
+    bool operator > (const FpF &r) const {
         return rawVal_ > r.rawVal_;
     }
 
