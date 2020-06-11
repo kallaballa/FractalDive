@@ -12,7 +12,9 @@
 #include <SDL/SDL.h>
 #include "types.hpp"
 
-
+#ifdef _JAVASCRIPT
+#include <emscripten.h>
+#endif
 
 namespace fractaldive {
 inline fd_highres_tick_t get_milliseconds() {

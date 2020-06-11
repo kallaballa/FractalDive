@@ -10,6 +10,9 @@
   body {
     background-color: black;
     overflow: hidden;
+    width: 95vw;
+    padding: 0;
+    margin: 0;
   }
   
   canvas {
@@ -19,17 +22,27 @@
     transform: translate(-50%, -50%); 
   }
 
+  #loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 3em;
+  }
+
   textarea {
-    font-size: 18px; 
+    font-size: 1.5em; 
     opacity: 0.5; 
     outline: none; 
     resize: none; 
     border: 0; 
-    padding: 10px;
+    padding: 0.8em;
   }
  
  #content {
- 
+  padding: 0;
+  margin: 0; 
  }
  
  #bgcanvas0 {
@@ -50,49 +63,60 @@
  }
 
  #stderr {
+    position: fixed;
+    top: 19.5em;
+    display: block;
+    height: 9em;
+    width: 22em;
+    font-size: 1.2em;
     background-color: black; 
     color: red;
-    float: right;
-    margin-right: auto;
-    margin-left: 0;
+    overflow: scroll;
     visibility: hidden;
+    border: 0.2em solid rgba(255,255,255,0.3);
+    border-radius: 0.5em;
+    margin: 0.5em;
   }
   
   #stdout {
+    position: fixed;
+    top: 7.5em;
+    display: block;
+    height: 9em;
+    width: 22em;
     background-color: black; 
     color: white;
-    #overflow: hidden;
     visibility: hidden;
+    border: 0.2em solid rgba(255,255,255,0.3);
+    font-size: 1.2em;
+    border-radius: 0.5em;
+    margin: 0.5em;
   }
   
   
   #infoBtn {
     position: fixed;
     top: 0;
-    left: 0;
+    margin: 0.5em;
     color: rgba(200,200,200,0.8);
-    width: 90px;
-    height: 90px;
+    width: 6em;
+    height: 6em;
     background: none!important;
     background-color: black;
     border: 1px solid #DDDDff;
-    border-radius: 5px;
-    font-size: 16px;
-    padding: 5px;
-    margin: 5px;
-    
-    
+    border-radius: 0.5em;
+    font-size: 1em;
+    padding: 0.5em;
   }
   
   #debugBtn {
     position: fixed;
-    top: calc(100vh - 70px);
+    top: calc(100% - 6em);
     left: 0;
     color: #222222;
-    width: 70px;
-    height: 70px;
+    width: 6em;
+    height: 6em;
     background: none!important;
-    background-color: black;
     border: none;
     padding: 0!important;
     
@@ -102,20 +126,41 @@
     background-color: rgba(255,255,255,0.0);
     width: 70vw;
     height: 70vh;
-    z-index: 1000;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     margin: auto;
-    position: relative;
+    padding: 0;
+    visibility: hidden;
   }
-  
+ 
+  #infocloseBtn { 
+    position: relative;
+    display: block;
+    background: none!important;
+    border: 0.1em solid  rgba(0,0,0,0.3);
+    border-radius: 0.4em;
+    width: 1.6em;
+    height: 1.6em;
+    font-size: 1em;
+    top: 0;
+    margin-left: auto;
+    margin-right: 0;
+    margin-top: 0.4em;
+  } 
+
   #infotext {
     color: #333333;
     background-color: rgba(255,255,255,0.8);
-    margin: 0;
-    position: absolute;
+    position: fixed;
+    width: 65vw;
     top: 50%;
-    -ms-transform: translateY(-50%);
-    transform: translateY(-50%);
-    padding: 1vw;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 1em;
+    padding-top: 0em;
+    padding-bottom: 2em;
   }
   
   .paddedHeading {
@@ -123,35 +168,60 @@
   }
   
   @media only screen and (max-device-width : 480px) {
+     #stderr {
+    top: 25em;
+  }
+
+  #stdout {
+    top: 15em;
+  }
+
+
     #info {
+      width: 98vw;
+      margin: auto;   
+    }
+
+    #infoBtn {
+      font-size: 2.2em;
+      width: 6em;
+      height: 6em;
+    }
+    #debugBtn {
+      font-size: 2.2em;
+    }
+
+    #infotext {
+        font-size: 2.2em;
         width: 95vw;
     }
-    #infotext {
-        font-size: 2em;
-    }
+
   }
   </style>
 
 </head>
 <body>
-    <button id="infoBtn">Tell me a bit about what i see</button>
-    <button id="debugBtn">debug</button>
     <div id="content">
+        <div id="loading">Loading...</div>
         <canvas id="bgcanvas0" ></canvas>
         <canvas id="bgcanvas1" ></canvas>
         <canvas id="canvas"></canvas>
         <textarea cols=26 rows=5 id="stdout"></textarea>
         <textarea cols=26 rows=5 id="stderr"></textarea>
         <div id="info">
-        <div id="infotext"><b>A little story</b><br/>I created this page because I have the following formular tattooed on my arm: <img src="formula.svg"/>.
+        <div id="infotext">
+            <button id="infocloseBtn">X</button>
+            <b>A little story</b><br/>I created this page because I have the following formular tattooed on my arm: <img src="formula.svg"/>.
             People kept asking me about it and I tried to convey a vague sense of what it is in words... no more! The main purpose of this page is to demonstrate the beauty of the mandelbrot set.<br/><br/>
             <b class="paddedHeading">A little explanation</b><br/>
             In short: The mandelbrot set is a subset of the <a href="https://www.mathsisfun.com/numbers/complex-numbers.html">complex numbers</a> limited in a funny way. Interpreted in the right way it is a fractal. There are interesting applications for fractal mathematics but most people like them for their visual properties - the closer you look the more shapes emerge, all bearing a certain similarity. If you like math you are going to figure out the <a href="https://plus.maths.org/content/what-mandelbrot-set">basics</a> quickly. The zoom could theoretically go on forever (if you ignore that computers have limits) but because the goal is to have a steady animation the zoom depth is automatically limited to what your computer can handle. Everything is calculated in real-time and no zoom is like the other.<br/><br/>
             <b class="paddedHeading">A little tech</b><br/>
             This demo has been implemented using modern C++ and it's goal is to be highly optimized while being highly portable. Check it out on <a href="https://github.com/kallaballa/FractalDive">github</a>. It has been tested on many kinds of browsers, Linux (x86/armv7), MacOS and Amiga (1200/4000). In some respects it is still far from optimal.
         </div>
-        </dive>
+        </div>
     </div>
+    <button id="infoBtn">Tell me a bit about what i see</button>
+    <button id="debugBtn">debug</button>
         <script>
             var stderr = document.getElementById('stderr');
             var stdout = document.getElementById('stdout');
@@ -189,16 +259,14 @@
 
             var infoBtn = document.getElementById("infoBtn");
             var debugBtn = document.getElementById("debugBtn");
+            var infocloseBtn = document.getElementById("infocloseBtn");
             var err = document.getElementById("stderr");
             var out = document.getElementById("stdout");
             var info = document.getElementById("info");
 
-            err.style.visibility = "hidden";
-            out.style.visibility = "hidden";
-            info.style.visibility = "hidden";
 
             infoBtn.onclick = function() {
-                if(info.style.visibility === "hidden") {
+                if(info.style.visibility === "" || info.style.visibility === "hidden") {
                     info.style.visibility = "visible";
                 } else { 
                     info.style.visibility = "hidden";
@@ -206,12 +274,20 @@
             }
             
             debugBtn.onclick = function() {
-                if(err.style.visibility = "" || err.style.visibility === "hidden") {
+                var err = document.getElementById("stderr");
+                var out = document.getElementById("stdout");
+                if(err.style.visibility === undefined || err.style.visibility === "" || err.style.visibility === "hidden") {
                     out.style.visibility = "visible";
                     err.style.visibility = "visible";
                 } else { 
                     out.style.visibility = "hidden";
                     err.style.visibility = "hidden";
+                }
+            }
+
+            infocloseBtn.onclick = function() {
+                if(info.style.visibility === undefined || info.style.visibility === "" || info.style.visibility === "visible") {
+                    info.style.visibility = "hidden";
                 }
             }
 		</script>

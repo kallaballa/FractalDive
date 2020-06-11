@@ -65,8 +65,6 @@ ifdef JAVASCRIPT
 CXX	:= em++
 # defines
 EMFLAGS = -DNDEBUG -D_JAVASCRIPT -flto
-# unsafe options
-EMFLAGS += -ffp-contract=fast -freciprocal-math -fno-signed-zeros --closure 1 --llvm-opts "['-menable-no-infs', '-menable-no-nans', '-menable-unsafe-fp-math']" 
 # emscripteb options
 EMFLAGS +=  -s INITIAL_MEMORY=33554432 -s ASYNCIFY
 
@@ -131,7 +129,11 @@ profile: CXXFLAGS += -rdynamic
 endif
 profile: dirs
 
+ifdef JAVASCRIPT
+hardcore: CXXFLAGS += -c -g0 -O3 -ffp-contract=fast -freciprocal-math -fno-signed-zeros --closure 1 --llvm-opts "['-menable-no-infs', '-menable-no-nans', '-menable-unsafe-fp-math']" 
+else
 hardcore: CXXFLAGS += -g0 -Ofast
+endif
 #ifeq ($(UNAME_S), Darwin)
 hardcore: LDFLAGS += -s
 #endif

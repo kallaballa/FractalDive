@@ -95,16 +95,18 @@ fd_float_t numberOfChanges(const shadow_image_t& greyImage, const size_t& size) 
 	fd_shadow_pix_t last = 0;
 
 	for (size_t i = 0; i < size; i++) {
-		if (greyImage[i] != 0 && last != greyImage[i])
+		const fd_shadow_pix_t& p = greyImage[i];
+		if(p == 0 && numChanges > 0) {
+			--numChanges;
+		} else if (last != p) {
 			++numChanges;
-		last = greyImage[i];
+		}
+		last = p;
 	}
 	return (fd_float_t(numChanges) / size);
 }
 
 fd_float_t measureDetail(const shadow_image_t& greyImage, const size_t& size) {
-//identifies areas of interest better at a low resolution but is significantly more costly
-//return entropy(greyImage,size + ((1.0 - numberOfZeroes(greyImage, size)) * 2)) / 3.0;
 	return numberOfChanges(greyImage, size);
 }
 
@@ -164,8 +166,7 @@ bool dive(bool zoom, bool benchmark) {
 		tt.execute("dive.measureDetail", [&]() {
 			detail = measureDetail(renderer.shadowdata_, renderer.width_ * renderer.height_);
 		});
-
-		if (!benchmark && detail < 0.0001) {
+		if (!benchmark && detail < 0.00001) {
 #ifdef _JAVASCRIPT
 			renderer.reset();
 			renderer.render();
@@ -202,7 +203,7 @@ bool dive(bool zoom, bool benchmark) {
 void auto_scale_max_iterations() {
 	auto start = get_milliseconds();
 #ifndef _AMIGA
-	fd_float_t prescale = 1.0;
+	fd_float_t prescale = 2.0;
 #else
 	fd_float_t prescale = 0.02;
 #endif
@@ -229,7 +230,7 @@ void auto_scale_max_iterations() {
 #endif
 
 #ifdef _JAVASCRIPT_MT
-	iterations = (iterations * (ThreadPool::cores() - 1));
+	iterations = (iterations * (ThreadPool::cores() - 2));
 #endif
 
 #ifndef _FIXEDPOINT
