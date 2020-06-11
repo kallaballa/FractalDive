@@ -29,27 +29,27 @@ There are many build targets. The default is "release" but on some platforms you
 
 ## JavaScript/WASM
 To build for Javascript you need em++ > 1.39.1. The following builds might need specific browsers or even special browser configurations. In src/index.html you can an example of how to select the right javascript build to load by using feature checking.
-```
+```bash
 make clean && JAVASCRIPT=1 make -j2
 ```
 ### Multi-Threaded 
-```
+```bash
 make clean && JAVASCRIPT_MT=1 make -j2
 ```
 ### Using simd instructions
-```
+```bash
 make clean && AUTOVECTOR=1 JAVASCRIPT=1 make -j2
 ```
 ### Using multi-threading and simd instructions
-```
+```bash
 make clean && AUTOVECTOR=1 JAVASCRIPT_MT=1 make -j2
 ```
 ## Linux/MacOSX (x86 and armv7)
-```
+```bash
 make clean && AUTOVECTOR=1 make -j2 hardcore
 ```
 ### Without multi-threading
-```
+```bash
 make clean && NOTHREADS=1 AUTOVECTOR=1 make -j2 hardcode
 ```
 ## Amiga/m68k
@@ -57,12 +57,12 @@ make clean && NOTHREADS=1 AUTOVECTOR=1 make -j2 hardcode
 For m68k you need amiga-gcc (https://github.com/kallaballa/amiga-gcc/releases/tag/latest-20200516174914).
 
 ### Build for 68000
-```
+```bash
 make clean; AMIGA=68000 make CXX=m68k-amigaos-g++ LD=m68k-amigaos-ld hardcore
 ```
 
 ### Build for 68020
-```
+```bash
 make clean; AMIGA=68020 make CXX=m68k-amigaos-g++ LD=m68k-amigaos-ld hardcore
 ```
 # Optimizations
@@ -75,7 +75,7 @@ I found that there are many apects to consider in order to get cross-platform an
 ## Code
 
 ### Before
-```
+```C++
 uint32_t iterations = 0;
 float x0 = (x + offsetx_ + panx_) / (zoom_ / 10);
 float y0 = (y + offsety_ + pany_) / (zoom_ / 10);
@@ -89,7 +89,7 @@ while (abs (z) < 2 && iterations < maxIterations_) {
 ```
 
 ### After
-```
+```C++
 fd_iter_count_t iterations = 0;
 fd_mandelfloat_t xViewport = (x + offsetx_ + panx_) / (zoom_ / 10.0);
 fd_mandelfloat_t yViewport = (y + offsety_ + pany_) / (zoom_ / 10.0);
