@@ -82,8 +82,8 @@ std::complex<float> point(x0/width_, y0/height_);
 std::complex<float> z(0, 0);
 size_t iterations = 0;
 while (abs (z) < 2 && iterations < maxIterations_) {
-    z = z * z + point;
-    ++iterations;
+	z = z * z + point;
+	++iterations;
 }
 ```
 
