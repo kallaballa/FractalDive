@@ -136,8 +136,8 @@ fd_float_t measureDetail(const shadow_image_t& greyImage, const size_t& size) {
 
 std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_dim_t& numTilesX,
 		const fd_dim_t& numTilesY) {
-	const fd_dim_t tileW = std::floor(fd_float_t(renderer.WIDTH_) / numTilesX);
-	const fd_dim_t tileH = std::floor(fd_float_t(renderer.HEIGHT_) / numTilesY);
+	const fd_dim_t tileW = std::floor(fd_float_t(renderer.width_) / numTilesX);
+	const fd_dim_t tileH = std::floor(fd_float_t(renderer.height_) / numTilesY);
 	assert(tileW > 1);
 	assert(tileH > 1);
 
@@ -152,13 +152,13 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 	//iterate over tiles
 	for (fd_dim_t ty = 0; ty < numTilesY; ++ty) {
 		for (fd_dim_t tx = 0; tx < numTilesX; ++tx) {
-			const fd_dim_t offY = tileH * ty * renderer.WIDTH_;
+			const fd_dim_t offY = tileH * ty * renderer.width_;
 			const fd_dim_t offX = tileW * tx;
 
 			//iterate over pixels of the tile
 			for (fd_dim_t y = 0; y < tileH; ++y) {
 				for (fd_dim_t x = 0; x < tileW; ++x) {
-					const size_t pixIdx = (offY + (y * renderer.WIDTH_)) + (offX + x);
+					const size_t pixIdx = (offY + (y * renderer.width_)) + (offX + x);
 					tile[y * tileW + x] = shadowImage[pixIdx];
 				}
 			}
@@ -182,7 +182,7 @@ bool dive(bool zoom, bool benchmark) {
 	TimeTracker& tt = TimeTracker::getInstance();
 	fd_float_t detail;
 	tt.execute("measureDetail", [&](){
-		detail = measureDetail(renderer.shadowdata_, renderer.WIDTH_ * renderer.HEIGHT_);
+		detail = measureDetail(renderer.shadowdata_, renderer.width_ * renderer.height_);
 	});
 	if (!benchmark && detail < 0.0001) {
 #ifdef _JAVASCRIPT
@@ -201,13 +201,13 @@ bool dive(bool zoom, bool benchmark) {
 #endif
 	});
 
-	fd_coord_t hDiff = centerOfHighDetail.first - (renderer.WIDTH_ / 2);
-	fd_coord_t vDiff = centerOfHighDetail.second - (renderer.HEIGHT_ / 2);
+	fd_coord_t hDiff = centerOfHighDetail.first - (renderer.width_ / 2);
+	fd_coord_t vDiff = centerOfHighDetail.second - (renderer.height_ / 2);
 
 	if (zoom) {
 		renderer.pan(hDiff / 20, vDiff / 20);
 		fd_float_t zf = 0.60 / FPS;
-		renderer.zoomAt(renderer.WIDTH_ / 2, renderer.HEIGHT_ / 2, 1.0 + zf, true);
+		renderer.zoomAt(renderer.width_ / 2, renderer.height_ / 2, 1.0 + zf, true);
 	}
 	tt.execute("render", [&](){
 		renderer.render();

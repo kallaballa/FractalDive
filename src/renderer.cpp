@@ -6,6 +6,7 @@
 #include "threadpool.hpp"
 #include "printer.hpp"
 #include "timetracker.hpp"
+#include <complex>
 
 
 namespace fractaldive {
@@ -18,8 +19,8 @@ void Renderer::render(const bool& shadowOnly) {
 			ThreadPool& tpool = ThreadPool::getInstance();
 			size_t tpsize = tpool.size();
 			//slice the image into vertical stripes
-			fd_dim_t sliceHeight = std::floor(fd_float_t(HEIGHT_) / tpsize);
-			fd_dim_t remainder = (HEIGHT_ % sliceHeight);
+			fd_dim_t sliceHeight = std::floor(fd_float_t(height_) / tpsize);
+			fd_dim_t remainder = (height_ % sliceHeight);
 			fd_dim_t extra = 0;
 			std::vector<std::future<void>> futures;
 			for (size_t i = 0; i < tpsize; ++i) {
@@ -33,14 +34,14 @@ void Renderer::render(const bool& shadowOnly) {
 							colorPixelAt(x, y, calculatePaletteIndex(iterate(x, y), maxIterations_), shadowOnly);
 						}
 					}
-				}, i, WIDTH_, sliceHeight, extra, shadowOnly));
+				}, i, width_, sliceHeight, extra, shadowOnly));
 			}
 			for(auto& f : futures) {
 				f.get();
 			}
 		} else {
-			for (fd_dim_t y = 0; y < HEIGHT_; y++) {
-				for (fd_dim_t x = 0; x < WIDTH_; x++) {
+			for (fd_dim_t y = 0; y < height_; y++) {
+				for (fd_dim_t x = 0; x < width_; x++) {
 					colorPixelAt(x, y, calculatePaletteIndex(iterate(x, y), maxIterations_), shadowOnly);
 				}
 			}
@@ -53,6 +54,7 @@ inline fd_mandelfloat_t Renderer::square(const fd_mandelfloat_t& n) const {
 }
 
 inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const  {
+#if 0
 	fd_iter_count_t iterations = 0;
 	fd_mandelfloat_t xViewport = (x + offsetx_ + panx_) / (zoom_ / 10.0);
 	fd_mandelfloat_t yViewport = (y + offsety_ + pany_) / (zoom_ / 10.0);
@@ -60,8 +62,8 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	fd_mandelfloat_t zr = 0.0, zi = 0.0;
 	fd_mandelfloat_t zrsqr = 0;
 	fd_mandelfloat_t zisqr = 0;
-	fd_mandelfloat_t cr = xViewport / WIDTH_; //0.0 - 1.0
-	fd_mandelfloat_t ci = yViewport / HEIGHT_; //0.0 - 1.0
+	fd_mandelfloat_t cr = xViewport / width_; //0.0 - 1.0
+	fd_mandelfloat_t ci = yViewport / height_; //0.0 - 1.0
 	fd_mandelfloat_t four = 4.0;
 
 	//Algebraically optimized version that uses addition/subtraction as often as possible while reducing multiplications
@@ -77,7 +79,19 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 		zisqr = square(zi);
 		iterations+=1;
 	}
+#else
+	float x0 = (x + offsetx_ + panx_) / (zoom_ / 10);
+	float y0 = (y + offsety_ + pany_) / (zoom_ / 10);
+	std::complex<float> point(x0/width_, y0/height_);
+	std::complex<float> z(0, 0);
+	fd_iter_count_t iterations = 0;
+	while (abs (z) < 2 && iterations < maxIterations_) {
+	    z = z * z + point;
+	    ++iterations;
+	}
 
+	return iterations;
+#endif
 	return iterations;
 }
 
@@ -100,7 +114,7 @@ void Renderer::colorPixelAt(const fd_coord_t& x, const fd_coord_t& y, const size
 #ifndef _NO_SHADOW
 		fd_image_pix_t color;
 		get_color_from_palette(color, index);
-		size_t pixelindex = (y * WIDTH_ + x);
+		size_t pixelindex = (y * width_ + x);
 
 		// Apply the argb color
 		if (!shadowOnly) {
@@ -111,7 +125,7 @@ void Renderer::colorPixelAt(const fd_coord_t& x, const fd_coord_t& y, const size
 		assert(index < 256);
 		shadowdata_[pixelindex] = index;
 #else
-		size_t pixelindex = (y * WIDTH_ + x);
+		size_t pixelindex = (y * width_ + x);
 		// Apply the color
 			if (index == 0) {
 				imgdata_[pixelindex] = 0;
