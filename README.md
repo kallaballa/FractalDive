@@ -89,26 +89,26 @@ while (abs (z) < 2 && iterations < maxIterations_) {
 
 ### After
 ```C++
-	fd_iter_count_t iterations = 0;
-	fd_mandelfloat_t x0 = (x + offsetx_ + panx_) / (zoom_ / 10.0);
-	fd_mandelfloat_t y0 = (y + offsety_ + pany_) / (zoom_ / 10.0);
+fd_iter_count_t iterations = 0;
+fd_mandelfloat_t x0 = (x + offsetx_ + panx_) / (zoom_ / 10.0);
+fd_mandelfloat_t y0 = (y + offsety_ + pany_) / (zoom_ / 10.0);
 
-	fd_mandelfloat_t zr = 0.0, zi = 0.0;
-	fd_mandelfloat_t zrsqr = 0;
-	fd_mandelfloat_t zisqr = 0;
-	fd_mandelfloat_t pointr = x0 / width_; //0.0 - 1.0
-	fd_mandelfloat_t pointi = y0 / height_; //0.0 - 1.0
-	fd_mandelfloat_t four = 4.0;
+fd_mandelfloat_t zr = 0.0, zi = 0.0;
+fd_mandelfloat_t zrsqr = 0;
+fd_mandelfloat_t zisqr = 0;
+fd_mandelfloat_t pointr = x0 / width_; //0.0 - 1.0
+fd_mandelfloat_t pointi = y0 / height_; //0.0 - 1.0
+fd_mandelfloat_t four = 4.0;
 
-	while (iterations < maxIterations_ && zrsqr + zisqr <= four) {
-		zi = (zr + zr) * zi;
-		zi += pointi;
-		zr = (zrsqr - zisqr) + pointr;
+while (iterations < maxIterations_ && zrsqr + zisqr <= four) {
+	zi = (zr + zr) * zi;
+	zi += pointi;
+	zr = (zrsqr - zisqr) + pointr;
 
-		zrsqr = square(zr);
-		zisqr = square(zi);
-		++iterations;
-	}
+	zrsqr = square(zr);
+	zisqr = square(zi);
+	++iterations;
+}
 ```
 ## Considerations
 ### Mind the compiler backend
