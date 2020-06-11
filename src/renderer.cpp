@@ -69,7 +69,7 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	//because types are chosen very carefully in "types.hpp"
 	while (iterations < maxIterations_ && zrsqr + zisqr <= four) {
 		//zi = (square(zr + zi) - zrsqr) - zisqr; //equals line below as a consequence of binomial expansion
-		zi = (zr + zr)*zi;
+		zi = (zr + zr) * zi;
 		zi += ci;
 		zr = (zrsqr - zisqr) + cr;
 
