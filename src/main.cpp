@@ -184,7 +184,7 @@ bool dive(bool zoom, bool benchmark) {
 		fd_coord_t vDiff = centerOfHighDetail.second - (renderer.height_ / 2);
 
 		if (zoom) {
-			fd_float_t zoomSpeed = 0.45;
+			fd_float_t zoomSpeed = 0.40;
 			renderer.pan(hDiff / (12 / zoomSpeed), vDiff / (12 / zoomSpeed));
 			fd_float_t zf = zoomSpeed / FPS;
 			renderer.zoomAt(renderer.width_ / 2, renderer.height_ / 2, 1.0 + zf, true);
