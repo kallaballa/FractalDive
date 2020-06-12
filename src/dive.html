@@ -7,10 +7,13 @@
   <meta name="keywords" content="mandelbrot, fractal, zoom, realtime, FractalDive, C++, cross-platform, platform independent, optimization">
   <meta name="author" content="amir@viel-zu.org">
   <style>
+  html {
+    width: 100%;  
+  }
   body {
     background-color: black;
     overflow: hidden;
-    width: 95vw;
+    width: 100%;
     padding: 0;
     margin: 0;
   }
@@ -124,8 +127,8 @@
   
   #info {
     background-color: rgba(255,255,255,0.0);
-    width: 70vw;
-    height: 70vh;
+    width: 70%;
+    height: 70%;
     position: fixed;
     top: 50%;
     left: 50%;
@@ -154,7 +157,7 @@
     color: #333333;
     background-color: rgba(255,255,255,0.8);
     position: fixed;
-    width: 65vw;
+    width: 70%;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -167,19 +170,23 @@
     line-height: 2.1em;
   }
   
-  @media only screen and (max-device-width : 640px) {
+  @media only handheld, (orientation: portrait) and (max-width : 1280px) {
      #stderr {
-    top: 25em;
+    top: 19em;
+    font-size: 2.2em;
   }
 
   #stdout {
-    top: 15em;
+    top: 8em;
+    font-size: 2.2em;
   }
 
 
     #info {
-      width: 95vw;
+      width: 100%;
+      height: 100%;
     }
+
     #infoBtn {
       font-size: 2.2em;
       width: 6em;
@@ -191,10 +198,45 @@
 
     #infotext {
         font-size: 2.0em;
-        width: 92vw;
+        width: 95%;
+        height: 95%;
     }
 
   }
+
+  @media only handheld, (orientation: landscape) and (max-width : 1280px) {
+     #stderr {
+    top: 19em;
+    font-size: 1em;
+  }
+
+  #stdout {
+    top: 8em;
+    font-size: 1em;
+  }
+
+
+    #info {
+      width: 100%;
+      height: 100%;
+    }
+    #infoBtn {
+      font-size: 1em;
+      width: 6em;
+      height: 6em;
+    }
+    #debugBtn {
+      font-size: 1em;
+    }
+
+    #infotext {
+        font-size: 1em;
+        height: 95%;
+        width: 93%;
+    }
+
+  }
+
   </style>
 
 </head>
@@ -266,9 +308,9 @@
             infoBtn.onclick = function() {
                 if(info.style.visibility === "" || info.style.visibility === "hidden") {
                     info.style.visibility = "visible";
-                } else { 
-                    info.style.visibility = "hidden";
-                }
+                    infoBtn.style.visibility = "hidden";
+                    debugBtn.style.visibility = "hidden";
+                } 
             }
             
             debugBtn.onclick = function() {
@@ -286,7 +328,10 @@
             infocloseBtn.onclick = function() {
                 if(info.style.visibility === undefined || info.style.visibility === "" || info.style.visibility === "visible") {
                     info.style.visibility = "hidden";
+                    infoBtn.style.visibility = "visible";
+                    debugBtn.style.visibility = "visible";
                 }
+                
             }
 		</script>
 		<script src="dive.js"></script>
