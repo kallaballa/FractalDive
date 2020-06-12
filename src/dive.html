@@ -167,7 +167,7 @@
     line-height: 2.1em;
   }
   
-  @media only screen and (max-device-width : 480px) {
+  @media only screen and (max-device-width : 640px) {
      #stderr {
     top: 25em;
   }
@@ -178,10 +178,8 @@
 
 
     #info {
-      width: 98vw;
-      margin: auto;   
+      width: 95vw;
     }
-
     #infoBtn {
       font-size: 2.2em;
       width: 6em;
@@ -192,8 +190,8 @@
     }
 
     #infotext {
-        font-size: 2.2em;
-        width: 95vw;
+        font-size: 2.0em;
+        width: 92vw;
     }
 
   }
@@ -219,9 +217,9 @@
             This demo has been implemented using modern C++ and it's goal is to be highly optimized while being highly portable. Check it out on <a href="https://github.com/kallaballa/FractalDive">github</a>. It has been tested on many kinds of browsers, Linux (x86/armv7), MacOS and Amiga (1200/4000). In some respects it is still far from optimal.
         </div>
         </div>
-    </div>
     <button id="infoBtn">Tell me a bit about what i see</button>
     <button id="debugBtn">debug</button>
+    </div>
         <script>
             var stderr = document.getElementById('stderr');
             var stdout = document.getElementById('stdout');
