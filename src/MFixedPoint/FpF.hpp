@@ -485,11 +485,10 @@ public:
         return stream;
     }
 
-public:
+private:
 
     /// \brief		The fixed-point number is stored in this basic data type.
     BaseType rawVal_;
-
 };
 
 template<uint8_t numFracBits>

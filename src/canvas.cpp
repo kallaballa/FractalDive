@@ -39,9 +39,9 @@ void Canvas::flip() {
   }
 }
 #ifndef _NO_SHADOW
-	void Canvas::draw(image_t& image) {
+	void Canvas::draw(image_t const& image) {
 #else
-	void Canvas::draw(shadow_image_t& image) {
+	void Canvas::draw(shadow_image_t const& image) {
 #endif
 	if (SDL_MUSTLOCK(screen_))
 		SDL_LockSurface(screen_);

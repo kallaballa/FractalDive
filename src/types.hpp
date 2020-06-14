@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <cstddef>
 #include <limits>
+#include <string>
+
 
 #ifdef _FIXEDPOINT
 #include "MFixedPoint/FpF.hpp"
@@ -17,26 +19,28 @@
 
 namespace fractaldive {
 #ifndef _AMIGA
-	typedef int32_t fd_coord_t;
-	typedef uint32_t fd_dim_t;
+	typedef int64_t fd_coord_t;
+	typedef uint64_t fd_dim_t;
 #else
 	typedef int16_t fd_coord_t;
 	typedef uint16_t fd_dim_t;
 #endif
 
-	//we have no real-world example where float precision is exceeded hence the default
-	typedef float fd_float_t;
+	typedef double fd_float_t;
 
 #ifdef _FIXEDPOINT
 	#ifdef _AMIGA
 	//on 000, 020 and 030 the multiplication of a 8bit+8bit in square translates to "muls.w d0,d0" and the precision seems to be enough for what we can achieve there
 	typedef mn::MFixedPoint::FpF16<8> fd_mandelfloat_t;
+	constexpr char FD_PRECISION[] = "8bit/8bit";
 	#else
 	//Enough precision on all real-world examples we tested.
 	typedef mn::MFixedPoint::FpF32<16> fd_mandelfloat_t;
+	constexpr char FD_PRECISION[] = "16bit/16bit";
 	#endif
 #else
-	typedef fd_float_t fd_mandelfloat_t;
+	typedef double fd_mandelfloat_t;
+	constexpr char FD_PRECISION[] = "double";
 #endif
 
 #ifndef _NO_SHADOW
@@ -67,6 +71,7 @@ namespace fractaldive {
 #else
 	typedef uint32_t fd_highres_tick_t;
 #endif
+
 }
 
 #endif /* SRC_TYPES_HPP_ */

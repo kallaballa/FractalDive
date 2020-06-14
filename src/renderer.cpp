@@ -21,8 +21,8 @@ void Renderer::render(const bool& shadowOnly) {
 			ThreadPool& tpool = ThreadPool::getInstance();
 			size_t tpsize = tpool.size();
 			//slice the image into vertical stripes
-			fd_dim_t sliceHeight = std::floor(fd_float_t(height_) / tpsize);
-			fd_dim_t remainder = (height_ % sliceHeight);
+			fd_dim_t sliceHeight = std::floor(fd_float_t(HEIGHT_) / tpsize);
+			fd_dim_t remainder = (HEIGHT_ % sliceHeight);
 			fd_dim_t extra = 0;
 			for (size_t i = 0; i < tpsize; ++i) {
 				if (i == (tpsize - 1) && remainder > 0)
@@ -30,6 +30,8 @@ void Renderer::render(const bool& shadowOnly) {
 
 				//start a worker thread
 				tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra, const bool& shadowOnly) {
+					TimeTracker& tt = TimeTracker::getInstance();
+
 					fd_iter_count_t iterations = 0;
 					size_t index = 0;
 					for (fd_dim_t y = sliceHeight * i; y < (sliceHeight * (i + 1)) + extra; y++) {
@@ -37,9 +39,8 @@ void Renderer::render(const bool& shadowOnly) {
 							tt.execute("dive.render.mandelbrot", [&](){
 								iterations = mandelbrot(x, y);
 							});
-
 							tt.execute("dive.render.calcIndex", [&](){
-								index = calculatePaletteIndex(iterations, maxIterations_);
+								index = calculatePaletteIndex(iterations, getMaxIterations());
 							});
 
 							tt.execute("dive.render.colorPixel", [&](){
@@ -47,13 +48,13 @@ void Renderer::render(const bool& shadowOnly) {
 							});
 						}
 					}
-				}, i, width_, sliceHeight, extra, shadowOnly);
+				}, i, WIDTH_, sliceHeight, extra, shadowOnly);
 			}
 		} else {
 			fd_iter_count_t iterations = 0;
 			size_t index = 0;
-			for (fd_dim_t y = 0; y < height_; y++) {
-				for (fd_dim_t x = 0; x < width_; x++) {
+			for (fd_dim_t y = 0; y < HEIGHT_; y++) {
+				for (fd_dim_t x = 0; x < WIDTH_; x++) {
 					tt.execute("dive.render.mandelbrot", [&](){
 						iterations = mandelbrot(x, y);
 					});
@@ -84,8 +85,8 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	fd_mandelfloat_t zr = 0.0, zi = 0.0;
 	fd_mandelfloat_t zrsqr = 0;
 	fd_mandelfloat_t zisqr = 0;
-	fd_mandelfloat_t pointr = x0 / width_; //0.0 - 1.0
-	fd_mandelfloat_t pointi = y0 / height_; //0.0 - 1.0
+	fd_mandelfloat_t pointr = x0 / WIDTH_; //0.0 - 1.0
+	fd_mandelfloat_t pointi = y0 / HEIGHT_; //0.0 - 1.0
 	fd_mandelfloat_t four = 4.0;
 
 	//Algebraically optimized version that uses addition/subtraction as often as possible while reducing multiplications
@@ -99,12 +100,13 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 
 		zrsqr = square(zr);
 		zisqr = square(zi);
+
 		++iterations;
 	}
 #else
 	float x0 = (x + offsetx_ + panx_) / (zoom_ / 10);
 	float y0 = (y + offsety_ + pany_) / (zoom_ / 10);
-	std::complex<float> point(x0/width_, y0/height_);
+	std::complex<float> point(x0/WIDTH_, y0/HEIGHT_);
 	std::complex<float> z(0, 0);
 	fd_iter_count_t iterations = 0;
 	while (abs (z) < 2 && iterations < maxIterations_) {
@@ -133,11 +135,14 @@ size_t Renderer::calculatePaletteIndex(const fd_iter_count_t& iterations,	const 
 	return index;
 }
 
+/*
+ * FIXME: Thread safety
+ */
 void Renderer::colorPixelAt(const fd_coord_t& x, const fd_coord_t& y, const size_t& index, const fd_iter_count_t& iterations, const bool& shadowOnly) {
 #ifndef _NO_SHADOW
 		fd_image_pix_t color;
 		get_color_from_palette(color, index);
-		size_t pixelindex = (y * width_ + x);
+		size_t pixelindex = (y * WIDTH_ + x);
 
 		// Apply the argb color
 		if (!shadowOnly) {
@@ -146,9 +151,9 @@ void Renderer::colorPixelAt(const fd_coord_t& x, const fd_coord_t& y, const size
 
 		//cheap greyscale. we don't need perceptual acuity to measure detail.
 		assert(index < 256);
-		shadowdata_[pixelindex] = index;
+		shadowData_[pixelindex] = index;
 #else
-		size_t pixelindex = (y * width_ + x);
+		size_t pixelindex = (y * WIDTH_ + x);
 		// Apply the color
 			if (index == 0) {
 				imgdata_[pixelindex] = 0;
@@ -165,6 +170,7 @@ void Renderer::colorPixelAt(const fd_coord_t& x, const fd_coord_t& y, const size
 
 // Zoom the fractal
 void Renderer::zoomAt(const fd_coord_t& x, const fd_coord_t& y, const fd_float_t& factor, const bool& zoomin) {
+	std::cerr << "F:" << factor << std::endl;
 	if (zoomin) {
 		// Zoom in
 		zoom_ *= factor;
@@ -178,31 +184,40 @@ void Renderer::zoomAt(const fd_coord_t& x, const fd_coord_t& y, const fd_float_t
 	}
 }
 
+void Renderer::resetSmoothPan() {
+	panHistoryX_.clear();
+	panHistoryY_.clear();
+}
+
 void Renderer::initSmoothPan(const fd_coord_t& x, const fd_coord_t& y) {
-	panHistoryX_.pop_back();
-	panHistoryY_.pop_back();
-	panHistoryX_.push_front(x);
-	panHistoryY_.push_front(y);
+	panHistoryX_.resize(panSmoothLen_);
+	panHistoryY_.resize(panSmoothLen_);
 
-	fd_float_t xstep = (x / PAN_HIST_LENGTH);
-	fd_float_t ystep = (y / PAN_HIST_LENGTH);
+	fd_float_t xstep = (x / panSmoothLen_);
+	fd_float_t ystep = (y / panSmoothLen_);
 
-	for(size_t i = 0; i < PAN_HIST_LENGTH; ++i) {
-		panHistoryX_[i] = xstep * i;
+	for(size_t i = 0; i < panSmoothLen_; ++i) {
+		panHistoryX_[i] = (xstep * i);
 	}
 
-	for(size_t i = 0; i < PAN_HIST_LENGTH; ++i) {
-		panHistoryY_[i] = ystep * i;
+	for(size_t i = 0; i < panSmoothLen_; ++i) {
+		panHistoryY_[i] = (ystep * i);
 	}
 }
 
 std::pair<fd_coord_t, fd_coord_t> Renderer::smoothPan(const fd_coord_t& x, const fd_coord_t& y) {
+	assert((panHistoryX_.empty() && panHistoryY_.empty()) || (!panHistoryX_.empty() && !panHistoryY_.empty()));
+	if(panHistoryX_.empty()) {
+		initSmoothPan(x,y);
+	}
+
 	panHistoryX_.pop_back();
 	panHistoryY_.pop_back();
 	panHistoryX_.push_front(x);
 	panHistoryY_.push_front(y);
 
 	fd_coord_t xhtotal = 0;
+
 	for(const auto& xh : panHistoryX_) {
 		xhtotal += xh;
 	}
@@ -212,11 +227,13 @@ std::pair<fd_coord_t, fd_coord_t> Renderer::smoothPan(const fd_coord_t& x, const
 		yhtotal += yh;
 	}
 
-	return {xhtotal / 5.0, yhtotal / 5.0};
+	return {fd_float_t(xhtotal) / panSmoothLen_, fd_float_t(yhtotal) / panSmoothLen_};
 }
 
 // Pan the fractal
 void Renderer::pan(const fd_coord_t& x, const fd_coord_t& y) {
+	std::cerr << "P:" << x << " \t" << y << std::endl;
+
 	auto ft = smoothPan(x,y);
 	panx_ += ft.first;
 	pany_ += ft.second;

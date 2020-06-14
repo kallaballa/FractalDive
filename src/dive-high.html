@@ -6,7 +6,7 @@
   <meta name="description" content="A demonstration of the beauty of the mandelbrot set implemented as a real-time zoom.">
   <meta name="keywords" content="mandelbrot, fractal, zoom, realtime, FractalDive, C++, cross-platform, platform independent, optimization">
   <meta name="author" content="amir@viel-zu.org">
-  <meta name="viewport" content="width=768">
+  <meta name="viewport" content="width=1024">
   <style>
 ::-webkit-scrollbar {
     -webkit-appearance: none;
@@ -75,20 +75,20 @@
  }
  
  #bgcanvas0 {
-    width: 768px; 
-    height: 768px; 
+    width: 1024px; 
+    height: 1024px; 
     opacity: 0.25;
  }
 
  #bgcanvas1 {
-    width: 512px; 
-    height: 512px; 
+    width: 768px; 
+    height: 768px; 
     opacity: 0.5;
  }
 
  #canvas {
-    width: 256px;
-    height: 256px;
+    width: 512px;
+    height: 512px;
  }
 
  #stderr {
@@ -199,7 +199,7 @@
     line-height: 2.1em;
   }
   
-  @media only handheld, (orientation: portrait) and (max-width : 1024px) {
+  @media only handheld, (orientation: portrait) and (max-width : 1280px) {
      #stderr {
     top: 19em;
     font-size: 2.2em;
@@ -210,34 +210,36 @@
     font-size: 2.2em;
   }
 
+
     #info {
       width: 100%;
       height: 100%;
     }
 
     #infoBtn {
-      left: 6em;
-      font-size: 1.6em;
-      width: calc(100% - 12em);
-      min-width: calc(100% - 12em);
+      left: 0.5em;
+      font-size: 3.2em;
+      width: calc(100% - 1.5em);
+      min-width: calc(100% - 1em);
       max-height: 3em;
+
     }
     #infocloseBtn {
-      font-size: 3em
+      font-size: 2em
     }
     #debugBtn {
       font-size: 2.2em;
     }
 
     #infotext {
-        font-size: 1em;
+        font-size: 2em;
         height: calc(100% - 2em);
         width: calc(100% - 2em);
    }
 
   }
 
-  @media only handheld, (orientation: landscape) and (max-width : 1024px) {
+  @media only handheld, (orientation: landscape) and (max-width : 1280px) {
      #stderr {
     top: 19em;
     font-size: 1em;
@@ -257,10 +259,8 @@
       top: 0.5em;
       left: 0.5em;
       font-size: 1.4em;
-      width: 5.0em;
       max-width: 5.0em;
       min-height: calc(100% - 1em);
-      max-height: calc(100% - 1em);
 
     }
     #debugBtn {
@@ -268,7 +268,7 @@
     }
 
     #infocloseBtn {
-      font-size: 1.8em;
+      font-size: 2em;
     }
 
 

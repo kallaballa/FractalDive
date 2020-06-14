@@ -8,7 +8,7 @@ ifdef JAVASCRIPT_MT
 TARGET := dive.js
 endif
 
-SRCS  := main.cpp renderer.cpp canvas.cpp threadpool.cpp printer.cpp timetracker.cpp   
+SRCS  := main.cpp renderer.cpp canvas.cpp threadpool.cpp printer.cpp timetracker.cpp config.cpp 
 ifndef JAVASCRIPT
 ifndef JAVASCRIPT_MT
 ifndef AMIGA

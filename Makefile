@@ -47,6 +47,28 @@ ifdef NOTHREADS
 CXXFLAGS += -D_NO_THREADS
 endif
 
+ifdef LOWRES
+CXXFLAGS += -D_LOW_RES
+else
+  ifdef HIGHRES
+CXXFLAGS += -D_HIGH_RES
+  endif
+endif
+
+ifdef SLOWZOOM
+CXXFLAGS += -D_SLOW_ZOOM
+else
+  ifdef FASTZOOM
+CXXFLAGS += -D_FAST_ZOOM
+  else
+    ifdef FASTERZOOM
+CXXFLAGS += -D_FASTER_ZOOM
+    endif
+  endif
+endif
+
+
+
 ifdef JAVASCRIPT_MT
 JAVASCRIPT=1
 CXXFLAGS += -D_JAVASCRIPT_MT -s USE_PTHREADS=1 -s PROXY_TO_PTHREAD
@@ -66,13 +88,14 @@ CXX	:= em++
 # defines
 EMFLAGS = -DNDEBUG -D_JAVASCRIPT -flto
 # emscripteb options
-EMFLAGS +=  -s INITIAL_MEMORY=33554432 -s ASYNCIFY
+EMFLAGS +=  -s INITIAL_MEMORY=104857600 -s ASYNCIFY -s DISABLE_EXCEPTION_CATCHING=1 -s TOTAL_STACK=52428800
+
 
 ifdef AUTOVECTOR
 EMFLAGS += -msimd128
 endif
 
-CXXFLAGS += $(EMFLAGS) 
+CXXFLAGS += $(EMFLAGS) -c
 LDFLAGS += $(EMFLAGS)
 endif
 
@@ -114,8 +137,12 @@ info: CXXFLAGS += -g3 -O0
 info: LDFLAGS += -Wl,--export-dynamic -rdynamic
 info: dirs
 
-debug: CXXFLAGS += -g3 -O0 -rdynamic
-debug: LDFLAGS += -Wl,--export-dynamic -rdynamic
+ifndef JAVASCRIPT
+debug: CXXFLAGS += -rdynamic
+debug: LDFLAGS += -rdynamic
+endif
+debug: CXXFLAGS += -g3 -O0
+debug: LDFLAGS += -Wl,--export-dynamic
 debug: dirs
 
 profile: CXXFLAGS += -g3 -O3 
@@ -130,7 +157,7 @@ endif
 profile: dirs
 
 ifdef JAVASCRIPT
-hardcore: CXXFLAGS += -c -g0 -O3 -ffp-contract=fast -freciprocal-math -fno-signed-zeros --closure 1 --llvm-opts "['-menable-no-infs', '-menable-no-nans', '-menable-unsafe-fp-math']" 
+hardcore: CXXFLAGS += -g0 -O3 -ffp-contract=fast -freciprocal-math -fno-signed-zeros --closure 1 --llvm-opts "['-menable-no-infs', '-menable-no-nans', '-menable-unsafe-fp-math']" 
 else
 hardcore: CXXFLAGS += -g0 -Ofast
 endif
@@ -139,9 +166,18 @@ hardcore: LDFLAGS += -s
 #endif
 hardcore: dirs
 
-asan: CXXFLAGS += -g3 -O0 -rdynamic -fno-omit-frame-pointer -fsanitize=address
-asan: LDFLAGS += -Wl,--export-dynamic -fsanitize=address
+ifdef JAVASCRIPT
+asan: CXXFLAGS += -fsanitize=undefined -s STACK_OVERFLOW_CHECK=2 -s ASSERTIONS=2 -s SAFE_HEAP=1
+asan: LDFLAGS += -fsanitize=undefined -s STACK_OVERFLOW_CHECK=2 -s ASSERTIONS=2 -s SAFE_HEAP=1
+else
+debug: CXXFLAGS += -rdynamic -fsanitize=address
+debug: LDFLAGS += -rdynamic -fsanitize=address
+endif
+asan: CXXFLAGS += -g3 -O0 -fno-omit-frame-pointer
+asan: LDFLAGS += -Wl,--export-dynamic
+ifndef JAVASCRIPT
 asan: LIBS+= -lbfd -ldw
+endif
 asan: dirs
 
 clean: dirs

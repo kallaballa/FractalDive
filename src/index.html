@@ -1,9 +1,14 @@
 <html>
+  <head>
+  </head>
 	<body id="body" style="width: 98vw; height:98vh; background-color: black;">
     <script src="wasm-detect.js"></script>
 	<script>
             var threading = typeof Atomics !== 'undefined' && typeof SharedArrayBuffer !== 'undefined';
-                
+            var w = screen.availWidth;
+            var h = screen.availHeight;
+            var lowres = Math.max(w,h) < 960;
+            var highres = false;// Math.max(w,h) >= 1600; 
 //             wasmFeatureDetect.simd().then(simdSupported => {
 //                 if (simdSupported) {
 //                     if(threading) {
@@ -14,10 +19,23 @@
 //                         window.location.href = "/dive-simd/dive.html" 
 //                     }
 //                 } else {
+
                     if(threading) {
-                        window.location.href = "/dive-mt/dive.html"
+                        if(lowres) {
+                          window.location.href = "/dive-mt-low/dive.html"
+                        } else if(highres) {
+                          window.location.href = "/dive-mt-high/dive.html"
+                        } else {
+                          window.location.href = "/dive-mt/dive.html"
+                        }
                     } else {
-                        window.location.href = "/dive/dive.html"
+                        if(lowres) {
+                          window.location.href = "/dive-low/dive.html"
+                        } else if(highres) {
+                          window.location.href = "/dive-high/dive.html"
+                        } else {
+                          window.location.href = "/dive/dive.html"
+                        }
                     }
 //                 }
 //             });

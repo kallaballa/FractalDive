@@ -65,11 +65,6 @@ private:
 	 std::mutex mapMtx;
 #endif
 	TimeTracker();
-
-	std::string pad_string(std::string s, size_t num) {
-		s.append(num - s.length(), ' ');
-		return s;
-	}
 public:
 	virtual ~TimeTracker();
 

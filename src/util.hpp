@@ -47,5 +47,10 @@ inline void sleep_millis(uint32_t millis) {
 	SDL_Delay(millis);
 #endif
 }
+
+inline std::string pad_string(std::string s, size_t num) {
+	s.append(num - s.length(), ' ');
+	return s;
+}
 }
 #endif /* SRC_UTIL_HPP_ */

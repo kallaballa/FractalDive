@@ -96,6 +96,11 @@ public:
 		stop();
 	}
 
+	size_t taskCount() {
+		std::unique_lock<std::mutex> lock(queue_mutex_);
+		return tasks_.size();
+	}
+
 	void stop() {
 		{
 			std::unique_lock<std::mutex> lock(queue_mutex_);

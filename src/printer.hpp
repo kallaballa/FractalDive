@@ -77,7 +77,7 @@ public:
 		print(tail...);
 #else
 		std::cerr << t << ' ';
-		print(tail...);
+		printErr(tail...);
 #endif
 	}
 };

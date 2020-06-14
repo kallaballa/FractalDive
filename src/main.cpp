@@ -25,35 +25,19 @@
 
 #include "printer.hpp"
 #include "threadpool.hpp"
-#include "types.hpp"
+#include "config.hpp"
 #include "renderer.hpp"
 #include "canvas.hpp"
 #include "timetracker.hpp"
 #include "util.hpp"
 
 using namespace fractaldive;
-#ifndef _AMIGA
-constexpr fd_dim_t WIDTH = 256;
-constexpr fd_dim_t HEIGHT = 256;
-#else
-constexpr fd_dim_t WIDTH = 30;
-constexpr fd_dim_t HEIGHT = 30;
-#endif
 
-#ifndef _AMIGA
-constexpr size_t FPS = 24;
-#else
-constexpr size_t FPS = 6;
-#endif
+Config& CONFIG = Config::getInstance();
+Renderer RENDERER(CONFIG.width_, CONFIG.height_, CONFIG.startIterations_, CONFIG.zoomFactor_, CONFIG.panSmoothLen_);
+Canvas CANVAS(CONFIG.width_, CONFIG.height_, false);
 
-constexpr fd_dim_t FRAME_SIZE = WIDTH * HEIGHT;
-
-fd_iter_count_t max_iterations = 100;
-
-fractaldive::Renderer renderer(WIDTH, HEIGHT, max_iterations);
-fractaldive::Canvas canvas(WIDTH, HEIGHT, false);
 bool do_run = true;
-
 
 
 fd_float_t entropy(const shadow_image_t& greyImage, const size_t& size) {
@@ -91,35 +75,36 @@ fd_float_t numberOfColors(const shadow_image_t& greyImage, const size_t& size) {
 }
 
 fd_float_t numberOfChanges(const shadow_image_t& greyImage, const size_t& size) {
-	size_t numChanges = 0;
+	fd_float_t numChanges = 0;
 	fd_shadow_pix_t last = 0;
-
 	for (size_t i = 0; i < size; i++) {
 		const fd_shadow_pix_t& p = greyImage[i];
-		if(p == 0 && numChanges > 0) {
-			--numChanges;
-		} else if (last != p) {
+		if (last != p) {
 			++numChanges;
 		}
 		last = p;
 	}
-	return (fd_float_t(numChanges) / size);
+
+	return (fd_float_t(numChanges) / fd_float_t(size));
 }
 
-fd_float_t measureDetail(const shadow_image_t& greyImage, const size_t& size) {
+fd_float_t measureDetail(const shadow_image_t greyImage, const size_t& size) {
 	return numberOfChanges(greyImage, size);
 }
 
 std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_coord_t& numTilesX,
-		const fd_coord_t& numTilesY, const bool& favourCenter = false) {
-	const fd_coord_t tileW = std::floor(fd_float_t(renderer.width_) / numTilesX);
-	const fd_coord_t tileH = std::floor(fd_float_t(renderer.height_) / numTilesY);
+		const fd_coord_t& numTilesY) {
+	assert(numTilesX > 1);
+	assert(numTilesY > 1);
+
+	const fd_coord_t tileW = std::floor(fd_float_t(CONFIG.width_) / fd_float_t(numTilesX));
+	const fd_coord_t tileH = std::floor(fd_float_t(CONFIG.height_) / fd_float_t(numTilesY));
+	const size_t tileSize = tileW * tileH;
 	assert(tileW > 1);
 	assert(tileH > 1);
-	assert(favourCenter ? (numTilesX >= 5 && numTilesY >= 5) : true);
 
-	const auto& shadowImage = renderer.shadowdata_;
-	fd_shadow_pix_t tile[FRAME_SIZE];
+	const auto& shadowImage = RENDERER.shadowData_;
+	std::vector<fd_shadow_pix_t> tile(tileSize);
 
 	std::vector<fd_float_t> tileScores;
 	fd_float_t candidateScore = 0;
@@ -129,22 +114,23 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_c
 	//iterate over tiles
 	for (fd_coord_t ty = 0; ty < numTilesY; ++ty) {
 		for (fd_coord_t tx = 0; tx < numTilesX; ++tx) {
-			const fd_coord_t offY = tileH * ty * renderer.width_;
+			const fd_coord_t offY = tileH * ty * CONFIG.width_;
 			const fd_coord_t offX = tileW * tx;
 
 			//iterate over pixels of the tile
 			for (fd_coord_t y = 0; y < tileH; ++y) {
 				for (fd_coord_t x = 0; x < tileW; ++x) {
-					const size_t pixIdx = (offY + (y * renderer.width_)) + (offX + x);
+					const size_t pixIdx = (offY + (y * CONFIG.width_)) + (offX + x);
 					tile[y * tileW + x] = shadowImage[pixIdx];
 				}
 			}
 
-			fd_float_t noiseWet = 0.7;
-			fd_float_t txf = 1.0 - std::fabs(0.5 - fd_float_t(tx) / (fd_float_t(numTilesX - 1)));
-			fd_float_t tyf = 1.0 - std::fabs(0.5 - fd_float_t(ty) / (fd_float_t(numTilesY - 1)));
-			fd_float_t noise = (static_cast <fd_float_t> (rand()) / static_cast <float> (RAND_MAX)) * noiseWet;
-			fd_float_t score = measureDetail(tile, tileW * tileH) * (1.0 - noise) * (txf + tyf);
+			fd_float_t noiseAmount = 0.7;
+			//calculate weighting of tiles to favour the center
+			fd_float_t txf = 0.5; //std::fabs(0.5 - fd_float_t(tx) / (fd_float_t(numTilesX - 1)));
+			fd_float_t tyf = 0.5; //std::fabs(0.5 - fd_float_t(ty) / (fd_float_t(numTilesY - 1)));
+			fd_float_t noise = (static_cast <fd_float_t> (rand()) / static_cast <float> (RAND_MAX)) * noiseAmount;
+			fd_float_t score = (measureDetail(tile.data(), tileW * tileH) * (txf + tyf)) * (1.0 - noise) ;
 			if (score > candidateScore) {
 				candidateScore = score;
 				candidateTx = tx;
@@ -152,92 +138,96 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_c
 			}
 		}
 	}
-
 //	candidateTx = rand() % 2 ? rand() % numTilesX : candidateTx;
 //	candidateTy = rand() % 2 ? rand() % numTilesY : candidateTy;
 	return {(candidateTx * tileW) + (tileW / 2), (candidateTy * tileH) + (tileH / 2)};
 }
 
+std::pair<fd_coord_t,fd_coord_t> calculatePanVector(const fd_coord_t& x, const fd_coord_t& y) {
+	fd_float_t hDiff = x - std::floor(CONFIG.width_ / 2.0);
+	fd_float_t vDiff = x - std::floor(CONFIG.height_ / 2.0);
+	fd_float_t scale = 30 * (1.0 / CONFIG.width_);
+	fd_coord_t panX = (hDiff * scale);
+	fd_coord_t panY = (vDiff * scale);
+	return {panX, panY};
+}
+
 bool dive(bool zoom, bool benchmark) {
+
 	TimeTracker& tt = TimeTracker::getInstance();
-	bool result;
+	bool result = true;
+
 	tt.execute("dive", [&]() {
-		fd_float_t detail;
+		fd_float_t detail = 0;
 		tt.execute("dive.measureDetail", [&]() {
-			detail = measureDetail(renderer.shadowdata_, renderer.width_ * renderer.height_);
+			detail = measureDetail(RENDERER.shadowData_, CONFIG.frameSize_);
 		});
-		if (!benchmark && detail < 0.00001) {
+
+		std::cerr << "detail:" << detail << std::endl;
+		if (!benchmark && detail < CONFIG.detailThreshold_) {
+			std::cerr << "Bail" << std::endl;
 #ifdef _JAVASCRIPT
-			renderer.reset();
-			renderer.render();
+			RENDERER.reset();
+			RENDERER.resetSmoothPan();
+			RENDERER.render();
 			//		emscripten_cancel_main_loop();
 #endif
 			result = false;
 			return;
 		}
-		std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
-		tt.execute("dive.findCenter", [&]() {
-			centerOfHighDetail = identifyCenterOfTileOfHighestDetail(5, 5, true);
-		});
-
-		fd_coord_t hDiff = centerOfHighDetail.first - (renderer.width_ / 2);
-		fd_coord_t vDiff = centerOfHighDetail.second - (renderer.height_ / 2);
-
 		if (zoom) {
-			fd_float_t zoomSpeed = 0.40;
-			renderer.pan(hDiff / (12 / zoomSpeed), vDiff / (12 / zoomSpeed));
-			fd_float_t zf = zoomSpeed / FPS;
-			renderer.zoomAt(renderer.width_ / 2, renderer.height_ / 2, 1.0 + zf, true);
+			std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
+			tt.execute("dive.findCenter", [&]() {
+				centerOfHighDetail = identifyCenterOfTileOfHighestDetail(5, 5);
+			});
+			tt.execute("dive.zoom", [&]() {
+				const auto& pv = calculatePanVector(centerOfHighDetail.first, centerOfHighDetail.second);
+				fd_float_t zoomFactor = 1.0 + (CONFIG.zoomSpeed_ / CONFIG.fps_);
+				RENDERER.pan(pv.first, pv.second);
+				RENDERER.zoomAt(CONFIG.width_ / 2.0, CONFIG.height_ / 2.0, zoomFactor, true);
+			});
 		}
 
-		renderer.render();
+		RENDERER.render();
 
 		tt.execute("dive.draw", [&]() {
-			canvas.draw(renderer.imgdata_);
+			CANVAS.draw(RENDERER.imgdata_);
 		});
 		result = true;
 	});
 	return result;
 }
-//automatic benchmark and
+
 void auto_scale_max_iterations() {
+
 	auto start = get_milliseconds();
-#ifndef _AMIGA
-	fd_float_t prescale = 2.0;
-#else
-	fd_float_t prescale = 0.02;
-#endif
+	auto duration = start;
 
-#ifndef _NO_TIMETRACK
-	prescale /= 10.0;
-#endif
-
-	fd_float_t postscale = 1.0 / prescale;
-
-	for (size_t i = 0; i < std::ceil(100.0 * prescale); ++i) {
+	size_t cnt = 0;
+	while ((duration = (get_milliseconds() - start)) < CONFIG.benchmarkTimeoutMillis_) {
 		dive(false, true);
+		++cnt;
 	}
 
-	auto duration = get_milliseconds() - start;
-	renderer.reset();
+ 	RENDERER.reset();
+	fd_float_t fpsMillis = 1000.0 / CONFIG.fps_;
 
-	fd_float_t fpsMillis = 1000.0 / FPS;
-	fd_float_t millisRatio = (pow(duration * postscale, 1.20) / fpsMillis);
+	fd_float_t millisRatio = (pow(duration / (cnt / 20.0), 1.0 + (CONFIG.frameSize_ / ( 327680.0 * (CONFIG.width_ / 256.0)))) / fpsMillis);
 #ifndef _FIXEDPOINT
-	fd_iter_count_t iterations = (max_iterations / millisRatio) * 50.0;
+	fd_iter_count_t iterations = (CONFIG.startIterations_ / millisRatio) * 10.0;
 #else
-	fd_iter_count_t iterations = (max_iterations.ToFloat() / millisRatio) * 50.0;
+	fd_iter_count_t iterations = (CONFIG.startIterations_.ToFloat() / millisRatio) * 10.0;
 #endif
 
 #ifdef _JAVASCRIPT_MT
-	iterations = (iterations * (ThreadPool::cores() - 2));
+	iterations = (iterations * (ThreadPool::cores() - 1));
 #endif
 
-#ifndef _FIXEDPOINT
-	renderer.setMaxIterations(fmax(round(iterations), 3.0));
-#else
-	renderer.setMaxIterations(fmax(round(iterations.ToFloat()), 3.0));
-#endif
+	if(iterations < CONFIG.minIterations_)
+			CONFIG.fps_ = std::min(std::floor(CONFIG.fps_ * (iterations / CONFIG.minIterations_)),1.0);
+
+	iterations = std::min(CONFIG.maxIterations_, std::max(std::ceil(iterations), CONFIG.minIterations_));
+	RENDERER.setMaxIterations(iterations);
 }
 
 bool step() {
@@ -245,14 +235,14 @@ bool step() {
 	bool result = dive(true, false);
 	auto duration = get_milliseconds() - start;
 
-	int32_t targetMillis = 1000.0 / FPS;
+	int32_t targetMillis = 1000.0 / CONFIG.fps_;
 	int32_t diff = targetMillis - duration;
 
 	if(result) {
 		if (diff > 0) {
 			sleep_millis(diff);
 		} else if (diff < 0)
-			printErr("Underrun: ", std::abs(diff));
+			print("Underrun: ", std::abs(diff));
 	}
 	return result;
 }
@@ -261,67 +251,86 @@ bool step() {
 void js_step() {
 	step();
 #ifndef _NO_TIMETRACK
-	printErr(tt.str());
-	tt.epoch();
+	printErr(TimeTracker::getInstance().str());
+	TimeTracker::getInstance().epoch();
 #endif
 }
 #endif
 
-void printInfo() {
-	print("Threads:", ThreadPool::cores());
+void printReport() {
+	print("#####");
+	print("# SETTINGS");
+	size_t padWidth = 20;
+	print(pad_string("Width:", padWidth), CONFIG.width_);
+	print(pad_string("Height:", padWidth), CONFIG.height_);
+	print(pad_string("Zoom speed:", padWidth), CONFIG.zoomSpeed_);
+	print(pad_string("Benchmark timeout:", padWidth), CONFIG.benchmarkTimeoutMillis_, "ms");
+
+	print("");
+	print("# FEATURES");
+	print(pad_string("Threads:", padWidth), ThreadPool::cores());
 #ifdef _AUTOVECTOR
-	print("Auto Vector/SIMD: on");
+	print(pad_string("Auto Vector/SIMD:", padWidth),"on");
 #else
-	print("Auto Vector/SIMD: off");
+	print(pad_string("Auto Vector/SIMD:", padWidth),"off");
 #endif
 
 #ifdef _FIXEDPOINT
-	print("Arithmetic: fixed point");
+	print(pad_string("Arithmetic:", padWidth),"fixed point");
 #else
-	print("Arithmetic: floating point");
+	print(pad_string("Arithmetic:", padWidth),"floating point");
 #endif
-	print("Max iterations:", renderer.getMaxIterations());
+	print(pad_string("Precision:", padWidth),FD_PRECISION);
+	print("");
+
+	print("# SCALING");
+	print(pad_string("FPS:", padWidth), CONFIG.fps_);
+	print(pad_string("Max iterations:", padWidth), RENDERER.getMaxIterations(), "of", CONFIG.maxIterations_);
+	print(pad_string("Detail threshold:", padWidth), CONFIG.detailThreshold_);
+	print(pad_string("Pan history:", padWidth), CONFIG.panSmoothLen_);
+	print("#####");
+
+	print("");
+
 }
 
 void run() {
 	auto_scale_max_iterations();
-	printInfo();
+	printReport();
 
 	TimeTracker& tt = TimeTracker::getInstance();
-
+	fd_highres_tick_t start = 0;
 	while (do_run) {
-		renderer.pan((rand() % WIDTH / 16) - (WIDTH / 8), (rand() % WIDTH / 16) - (WIDTH / 8));
-		renderer.render();
-		std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
-		tt.execute("dive.findCenter", [&]() {
-			centerOfHighDetail = identifyCenterOfTileOfHighestDetail(5, 5, true);
-		});
-
-		fd_coord_t hDiff = centerOfHighDetail.first - (renderer.width_ / 2);
-		fd_coord_t vDiff = centerOfHighDetail.second - (renderer.height_ / 2);
-
-		fd_float_t zoomSpeed = 0.45;
-		fd_coord_t panX = hDiff / (12 / zoomSpeed);
-		fd_coord_t panY = vDiff / (12 / zoomSpeed);
-
-		renderer.initSmoothPan(panX, panY);
-		renderer.pan(panX, panY);
-		renderer.render();
+		start = get_milliseconds();
+		RENDERER.reset();
+		RENDERER.resetSmoothPan();
+		RENDERER.pan(0,0);
+		RENDERER.render(true);
+		fd_float_t detail = measureDetail(RENDERER.shadowData_, CONFIG.frameSize_);
+		if(detail > CONFIG.detailThreshold_) {
+			print("Init:", detail);
 #ifdef _JAVASCRIPT
-		emscripten_set_main_loop(js_step, 0, 1);
+			emscripten_set_main_loop(js_step, 0, 1);
 #else
-		bool stepResult = true;
-		while (do_run && stepResult) {
-			stepResult = step();
+
+			bool stepResult = true;
+			while (do_run && stepResult) {
+				stepResult = step();
 #ifndef _NO_TIMETRACK
-			printErr(tt.str());
-			tt.epoch();
+				printErr(tt.str());
+				tt.epoch();
 #endif
+			}
+#endif
+			print("Duration:", (get_milliseconds() - start) / 1000.0, "seconds");
+		} else {
+			print("Skip:", detail);
+			sleep_millis(1000.0 / CONFIG.fps_);
 		}
-		renderer.reset();
-#endif
 	}
+#ifndef _NO_THREADS
 	ThreadPool::getInstance().stop();
+#endif
 	SDL_Quit();
 }
 
@@ -339,10 +348,10 @@ void sigint_handler(int sig) {
 #endif
 
 int main() {
-	assert(WIDTH >= 16 && is_power_of_two(WIDTH));
-	assert(HEIGHT >= 16 && is_power_of_two(HEIGHT));
-	assert(max_iterations > 3);
-	assert(FPS > 0);
+	assert(CONFIG.width_ >= 16 && is_power_of_two(CONFIG.width_));
+	assert(CONFIG.height_ >= 16 && is_power_of_two(CONFIG.height_));
+	assert(CONFIG.startIterations_ > 3);
+	assert(CONFIG.fps_ > 0);
 
 	srand(time(NULL));
 #ifndef _JAVASCRIPT
