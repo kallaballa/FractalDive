@@ -26,7 +26,7 @@ public:
 	fd_float_t fps_ = 0;
 
 	static Config& getInstance() {
-		if(instance_ == nullptr)
+		if (instance_ == nullptr)
 			instance_ = new Config();
 
 		return *instance_;

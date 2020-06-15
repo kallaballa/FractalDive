@@ -26,14 +26,16 @@ private:
 	std::stringstream buffer_;
 #endif
 
-	Printer() {};
-	virtual ~Printer() {};
+	Printer() {
+	}
+	virtual ~Printer() {
+	}
 public:
 	static Printer& getInstance() {
 #ifndef _NO_THREADS
 		std::unique_lock<std::mutex> lock(instanceMtx_);
 #endif
-		if(instance_ == nullptr)
+		if (instance_ == nullptr)
 			instance_ = new Printer();
 
 		return *instance_;
@@ -83,13 +85,13 @@ public:
 };
 
 template<typename T, typename ...TAIL>
-	void print(const T &t, TAIL ... tail) {
-		Printer::getInstance().print(t, tail...);
+void print(const T &t, TAIL ... tail) {
+	Printer::getInstance().print(t, tail...);
 }
 
 template<typename T, typename ...TAIL>
-	void printErr(const T &t, TAIL ... tail) {
-		Printer::getInstance().printErr(t, tail...);
+void printErr(const T &t, TAIL ... tail) {
+	Printer::getInstance().printErr(t, tail...);
 }
 
 } /* namespace fractaldive */

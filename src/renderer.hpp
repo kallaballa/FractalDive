@@ -5,7 +5,6 @@
 #include <mutex>
 #include "types.hpp"
 
-
 #ifndef SRC_RENDERER_HPP_
 #define SRC_RENDERER_HPP_
 
@@ -33,18 +32,18 @@ private:
 public:
 	image_t const imageData_;
 
-	Renderer(const fd_dim_t& width, const fd_dim_t& height, const fd_iter_count_t& maxIterations, const fd_float_t& zoomFactor, const size_t& panSmoothLen) :
+	Renderer(const fd_dim_t& width, const fd_dim_t& height, const fd_iter_count_t& maxIterations,
+			const fd_float_t& zoomFactor, const size_t& panSmoothLen) :
 			WIDTH_(width),
 			HEIGHT_(height),
 			BUFFERSIZE(width * height),
 			maxIterations_(maxIterations),
-			offsetx_(-fd_float_t(width)/2.0),
-			offsety_(-fd_float_t(height)/2.0),
+			offsetx_(-fd_float_t(width) / 2.0),
+			offsety_(-fd_float_t(height) / 2.0),
 			defaultZoom_(zoomFactor),
 			zoom_(zoomFactor),
 			panSmoothLen_(panSmoothLen),
-			imageData_(new fd_image_pix_t[width * height])
-	{
+			imageData_(new fd_image_pix_t[width * height]) {
 	}
 
 	virtual ~Renderer() {
@@ -57,8 +56,8 @@ public:
 	inline fd_iter_count_t mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const;
 
 	void reset() {
-	  offsetx_ = -fd_float_t(WIDTH_)/2.0;
-		offsety_ = -fd_float_t(WIDTH_)/2.0;
+		offsetx_ = -fd_float_t(WIDTH_) / 2.0;
+		offsety_ = -fd_float_t(WIDTH_) / 2.0;
 		panx_ = 0;
 		pany_ = 0;
 		zoom_ = defaultZoom_;
@@ -86,7 +85,6 @@ public:
 
 private:
 	std::pair<fd_coord_t, fd_coord_t> smoothPan(const fd_coord_t& x, const fd_coord_t& y);
-
 };
 } /* namespace fractaldive */
 

@@ -75,8 +75,7 @@ public:
 	// add new work item to the pool
 	template<class F, class ... Args>
 	void enqueue(F&& f, Args&&... args) {
-		auto task = std::make_shared<std::function<void()>>(
-				std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+		auto task = std::make_shared<std::function<void()>>(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
 
 		{
 			std::unique_lock<std::mutex> lock(queue_mutex_);
@@ -89,7 +88,6 @@ public:
 		}
 		condition_.notify_one();
 	}
-
 
 	// the destructor joins all threads
 	inline ~ThreadPool() {
@@ -104,7 +102,7 @@ public:
 	void stop() {
 		{
 			std::unique_lock<std::mutex> lock(queue_mutex_);
-			if(stop_)
+			if (stop_)
 				return;
 			stop_ = true;
 		}
@@ -141,7 +139,7 @@ public:
 		return *instance_;
 	}
 
-	inline ThreadPool(size_t threads)	{
+	inline ThreadPool(size_t threads) {
 	}
 
 	inline ~ThreadPool() {
@@ -164,6 +162,7 @@ private:
 	static std::mutex instanceMtx_;
 };
 #endif
-} /* namespace fractaldive */
+}
+/* namespace fractaldive */
 
 #endif /* SRC_THREADPOOL_HPP_ */

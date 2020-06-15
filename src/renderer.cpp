@@ -7,63 +7,62 @@
 #include "printer.hpp"
 #include "util.hpp"
 
-
 namespace fractaldive {
 
 // Generate the fractal image
 void Renderer::render() {
-		if (ThreadPool::cores() > 1) {
-			//use a thread pool to reduce thread start overhead
-			ThreadPool& tpool = ThreadPool::getInstance();
-			size_t tpsize = tpool.size();
-			//slice the image into vertical stripes
-			fd_dim_t sliceHeight = std::floor(fd_float_t(HEIGHT_) / tpsize);
-			fd_dim_t remainder = (HEIGHT_ % sliceHeight);
-			fd_dim_t extra = 0;
-			for (size_t i = 0; i < tpsize; ++i) {
-				if (i == (tpsize - 1) && remainder > 0)
-					extra = remainder;
+	if (ThreadPool::cores() > 1) {
+		//use a thread pool to reduce thread start overhead
+		ThreadPool& tpool = ThreadPool::getInstance();
+		size_t tpsize = tpool.size();
+		//slice the image into vertical stripes
+		fd_dim_t sliceHeight = std::floor(fd_float_t(HEIGHT_) / tpsize);
+		fd_dim_t remainder = (HEIGHT_ % sliceHeight);
+		fd_dim_t extra = 0;
+		for (size_t i = 0; i < tpsize; ++i) {
+			if (i == (tpsize - 1) && remainder > 0)
+				extra = remainder;
 
-				//start a worker thread
-				tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra) {
-					fd_iter_count_t iterations = 0;
-					fd_coord_t yoff = 0;
-					for (fd_dim_t y = 0; y < HEIGHT_; y++) {
-						yoff = y * WIDTH_;
-						for (fd_dim_t x = 0; x < WIDTH_; x++) {
-								iterations = mandelbrot(x, y);
-								if(iterations < maxIterations_) {
-									imageData_[yoff + x] = colorPixelAt(calculatePaletteIndex(iterations));
-								} else {
-									imageData_[yoff + x] = 0;
-								}
-						}
-					}
-				}, i, WIDTH_, sliceHeight, extra);
-			}
-		} else {
-			fd_iter_count_t iterations = 0;
-			fd_coord_t yoff = 0;
-
-			for (fd_dim_t y = 0; y < HEIGHT_; y++) {
-				yoff = y * WIDTH_;
-				for (fd_dim_t x = 0; x < WIDTH_; x++) {
+			//start a worker thread
+			tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra) {
+				fd_iter_count_t iterations = 0;
+				fd_coord_t yoff = 0;
+				for (fd_dim_t y = 0; y < HEIGHT_; y++) {
+					yoff = y * WIDTH_;
+					for (fd_dim_t x = 0; x < WIDTH_; x++) {
 						iterations = mandelbrot(x, y);
 						if(iterations < maxIterations_) {
 							imageData_[yoff + x] = colorPixelAt(calculatePaletteIndex(iterations));
 						} else {
 							imageData_[yoff + x] = 0;
 						}
+					}
+				}
+			}, i, WIDTH_, sliceHeight, extra);
+		}
+	} else {
+		fd_iter_count_t iterations = 0;
+		fd_coord_t yoff = 0;
+
+		for (fd_dim_t y = 0; y < HEIGHT_; y++) {
+			yoff = y * WIDTH_;
+			for (fd_dim_t x = 0; x < WIDTH_; x++) {
+				iterations = mandelbrot(x, y);
+				if (iterations < maxIterations_) {
+					imageData_[yoff + x] = colorPixelAt(calculatePaletteIndex(iterations));
+				} else {
+					imageData_[yoff + x] = 0;
 				}
 			}
 		}
+	}
 }
 
 inline fd_mandelfloat_t Renderer::square(const fd_mandelfloat_t& n) const {
 	return n * n;
 }
 
-inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const  {
+inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const {
 #if 1
 	fd_iter_count_t iterations = 0;
 	fd_mandelfloat_t x0 = (x + offsetx_ + panx_) / (zoom_ / 10.0);
@@ -97,8 +96,8 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	std::complex<float> z(0, 0);
 	fd_iter_count_t iterations = 0;
 	while (abs (z) < 2 && iterations < maxIterations_) {
-	    z = z * z + point;
-	    ++iterations;
+		z = z * z + point;
+		++iterations;
 	}
 
 	return iterations;
@@ -108,7 +107,7 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 
 inline size_t Renderer::calculatePaletteIndex(const fd_iter_count_t& iterations) const {
 	// 254 so we can use 0 as index for black
-		return iterations % 255;
+	return iterations % 255;
 }
 
 /*
@@ -116,12 +115,11 @@ inline size_t Renderer::calculatePaletteIndex(const fd_iter_count_t& iterations)
  */
 inline const fd_image_pix_t& Renderer::colorPixelAt(const size_t& index) {
 #ifndef _AMIGA
-		return PALETTE[index];
+	return PALETTE[index];
 #else
-    return index;
+	return index;
 #endif
 }
-
 
 // Zoom the fractal
 void Renderer::zoomAt(const fd_coord_t& x, const fd_coord_t& y, const fd_float_t& factor, const bool& zoomin) {
@@ -150,19 +148,19 @@ void Renderer::initSmoothPan(const fd_coord_t& x, const fd_coord_t& y) {
 	fd_float_t xstep = (x / panSmoothLen_);
 	fd_float_t ystep = (y / panSmoothLen_);
 
-	for(size_t i = 0; i < panSmoothLen_; ++i) {
+	for (size_t i = 0; i < panSmoothLen_; ++i) {
 		panHistoryX_[i] = (xstep * i);
 	}
 
-	for(size_t i = 0; i < panSmoothLen_; ++i) {
+	for (size_t i = 0; i < panSmoothLen_; ++i) {
 		panHistoryY_[i] = (ystep * i);
 	}
 }
 
 std::pair<fd_coord_t, fd_coord_t> Renderer::smoothPan(const fd_coord_t& x, const fd_coord_t& y) {
 	assert((panHistoryX_.empty() && panHistoryY_.empty()) || (!panHistoryX_.empty() && !panHistoryY_.empty()));
-	if(panHistoryX_.empty()) {
-		initSmoothPan(x,y);
+	if (panHistoryX_.empty()) {
+		initSmoothPan(x, y);
 	}
 
 	panHistoryX_.pop_back();
@@ -172,12 +170,12 @@ std::pair<fd_coord_t, fd_coord_t> Renderer::smoothPan(const fd_coord_t& x, const
 
 	fd_coord_t xhtotal = 0;
 
-	for(const auto& xh : panHistoryX_) {
+	for (const auto& xh : panHistoryX_) {
 		xhtotal += xh;
 	}
 
 	fd_coord_t yhtotal = 0;
-	for(const auto& yh : panHistoryY_) {
+	for (const auto& yh : panHistoryY_) {
 		yhtotal += yh;
 	}
 
@@ -186,7 +184,7 @@ std::pair<fd_coord_t, fd_coord_t> Renderer::smoothPan(const fd_coord_t& x, const
 
 // Pan the fractal
 void Renderer::pan(const fd_coord_t& x, const fd_coord_t& y) {
-	auto ft = smoothPan(x,y);
+	auto ft = smoothPan(x, y);
 	panx_ += ft.first;
 	pany_ += ft.second;
 }
