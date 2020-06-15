@@ -7,8 +7,9 @@
             var threading = typeof Atomics !== 'undefined' && typeof SharedArrayBuffer !== 'undefined';
             var w = screen.availWidth;
             var h = screen.availHeight;
+            alert(w + ":" + h);
             var lowres = Math.max(w,h) < 960;
-            var highres = false;// Math.max(w,h) >= 1600; 
+            var highres = Math.max(w,h) > 2000; 
 //             wasmFeatureDetect.simd().then(simdSupported => {
 //                 if (simdSupported) {
 //                     if(threading) {

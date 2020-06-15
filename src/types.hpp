@@ -19,14 +19,25 @@
 
 namespace fractaldive {
 #ifndef _AMIGA
-	typedef int64_t fd_coord_t;
-	typedef uint64_t fd_dim_t;
+  typedef double fd_float_t;
+  typedef int64_t fd_coord_t;
+  typedef uint64_t fd_dim_t;
+  typedef uint32_t fd_image_pix_t;
+  constexpr int FD_IMAGE_DEPTH_IN_BYTES = 4;
+  typedef uint32_t fd_iter_count_t;
+  typedef fd_image_pix_t* image_t;
+  typedef std::chrono::high_resolution_clock highres_clock;
+  typedef std::chrono::microseconds::rep fd_highres_tick_t;
 #else
-	typedef int16_t fd_coord_t;
-	typedef uint16_t fd_dim_t;
+  typedef float fd_float_t;
+  typedef int16_t fd_coord_t;
+  typedef uint16_t fd_dim_t;
+  typedef uint16_t fd_image_pix_t;
+  constexpr int FD_IMAGE_DEPTH_IN_BYTES = 2;
+  typedef uint16_t fd_iter_count_t;
+  typedef fd_image_pix_t* image_t;
+  typedef uint32_t fd_highres_tick_t;
 #endif
-
-	typedef double fd_float_t;
 
 #ifdef _FIXEDPOINT
 	#ifdef _AMIGA
@@ -41,35 +52,6 @@ namespace fractaldive {
 #else
 	typedef double fd_mandelfloat_t;
 	constexpr char FD_PRECISION[] = "double";
-#endif
-
-#ifndef _NO_SHADOW
-	//usually we use a (cheaply generated) greyscale "shadow" of the color24_t image for the area of interest search.
-	typedef uint8_t fd_shadow_pix_t;
-	typedef fd_shadow_pix_t* shadow_image_t;
-	typedef uint32_t fd_image_pix_t;
-	constexpr int FD_IMAGE_DEPTH_IN_BYTES = 4;
-	constexpr int FD_SHADOW_DEPTH_IN_BYTES = 1;
-	typedef fd_mandelfloat_t fd_iter_count_t;
-#else
-	//_NO_SHADOW basically that Renderer::imgdata_ and Renderer::shadowdata_ are the same (uint16_t) pointer and that a very simple palette algorithm is used
-	//8bit samples don't perform better on m68k 020/030 with a P96 (Zorro III) and on powerful platforms.
-	typedef uint16_t fd_shadow_pix_t;
-	typedef fd_shadow_pix_t* shadow_image_t;
-	typedef uint16_t fd_image_pix_t;
-	constexpr int FD_IMAGE_DEPTH_IN_BYTES = 2;
-	constexpr int FD_SHADOW_DEPTH_IN_BYTES = 2;
-	typedef fd_mandelfloat_t fd_iter_count_t;
-#endif
-
-	typedef fd_image_pix_t* image_t;
-
-
-#ifndef _AMIGA
-	typedef std::chrono::high_resolution_clock highres_clock;
-	typedef std::chrono::microseconds::rep fd_highres_tick_t;
-#else
-	typedef uint32_t fd_highres_tick_t;
 #endif
 
 }

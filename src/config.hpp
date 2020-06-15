@@ -14,7 +14,7 @@ public:
 	fd_dim_t width_ = 0;
 	fd_dim_t height_ = 0;
 	fd_dim_t frameSize_ = 0;
-
+	fd_dim_t frameTiling_ = 0;
 	size_t panSmoothLen_ = 0;
 	fd_highres_tick_t benchmarkTimeoutMillis_ = 0;
 	fd_iter_count_t startIterations_ = 0;

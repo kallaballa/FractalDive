@@ -293,14 +293,6 @@ constexpr static uint32_t PALETTE[256] = {
 		0x00FAE7EC,
 		0x00F9FFFB
  };
-
-template<typename T>
-static void get_color_from_palette(T& color, const uint8_t& index) {
-	if(index == 0)
-		color = T(0);
-	else
-		color = T(PALETTE[index]);
-}
 } /* namespace fractaldive */
 
 #endif /* SRC_COLOR_HPP_ */

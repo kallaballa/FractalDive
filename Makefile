@@ -126,6 +126,9 @@ all: release
 ifneq ($(UNAME_S), Darwin)
 release: LDFLAGS += -s
 endif
+ifdef JAVASCRIPT
+release: CXXFLAGS += -s STACK_OVERFLOW_CHECK=2 -0 ASSERTIONS=0 -s SAFE_HEAP=0
+endif
 release: CXXFLAGS += -g0 -O3 -c
 release: dirs
 
@@ -157,7 +160,7 @@ endif
 profile: dirs
 
 ifdef JAVASCRIPT
-hardcore: CXXFLAGS += -g0 -O3 -ffp-contract=fast -freciprocal-math -fno-signed-zeros --closure 1 --llvm-opts "['-menable-no-infs', '-menable-no-nans', '-menable-unsafe-fp-math']" 
+hardcore: CXXFLAGS += -g0 -O3 -ffp-contract=fast -freciprocal-math -fno-signed-zeros --closure 1 --llvm-opts "['-menable-no-infs', '-menable-no-nans', '-menable-unsafe-fp-math']" -s STACK_OVERFLOW_CHECK=0 -s ASSERTIONS=0 -s SAFE_HEAP=0
 else
 hardcore: CXXFLAGS += -g0 -Ofast
 endif

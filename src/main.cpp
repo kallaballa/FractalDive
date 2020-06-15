@@ -28,23 +28,54 @@
 #include "config.hpp"
 #include "renderer.hpp"
 #include "canvas.hpp"
-#include "timetracker.hpp"
+//#include "timetracker.hpp"
 #include "util.hpp"
 
 using namespace fractaldive;
 
+template<size_t Tsize>
+class TilingKernel {
+private:
+	std::vector<std::vector<fd_float_t>> calibration = {
+			{ 0.1, 0.3, 0.5, 0.7, 0.9 },
+			{ 0.3, 0.4, 0.5, 0.6, 0.7 },
+			{ 0.5, 0.5, 0.5, 0.5, 0.5 },
+			{ 0.7, 0.6, 0.5, 0.4, 0.3 },
+			{ 0.9, 0.7, 0.5, 0.3, 0.1},
+	};
+	fd_float_t kernel[Tsize][Tsize];
+public:
+	void initAt(const fd_coord_t& gravityX, const fd_coord_t& gravityY) {
+		for(fd_coord_t y = 0; y < Tsize; ++y) {
+			for(fd_coord_t x = 0; x < Tsize; ++x) {
+				const size_t& calX = std::round((fd_float_t(x) / (Tsize - 1.0)) * 4.0);
+				const size_t& calY = std::round((fd_float_t(y) / (Tsize - 1.0)) * 4.0);
+				fd_float_t gravity = ((((Tsize - std::abs(gravityX - x)) + (Tsize - std::abs(gravityY - y))) / 2.0) / Tsize);
+				kernel[x][y] = gravity * calibration[calY][calX];
+//				std::cerr << x << ":" << y << " ->" << gravity << '*' << calibration[calY][calX] << '=' << kernel[x][y] << "\t";
+			}
+//			std::cerr << std::endl;
+		}
+	}
+
+	fd_float_t* operator[](const size_t& x) {
+		return kernel[x];
+	}
+};
+
+
 Config& CONFIG = Config::getInstance();
 Renderer RENDERER(CONFIG.width_, CONFIG.height_, CONFIG.startIterations_, CONFIG.zoomFactor_, CONFIG.panSmoothLen_);
 Canvas CANVAS(CONFIG.width_, CONFIG.height_, false);
+TilingKernel<5> tkernel;
 
 bool do_run = true;
 
-
-fd_float_t entropy(const shadow_image_t& greyImage, const size_t& size) {
+fd_float_t entropy(const image_t& image, const size_t& size) {
 	std::map<uint8_t, int32_t> frequencies;
 
 	for (size_t i = 0; i < size; ++i)
-		++frequencies[greyImage[i]];
+		++frequencies[image[i]];
 
 	fd_float_t infocontent = 0;
 	for (const auto& p : frequencies) {
@@ -55,30 +86,30 @@ fd_float_t entropy(const shadow_image_t& greyImage, const size_t& size) {
 	return infocontent;
 }
 
-fd_float_t numberOfZeroes(const shadow_image_t& greyImage, const size_t& size) {
+fd_float_t numberOfZeroes(const image_t& image, const size_t& size) {
 	assert(size > 0);
 	fd_float_t zeroes = 0;
 	for (size_t i = 0; i < size; i++) {
-		if (greyImage[i] == 0)
+		if (image[i] == 0)
 			++zeroes;
 	}
 	return zeroes / size;
 }
 
-fd_float_t numberOfColors(const shadow_image_t& greyImage, const size_t& size) {
+fd_float_t numberOfColors(const image_t& image, const size_t& size) {
 	assert(size > 0);
-	std::set<fd_shadow_pix_t> clrs;
+	std::set<fd_image_pix_t> clrs;
 	for (size_t i = 0; i < size; i++) {
-		clrs.insert(greyImage[i]);
+		clrs.insert(image[i]);
 	}
 	return (fd_float_t(clrs.size()) / size);
 }
 
-fd_float_t numberOfChanges(const shadow_image_t& greyImage, const size_t& size) {
+fd_float_t numberOfChanges(const image_t& image, const size_t& size) {
 	fd_float_t numChanges = 0;
-	fd_shadow_pix_t last = 0;
+	fd_image_pix_t last = 0;
 	for (size_t i = 0; i < size; i++) {
-		const fd_shadow_pix_t& p = greyImage[i];
+		const fd_image_pix_t& p = image[i];
 		if (last != p) {
 			++numChanges;
 		}
@@ -88,23 +119,20 @@ fd_float_t numberOfChanges(const shadow_image_t& greyImage, const size_t& size) 
 	return (fd_float_t(numChanges) / fd_float_t(size));
 }
 
-fd_float_t measureDetail(const shadow_image_t greyImage, const size_t& size) {
-	return numberOfChanges(greyImage, size);
+fd_float_t measureDetail(const image_t& image, const size_t& size) {
+	return numberOfChanges(image, size);
 }
 
-std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_coord_t& numTilesX,
-		const fd_coord_t& numTilesY) {
-	assert(numTilesX > 1);
-	assert(numTilesY > 1);
-
-	const fd_coord_t tileW = std::floor(fd_float_t(CONFIG.width_) / fd_float_t(numTilesX));
-	const fd_coord_t tileH = std::floor(fd_float_t(CONFIG.height_) / fd_float_t(numTilesY));
+std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_coord_t& tiling) {
+	assert(tiling > 1);
+	const fd_coord_t tileW = std::floor(fd_float_t(CONFIG.width_) / fd_float_t(tiling));
+	const fd_coord_t tileH = std::floor(fd_float_t(CONFIG.height_) / fd_float_t(tiling));
 	const size_t tileSize = tileW * tileH;
 	assert(tileW > 1);
 	assert(tileH > 1);
 
-	const auto& shadowImage = RENDERER.shadowData_;
-	std::vector<fd_shadow_pix_t> tile(tileSize);
+	const auto& image = RENDERER.imageData_;
+	std::vector<fd_image_pix_t> tile(tileSize);
 
 	std::vector<fd_float_t> tileScores;
 	fd_float_t candidateScore = 0;
@@ -112,8 +140,8 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_c
 	fd_coord_t candidateTy = 0;
 
 	//iterate over tiles
-	for (fd_coord_t ty = 0; ty < numTilesY; ++ty) {
-		for (fd_coord_t tx = 0; tx < numTilesX; ++tx) {
+	for (fd_coord_t ty = 0; ty < tiling; ++ty) {
+		for (fd_coord_t tx = 0; tx < tiling; ++tx) {
 			const fd_coord_t offY = tileH * ty * CONFIG.width_;
 			const fd_coord_t offX = tileW * tx;
 
@@ -121,32 +149,33 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_c
 			for (fd_coord_t y = 0; y < tileH; ++y) {
 				for (fd_coord_t x = 0; x < tileW; ++x) {
 					const size_t pixIdx = (offY + (y * CONFIG.width_)) + (offX + x);
-					tile[y * tileW + x] = shadowImage[pixIdx];
+					tile[y * tileW + x] = image[pixIdx];
 				}
 			}
+			fd_float_t detail = measureDetail(tile.data(), tileW * tileH);
+  		fd_float_t weight = tkernel[tx][ty];
+			fd_float_t score =  detail * weight;
+//			std::cerr << detail * 2 << "*" << weight << " / 3.0 =\t" << score << std::endl;
 
-			fd_float_t noiseAmount = 0.7;
-			//calculate weighting of tiles to favour the center
-			fd_float_t txf = 0.5; //std::fabs(0.5 - fd_float_t(tx) / (fd_float_t(numTilesX - 1)));
-			fd_float_t tyf = 0.5; //std::fabs(0.5 - fd_float_t(ty) / (fd_float_t(numTilesY - 1)));
-			fd_float_t noise = (static_cast <fd_float_t> (rand()) / static_cast <float> (RAND_MAX)) * noiseAmount;
-			fd_float_t score = (measureDetail(tile.data(), tileW * tileH) * (txf + tyf)) * (1.0 - noise) ;
 			if (score > candidateScore) {
 				candidateScore = score;
 				candidateTx = tx;
 				candidateTy = ty;
 			}
 		}
+
 	}
-//	candidateTx = rand() % 2 ? rand() % numTilesX : candidateTx;
-//	candidateTy = rand() % 2 ? rand() % numTilesY : candidateTy;
-	return {(candidateTx * tileW) + (tileW / 2), (candidateTy * tileH) + (tileH / 2)};
+
+	std::pair<fd_coord_t, fd_coord_t> center = {(candidateTx * tileW) + (tileW / 2), (candidateTy * tileH) + (tileH / 2)};
+//	std::cerr << candidateTx << ":" << candidateTy << "=\t" << center.first << ":" << center.second << "=\t" << candidateScore << std::endl;
+
+	return center;
 }
 
 std::pair<fd_coord_t,fd_coord_t> calculatePanVector(const fd_coord_t& x, const fd_coord_t& y) {
 	fd_float_t hDiff = x - std::floor(CONFIG.width_ / 2.0);
-	fd_float_t vDiff = x - std::floor(CONFIG.height_ / 2.0);
-	fd_float_t scale = 30 * (1.0 / CONFIG.width_);
+	fd_float_t vDiff = y - std::floor(CONFIG.height_ / 2.0);
+	fd_float_t scale = (1.0 - (1.0 / (CONFIG.width_ / 10.0))) * ((CONFIG.fps_ + (CONFIG.fps_ * CONFIG.zoomSpeed_)) / (CONFIG.fps_ / (CONFIG.zoomSpeed_ * 0.1)));
 	fd_coord_t panX = (hDiff * scale);
 	fd_coord_t panY = (vDiff * scale);
 	return {panX, panY};
@@ -154,48 +183,43 @@ std::pair<fd_coord_t,fd_coord_t> calculatePanVector(const fd_coord_t& x, const f
 
 bool dive(bool zoom, bool benchmark) {
 
-	TimeTracker& tt = TimeTracker::getInstance();
-	bool result = true;
+//	TimeTracker& tt = TimeTracker::getInstance();
 
-	tt.execute("dive", [&]() {
+	//tt.execute("dive", [&]() {
 		fd_float_t detail = 0;
-		tt.execute("dive.measureDetail", [&]() {
-			detail = measureDetail(RENDERER.shadowData_, CONFIG.frameSize_);
-		});
+		//tt.execute("dive.measureDetail", [&]() {
+			detail = measureDetail(RENDERER.imageData_, CONFIG.frameSize_);
+		//});
 
-		std::cerr << "detail:" << detail << std::endl;
 		if (!benchmark && detail < CONFIG.detailThreshold_) {
-			std::cerr << "Bail" << std::endl;
 #ifdef _JAVASCRIPT
 			RENDERER.reset();
 			RENDERER.resetSmoothPan();
 			RENDERER.render();
 			//		emscripten_cancel_main_loop();
 #endif
-			result = false;
-			return;
+			return false;
 		}
 		if (zoom) {
 			std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
-			tt.execute("dive.findCenter", [&]() {
-				centerOfHighDetail = identifyCenterOfTileOfHighestDetail(5, 5);
-			});
-			tt.execute("dive.zoom", [&]() {
+			//tt.execute("dive.findCenter", [&]() {
+				centerOfHighDetail = identifyCenterOfTileOfHighestDetail(CONFIG.frameTiling_);
+//			});
+			//tt.execute("dive.zoom", [&]() {
 				const auto& pv = calculatePanVector(centerOfHighDetail.first, centerOfHighDetail.second);
 				fd_float_t zoomFactor = 1.0 + (CONFIG.zoomSpeed_ / CONFIG.fps_);
 				RENDERER.pan(pv.first, pv.second);
 				RENDERER.zoomAt(CONFIG.width_ / 2.0, CONFIG.height_ / 2.0, zoomFactor, true);
-			});
+//			});
 		}
 
 		RENDERER.render();
 
-		tt.execute("dive.draw", [&]() {
-			CANVAS.draw(RENDERER.imgdata_);
-		});
-		result = true;
-	});
-	return result;
+		//tt.execute("dive.draw", [&]() {
+			CANVAS.draw(RENDERER.imageData_);
+//		});
+//	});
+	return true;
 }
 
 void auto_scale_max_iterations() {
@@ -211,22 +235,28 @@ void auto_scale_max_iterations() {
 
  	RENDERER.reset();
 	fd_float_t fpsMillis = 1000.0 / CONFIG.fps_;
-
-	fd_float_t millisRatio = (pow(duration / (cnt / 20.0), 1.0 + (CONFIG.frameSize_ / ( 327680.0 * (CONFIG.width_ / 256.0)))) / fpsMillis);
+	fd_float_t exp = 1.2 + CONFIG.frameSize_ * (0.12 / (128 * 128));
+	fd_float_t millisRatio = (pow(duration / (cnt / 20.0), exp) / fpsMillis);
 #ifndef _FIXEDPOINT
-	fd_iter_count_t iterations = (CONFIG.startIterations_ / millisRatio) * 10.0;
+	fd_iter_count_t iterations = std::round((CONFIG.startIterations_ / millisRatio) * 10.0);
 #else
-	fd_iter_count_t iterations = (CONFIG.startIterations_.ToFloat() / millisRatio) * 10.0;
+	fd_iter_count_t iterations = std::round((CONFIG.startIterations_.ToFloat() / millisRatio) * 10.0);
 #endif
 
 #ifdef _JAVASCRIPT_MT
-	iterations = (iterations * (ThreadPool::cores() - 1));
+	iterations = (iterations * (ThreadPool::cores()));
 #endif
 
-	if(iterations < CONFIG.minIterations_)
-			CONFIG.fps_ = std::min(std::floor(CONFIG.fps_ * (iterations / CONFIG.minIterations_)),1.0);
+#ifdef _JAVASCRIPT
+	iterations *= 0.7;
+#endif
 
-	iterations = std::min(CONFIG.maxIterations_, std::max(std::ceil(iterations), CONFIG.minIterations_));
+	print("# Score");
+	print(iterations);
+
+	if(iterations < CONFIG.minIterations_)
+			CONFIG.fps_ = std::max(std::floor(CONFIG.fps_ * (fd_float_t(iterations) / CONFIG.minIterations_)),1.0);
+	iterations = std::min(CONFIG.maxIterations_, std::max(iterations, CONFIG.minIterations_));
 	RENDERER.setMaxIterations(iterations);
 }
 
@@ -298,17 +328,16 @@ void run() {
 	auto_scale_max_iterations();
 	printReport();
 
-	TimeTracker& tt = TimeTracker::getInstance();
 	fd_highres_tick_t start = 0;
 	while (do_run) {
 		start = get_milliseconds();
+		tkernel.initAt(rand() % CONFIG.frameTiling_, rand() % CONFIG.frameTiling_);
 		RENDERER.reset();
 		RENDERER.resetSmoothPan();
 		RENDERER.pan(0,0);
-		RENDERER.render(true);
-		fd_float_t detail = measureDetail(RENDERER.shadowData_, CONFIG.frameSize_);
+		RENDERER.render();
+		fd_float_t detail = measureDetail(RENDERER.imageData_, CONFIG.frameSize_);
 		if(detail > CONFIG.detailThreshold_) {
-			print("Init:", detail);
 #ifdef _JAVASCRIPT
 			emscripten_set_main_loop(js_step, 0, 1);
 #else

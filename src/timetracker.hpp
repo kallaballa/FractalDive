@@ -157,6 +157,7 @@ public:
 	}
 
 	static TimeTracker& getInstance() {
+		assert(false);
 		if(instance_ == nullptr) {
 			instance_ = new TimeTracker();
 		}

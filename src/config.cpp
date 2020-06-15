@@ -22,23 +22,21 @@ void Config::resetToDefaults() {
 	fps_ = 24;
 	minIterations_ = 10;
 	benchmarkTimeoutMillis_ = 1000;
-	detailThreshold_ = 0.001;
+	detailThreshold_ = 0.01;
 	startIterations_ = 100;
-	panSmoothLen_ = 20;
+	panSmoothLen_ = 30;
+	frameTiling_ = 5;
 	#ifndef _AMIGA
 #ifdef _LOW_RES
 	width_ = 128;
 	height_ = 128;
-	maxIterations_ = 500;
 #else
 #ifdef _HIGH_RES
-	width_ = 512;
-	height_ = 512;
-	maxIterations_ = 10000;
+	width_ = 384;
+	height_ = 384;
 #else
 	width_ = 256;
 	height_ = 256;
-	maxIterations_ = 3000;
 #endif
 #endif
 #else
@@ -47,8 +45,9 @@ void Config::resetToDefaults() {
 	panSmoothLen_ = 2;
 	maxIterations_ = 100;
 #endif
-
 	frameSize_ = width_ * height_;
+	maxIterations_ = (frameSize_ / 24);
+
 
 #ifdef _FAST_ZOOM
 	zoomSpeed_ = 1;
@@ -59,7 +58,7 @@ void Config::resetToDefaults() {
 		#ifdef _SLOW_ZOOM
 	zoomSpeed_ = 0.2;
 		#else
-	zoomSpeed_ = 0.45;
+	zoomSpeed_ = 0.40;
 		#endif
 	#endif
 #endif

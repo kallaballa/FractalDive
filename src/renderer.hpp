@@ -31,8 +31,7 @@ private:
 	std::deque<fd_coord_t> panHistoryX_;
 	std::deque<fd_coord_t> panHistoryY_;
 public:
-	image_t const imgdata_;
-	shadow_image_t const shadowData_;
+	image_t const imageData_;
 
 	Renderer(const fd_dim_t& width, const fd_dim_t& height, const fd_iter_count_t& maxIterations, const fd_float_t& zoomFactor, const size_t& panSmoothLen) :
 			WIDTH_(width),
@@ -44,26 +43,18 @@ public:
 			defaultZoom_(zoomFactor),
 			zoom_(zoomFactor),
 			panSmoothLen_(panSmoothLen),
-			imgdata_(new fd_image_pix_t[width * height]),
-#ifndef _NO_SHADOW
-			shadowData_(new fd_shadow_pix_t[width * height]) {
-#else
-			shadowData_(imgdata_) {
-#endif
+			imageData_(new fd_image_pix_t[width * height])
+	{
 	}
 
 	virtual ~Renderer() {
-		delete[] imgdata_;
-#ifndef _NO_SHADOW
-		delete[] shadowData_;
-#endif
+		delete[] imageData_;
 	}
 
-	size_t calculatePaletteIndex(const fd_iter_count_t& iterations,	const fd_iter_count_t& maxIterations) const;
-	void colorPixelAt(const fd_coord_t& x, const fd_coord_t& y, const size_t& index, const fd_iter_count_t& iterations, const bool& shadowOnly);
+	inline size_t calculatePaletteIndex(const fd_iter_count_t& iterations) const;
+	inline const fd_image_pix_t& colorPixelAt(const size_t& index);
 	inline fd_mandelfloat_t square(const fd_mandelfloat_t& n) const;
 	inline fd_iter_count_t mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const;
-	fd_iter_count_t iterate(const fd_coord_t& x, const fd_coord_t& y) const;
 
 	void reset() {
 	  offsetx_ = -fd_float_t(WIDTH_)/2.0;
@@ -75,7 +66,7 @@ public:
 		panHistoryY_.clear();
 	}
 
-	void render(const bool& shadowonly = false);
+	void render();
 	void zoomAt(const fd_coord_t& x, const fd_coord_t& y, const fd_float_t& factor, const bool& zoomin);
 	void resetSmoothPan();
 	void initSmoothPan(const fd_coord_t& x, const fd_coord_t& y);

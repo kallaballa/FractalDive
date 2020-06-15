@@ -5,17 +5,14 @@
 
 #include "threadpool.hpp"
 #include "printer.hpp"
-#include "timetracker.hpp"
+//#include "timetracker.hpp"
 #include "util.hpp"
 
 
 namespace fractaldive {
 
 // Generate the fractal image
-void Renderer::render(const bool& shadowOnly) {
-	TimeTracker& tt = TimeTracker::getInstance();
-
-	tt.execute("dive.render", [&](){
+void Renderer::render() {
 		if (ThreadPool::cores() > 1) {
 			//use a thread pool to reduce thread start overhead
 			ThreadPool& tpool = ThreadPool::getInstance();
@@ -29,47 +26,38 @@ void Renderer::render(const bool& shadowOnly) {
 					extra = remainder;
 
 				//start a worker thread
-				tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra, const bool& shadowOnly) {
-					TimeTracker& tt = TimeTracker::getInstance();
-
+				tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra) {
 					fd_iter_count_t iterations = 0;
-					size_t index = 0;
-					for (fd_dim_t y = sliceHeight * i; y < (sliceHeight * (i + 1)) + extra; y++) {
-						for (fd_dim_t x = 0; x < width; x++) {
-							tt.execute("dive.render.mandelbrot", [&](){
+					fd_coord_t yoff = 0;
+					for (fd_dim_t y = 0; y < HEIGHT_; y++) {
+						yoff = y * WIDTH_;
+						for (fd_dim_t x = 0; x < WIDTH_; x++) {
 								iterations = mandelbrot(x, y);
-							});
-							tt.execute("dive.render.calcIndex", [&](){
-								index = calculatePaletteIndex(iterations, getMaxIterations());
-							});
-
-							tt.execute("dive.render.colorPixel", [&](){
-								colorPixelAt(x, y, index, iterations, shadowOnly);
-							});
+								if(iterations < maxIterations_) {
+									imageData_[yoff + x] = colorPixelAt(calculatePaletteIndex(iterations));
+								} else {
+									imageData_[yoff + x] = 0;
+								}
 						}
 					}
-				}, i, WIDTH_, sliceHeight, extra, shadowOnly);
+				}, i, WIDTH_, sliceHeight, extra);
 			}
 		} else {
 			fd_iter_count_t iterations = 0;
-			size_t index = 0;
+			fd_coord_t yoff = 0;
+
 			for (fd_dim_t y = 0; y < HEIGHT_; y++) {
+				yoff = y * WIDTH_;
 				for (fd_dim_t x = 0; x < WIDTH_; x++) {
-					tt.execute("dive.render.mandelbrot", [&](){
 						iterations = mandelbrot(x, y);
-					});
-
-					tt.execute("dive.render.calcIndex", [&](){
-						index = calculatePaletteIndex(iterations, maxIterations_);
-					});
-
-					tt.execute("dive.render.colorPixel", [&](){
-						colorPixelAt(x, y, index, iterations, shadowOnly);
-					});
+						if(iterations < maxIterations_) {
+							imageData_[yoff + x] = colorPixelAt(calculatePaletteIndex(iterations));
+						} else {
+							imageData_[yoff + x] = 0;
+						}
 				}
 			}
 		}
-	});
 }
 
 inline fd_mandelfloat_t Renderer::square(const fd_mandelfloat_t& n) const {
@@ -119,58 +107,25 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	return iterations;
 }
 
-size_t Renderer::calculatePaletteIndex(const fd_iter_count_t& iterations,	const fd_iter_count_t& maxIterations) const {
-	size_t index = 0;
-#ifndef _NOSHADOW
-	if (iterations < maxIterations) {
-#ifndef _FIXEDPOINT
-		// 254 so we can use 0 as index for black
-		index = fd_mandelfloat_t(iterations) / maxIterations * 254 + 1;
-#else
-		// 254.0 so we can use 0 as index for black
-		index = (iterations / maxIterations_ * 254.0).ToInt<uint8_t>() + 1;
-#endif
-	}
-#endif
-	return index;
+inline size_t Renderer::calculatePaletteIndex(const fd_iter_count_t& iterations) const {
+	// 254 so we can use 0 as index for black
+		return iterations % 255;
 }
 
 /*
  * FIXME: Thread safety
  */
-void Renderer::colorPixelAt(const fd_coord_t& x, const fd_coord_t& y, const size_t& index, const fd_iter_count_t& iterations, const bool& shadowOnly) {
-#ifndef _NO_SHADOW
-		fd_image_pix_t color;
-		get_color_from_palette(color, index);
-		size_t pixelindex = (y * WIDTH_ + x);
-
-		// Apply the argb color
-		if (!shadowOnly) {
-			imgdata_[pixelindex] = color;
-		}
-
-		//cheap greyscale. we don't need perceptual acuity to measure detail.
-		assert(index < 256);
-		shadowData_[pixelindex] = index;
+inline const fd_image_pix_t& Renderer::colorPixelAt(const size_t& index) {
+#ifndef _AMIGA
+		return PALETTE[index];
 #else
-		size_t pixelindex = (y * WIDTH_ + x);
-		// Apply the color
-			if (index == 0) {
-				imgdata_[pixelindex] = 0;
-			} else {
-	#ifndef _FIXEDPOINT
-				imgdata_[pixelindex] = (iterations / maxIterations_) * std::numeric_limits<fd_image_pix_t>::max();
-	#else
-				imgdata_[pixelindex] = iterations.GetRawVal();
-	#endif
-			}
+    return index;
 #endif
 }
 
 
 // Zoom the fractal
 void Renderer::zoomAt(const fd_coord_t& x, const fd_coord_t& y, const fd_float_t& factor, const bool& zoomin) {
-	std::cerr << "F:" << factor << std::endl;
 	if (zoomin) {
 		// Zoom in
 		zoom_ *= factor;
@@ -232,8 +187,6 @@ std::pair<fd_coord_t, fd_coord_t> Renderer::smoothPan(const fd_coord_t& x, const
 
 // Pan the fractal
 void Renderer::pan(const fd_coord_t& x, const fd_coord_t& y) {
-	std::cerr << "P:" << x << " \t" << y << std::endl;
-
 	auto ft = smoothPan(x,y);
 	panx_ += ft.first;
 	pany_ += ft.second;
