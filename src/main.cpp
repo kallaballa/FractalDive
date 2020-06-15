@@ -28,41 +28,11 @@
 #include "config.hpp"
 #include "renderer.hpp"
 #include "canvas.hpp"
-//#include "timetracker.hpp"
 #include "util.hpp"
+#include "tilingkernel.hpp"
+#include "imagedetail.hpp"
 
 using namespace fractaldive;
-
-template<size_t Tsize>
-class TilingKernel {
-private:
-	std::vector<std::vector<fd_float_t>> calibration = {
-			{ 0.1, 0.3, 0.5, 0.7, 0.9 },
-			{ 0.3, 0.4, 0.5, 0.6, 0.7 },
-			{ 0.5, 0.5, 0.5, 0.5, 0.5 },
-			{ 0.7, 0.6, 0.5, 0.4, 0.3 },
-			{ 0.9, 0.7, 0.5, 0.3, 0.1},
-	};
-	fd_float_t kernel[Tsize][Tsize];
-public:
-	void initAt(const fd_coord_t& gravityX, const fd_coord_t& gravityY) {
-		for(fd_coord_t y = 0; y < Tsize; ++y) {
-			for(fd_coord_t x = 0; x < Tsize; ++x) {
-				const size_t& calX = std::round((fd_float_t(x) / (Tsize - 1.0)) * 4.0);
-				const size_t& calY = std::round((fd_float_t(y) / (Tsize - 1.0)) * 4.0);
-				fd_float_t gravity = ((((Tsize - std::abs(gravityX - x)) + (Tsize - std::abs(gravityY - y))) / 2.0) / Tsize);
-				kernel[x][y] = gravity * calibration[calY][calX];
-//				std::cerr << x << ":" << y << " ->" << gravity << '*' << calibration[calY][calX] << '=' << kernel[x][y] << "\t";
-			}
-//			std::cerr << std::endl;
-		}
-	}
-
-	fd_float_t* operator[](const size_t& x) {
-		return kernel[x];
-	}
-};
-
 
 Config& CONFIG = Config::getInstance();
 Renderer RENDERER(CONFIG.width_, CONFIG.height_, CONFIG.startIterations_, CONFIG.zoomFactor_, CONFIG.panSmoothLen_);
@@ -71,57 +41,7 @@ TilingKernel<5> tkernel;
 
 bool do_run = true;
 
-fd_float_t entropy(const image_t& image, const size_t& size) {
-	std::map<uint8_t, int32_t> frequencies;
 
-	for (size_t i = 0; i < size; ++i)
-		++frequencies[image[i]];
-
-	fd_float_t infocontent = 0;
-	for (const auto& p : frequencies) {
-		fd_float_t freq = static_cast<fd_float_t>(p.second) / size;
-		infocontent -= freq * log2(freq);
-	}
-
-	return infocontent;
-}
-
-fd_float_t numberOfZeroes(const image_t& image, const size_t& size) {
-	assert(size > 0);
-	fd_float_t zeroes = 0;
-	for (size_t i = 0; i < size; i++) {
-		if (image[i] == 0)
-			++zeroes;
-	}
-	return zeroes / size;
-}
-
-fd_float_t numberOfColors(const image_t& image, const size_t& size) {
-	assert(size > 0);
-	std::set<fd_image_pix_t> clrs;
-	for (size_t i = 0; i < size; i++) {
-		clrs.insert(image[i]);
-	}
-	return (fd_float_t(clrs.size()) / size);
-}
-
-fd_float_t numberOfChanges(const image_t& image, const size_t& size) {
-	fd_float_t numChanges = 0;
-	fd_image_pix_t last = 0;
-	for (size_t i = 0; i < size; i++) {
-		const fd_image_pix_t& p = image[i];
-		if (last != p) {
-			++numChanges;
-		}
-		last = p;
-	}
-
-	return (fd_float_t(numChanges) / fd_float_t(size));
-}
-
-fd_float_t measureDetail(const image_t& image, const size_t& size) {
-	return numberOfChanges(image, size);
-}
 
 std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_coord_t& tiling) {
 	assert(tiling > 1);
@@ -152,10 +72,9 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_c
 					tile[y * tileW + x] = image[pixIdx];
 				}
 			}
-			fd_float_t detail = measureDetail(tile.data(), tileW * tileH);
+			fd_float_t detail = measureImageDetail(tile.data(), tileW * tileH);
   		fd_float_t weight = tkernel[tx][ty];
 			fd_float_t score =  detail * weight;
-//			std::cerr << detail * 2 << "*" << weight << " / 3.0 =\t" << score << std::endl;
 
 			if (score > candidateScore) {
 				candidateScore = score;
@@ -167,8 +86,6 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_c
 	}
 
 	std::pair<fd_coord_t, fd_coord_t> center = {(candidateTx * tileW) + (tileW / 2), (candidateTy * tileH) + (tileH / 2)};
-//	std::cerr << candidateTx << ":" << candidateTy << "=\t" << center.first << ":" << center.second << "=\t" << candidateScore << std::endl;
-
 	return center;
 }
 
@@ -182,14 +99,7 @@ std::pair<fd_coord_t,fd_coord_t> calculatePanVector(const fd_coord_t& x, const f
 }
 
 bool dive(bool zoom, bool benchmark) {
-
-//	TimeTracker& tt = TimeTracker::getInstance();
-
-	//tt.execute("dive", [&]() {
-		fd_float_t detail = 0;
-		//tt.execute("dive.measureDetail", [&]() {
-			detail = measureDetail(RENDERER.imageData_, CONFIG.frameSize_);
-		//});
+		fd_float_t detail = measureImageDetail(RENDERER.imageData_, CONFIG.frameSize_);
 
 		if (!benchmark && detail < CONFIG.detailThreshold_) {
 #ifdef _JAVASCRIPT
@@ -202,23 +112,16 @@ bool dive(bool zoom, bool benchmark) {
 		}
 		if (zoom) {
 			std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
-			//tt.execute("dive.findCenter", [&]() {
 				centerOfHighDetail = identifyCenterOfTileOfHighestDetail(CONFIG.frameTiling_);
-//			});
-			//tt.execute("dive.zoom", [&]() {
 				const auto& pv = calculatePanVector(centerOfHighDetail.first, centerOfHighDetail.second);
 				fd_float_t zoomFactor = 1.0 + (CONFIG.zoomSpeed_ / CONFIG.fps_);
 				RENDERER.pan(pv.first, pv.second);
 				RENDERER.zoomAt(CONFIG.width_ / 2.0, CONFIG.height_ / 2.0, zoomFactor, true);
-//			});
 		}
 
 		RENDERER.render();
 
-		//tt.execute("dive.draw", [&]() {
 			CANVAS.draw(RENDERER.imageData_);
-//		});
-//	});
 	return true;
 }
 
@@ -272,7 +175,7 @@ bool step() {
 		if (diff > 0) {
 			sleep_millis(diff);
 		} else if (diff < 0)
-			print("Underrun: ", std::abs(diff));
+			printErr("Underrun: ", std::abs(diff));
 	}
 	return result;
 }
@@ -336,7 +239,7 @@ void run() {
 		RENDERER.resetSmoothPan();
 		RENDERER.pan(0,0);
 		RENDERER.render();
-		fd_float_t detail = measureDetail(RENDERER.imageData_, CONFIG.frameSize_);
+		fd_float_t detail = measureImageDetail(RENDERER.imageData_, CONFIG.frameSize_);
 		if(detail > CONFIG.detailThreshold_) {
 #ifdef _JAVASCRIPT
 			emscripten_set_main_loop(js_step, 0, 1);

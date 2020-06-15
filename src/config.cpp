@@ -22,7 +22,7 @@ void Config::resetToDefaults() {
 	fps_ = 24;
 	minIterations_ = 10;
 	benchmarkTimeoutMillis_ = 1000;
-	detailThreshold_ = 0.01;
+	detailThreshold_ = 0.02;
 	startIterations_ = 100;
 	panSmoothLen_ = 30;
 	frameTiling_ = 5;
@@ -58,7 +58,7 @@ void Config::resetToDefaults() {
 		#ifdef _SLOW_ZOOM
 	zoomSpeed_ = 0.2;
 		#else
-	zoomSpeed_ = 0.40;
+	zoomSpeed_ = 0.5;
 		#endif
 	#endif
 #endif
