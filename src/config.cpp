@@ -1,10 +1,3 @@
-/*
- * config.cpp
- *
- *  Created on: Jun 14, 2020
- *      Author: elchaschab
- */
-
 #include "config.hpp"
 
 namespace fractaldive {
@@ -46,7 +39,7 @@ void Config::resetToDefaults() {
 	maxIterations_ = 100;
 #endif
 	frameSize_ = width_ * height_;
-	maxIterations_ = (frameSize_ / 24);
+	maxIterations_ = frameSize_ / 24;
 
 
 #ifdef _FAST_ZOOM

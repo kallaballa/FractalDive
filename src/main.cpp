@@ -84,7 +84,7 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_c
 std::pair<fd_coord_t, fd_coord_t> calculatePanVector(const fd_coord_t& x, const fd_coord_t& y) {
 	fd_float_t hDiff = x - std::floor(config.width_ / 2.0);
 	fd_float_t vDiff = y - std::floor(config.height_ / 2.0);
-	fd_float_t scale = (1.0 - (1.0 / (config.width_ / 10.0)))
+	fd_float_t scale = (1.0 - (1.0 / (config.width_ / 8.0)))
 			* ((config.fps_ + (config.fps_ * config.zoomSpeed_)) / (config.fps_ / (config.zoomSpeed_ * 0.1)));
 	fd_coord_t panX = (hDiff * scale);
 	fd_coord_t panY = (vDiff * scale);
@@ -261,8 +261,8 @@ void sigint_handler(int sig) {
 #endif
 
 int main() {
-	assert(config.width_ >= 16 && is_power_of_two(config.width_));
-	assert(config.height_ >= 16 && is_power_of_two(config.height_));
+	assert(config.width_ >= 16 && config.width_ % 2 == 0);
+	assert(config.height_ >= 16 && config.height_ % 2 == 0);
 	assert(config.startIterations_ > 3);
 	assert(config.fps_ > 0);
 
