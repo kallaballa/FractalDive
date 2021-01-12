@@ -122,7 +122,7 @@ bool dive(bool zoom, bool benchmark) {
 	return true;
 }
 
-void auto_scale_max_iterations() {
+bool auto_scale_max_iterations() {
 	auto start = get_milliseconds();
 	auto duration = start;
 
@@ -150,13 +150,15 @@ void auto_scale_max_iterations() {
 	iterations *= 0.7;
 #endif
 
-	print("# Score");
 	print(iterations);
-
+#ifdef _BENCHMARK_ONLY
+	return true;
+#endif
 	if (iterations < config.minIterations_)
 		config.fps_ = std::max(std::floor(config.fps_ * (fd_float_t(iterations) / config.minIterations_)), 1.0);
 	iterations = std::min(config.maxIterations_, std::max(iterations, config.minIterations_));
 	renderer.setMaxIterations(iterations);
+	return false;
 }
 
 bool step() {
@@ -218,8 +220,14 @@ void printReport() {
 }
 
 void run() {
-	auto_scale_max_iterations();
-	printReport();
+	if(auto_scale_max_iterations()){
+			do_run = false;
+#ifndef _JAVASCRIPT
+			ThreadPool::getInstance().stop();
+#endif
+	}	else {
+		printReport();
+	}
 
 	fd_highres_tick_t start = 0;
 	while (do_run) {

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>The Benoit Mandelbrot Experience</title>
+  <meta name="description" content="A demonstration of the beauty of the mandelbrot set implemented as a real-time zoom.">
+  <meta name="keywords" content="mandelbrot, fractal, zoom, realtime, FractalDive, C++, cross-platform, platform independent, optimization">
+  <meta name="author" content="amir@viel-zu.org">
+  <meta name="viewport" content="width=768">
+  <style>
+::-webkit-scrollbar {
+    -webkit-appearance: none;
+}
+
+::-webkit-scrollbar:vertical {
+    width: 1em;
+}
+
+::-webkit-scrollbar:horizontal {
+    height: 1em;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, .5);
+    border-radius: 10px;
+    border: 0.1em solid #ffffff;
+}
+
+::-webkit-scrollbar-track {
+    border-radius: 0.8em;  
+    background-color: #ffffff; 
+}
+
+  html {
+    width: 100%;  
+  }
+  body {
+    background-color: black;
+    overflow: hidden;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+  
+  canvas {
+    position: absolute; 
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%); 
+    padding: 0;
+    margin: 0;
+  }
+
+  #loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 3em;
+  }
+
+  textarea {
+    font-size: 1.5em; 
+    opacity: 0.5; 
+    outline: none; 
+    resize: none; 
+    border: 0; 
+    padding: 0.8em;
+  }
+ 
+ #content {
+  padding: 0;
+  margin: 0; 
+ }
+ 
+ #bgcanvas0 {
+    width: 768px; 
+    height: 768px; 
+    opacity: 0.25;
+ }
+
+ #bgcanvas1 {
+    width: 512px; 
+    height: 512px; 
+    opacity: 0.5;
+ }
+
+ #canvas {
+    width: 256px;
+    height: 256px;
+ }
+
+ #stderr {
+    position: fixed;
+    top: 19.5em;
+    display: block;
+    height: 9em;
+    width: 22em;
+    font-size: 1.2em;
+    background-color: black; 
+    color: red;
+    overflow: scroll;
+    visibility: hidden;
+    border: 0.2em solid rgba(255,255,255,0.3);
+    border-radius: 0.5em;
+    margin: 0.5em;
+  }
+  
+  #stdout {
+    position: fixed;
+    top: 7.5em;
+    display: block;
+    height: 9em;
+    width: 22em;
+    background-color: black; 
+    color: white;
+    visibility: hidden;
+    border: 0.2em solid rgba(255,255,255,0.3);
+    font-size: 1.2em;
+    border-radius: 0.5em;
+    margin: 0.5em;
+  }
+  
+  
+  #infoBtn {
+    position: fixed;
+    top: 1em;
+    left: 25%;
+    margin: auto;
+    color: rgba(200,200,200,0.8);
+    width: 50%;
+    max-height: 5em;
+    background: none!important;
+    background-color: black;
+    border: 2px solid rgba(200,200,200,0.3);
+    border-radius: 0.5em;
+    font-size: 1em;
+    padding: 0.5em;
+  }
+  
+  #debugBtn {
+    position: fixed;
+    top: calc(100% - 6em);
+    left: calc(100% - 6em);
+    color: #222222;
+    width: 6em;
+    height: 6em;
+    background: none!important;
+    border: none;
+    padding: 0!important;
+    
+  }
+  
+  #info {
+    background-color: rgba(255,255,255,0.0);
+    width: 70%;
+    height: 70%;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: auto;
+    padding: 0;
+    visibility: hidden;
+    overflow-y: hidden;
+  }
+ 
+  #infocloseBtn { 
+    position: relative;
+    display: block;
+    background: none!important;
+    border: 0.1em solid  rgba(0,0,0,0.3);
+    border-radius: 0.4em;
+    width: 1.6em;
+    height: 1.6em;
+    font-size: 1em;
+    top: 0;
+    margin-left: auto;
+    margin-right: 0;
+    margin-top: 0.4em;
+  } 
+
+  #infotext {
+    color: #333333;
+    background-color: rgba(255,255,255,0.8);
+    position: fixed;
+    width: 70%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 1em;
+    padding-top: 0em;
+    padding-bottom: 2em;
+    overflow-y: auto;
+  }
+  
+  .paddedHeading {
+    line-height: 2.1em;
+  }
+  
+  @media only handheld, (orientation: portrait) and (max-width : 1024px) {
+     #stderr {
+    top: 19em;
+    font-size: 2.2em;
+  }
+
+  #stdout {
+    top: 8em;
+    font-size: 2.2em;
+  }
+
+    #info {
+      width: 100%;
+      height: 100%;
+    }
+
+    #infoBtn {
+      left: 6em;
+      font-size: 1.6em;
+      width: calc(100% - 12em);
+      min-width: calc(100% - 12em);
+      max-height: 3em;
+    }
+    #infocloseBtn {
+      font-size: 3em
+    }
+    #debugBtn {
+      font-size: 2.2em;
+    }
+
+    #infotext {
+        font-size: 1em;
+        height: calc(100% - 2em);
+        width: calc(100% - 2em);
+   }
+
+  }
+
+  @media only handheld, (orientation: landscape) and (max-width : 1024px) {
+     #stderr {
+    top: 19em;
+    font-size: 1em;
+  }
+
+  #stdout {
+    top: 8em;
+    font-size: 1em;
+  }
+
+
+    #info {
+      width: 100%;
+      height: 100%;
+    }
+    #infoBtn {
+      top: 0.5em;
+      left: 0.5em;
+      font-size: 1.4em;
+      width: 5.0em;
+      max-width: 5.0em;
+      min-height: calc(100% - 1em);
+      max-height: calc(100% - 1em);
+
+    }
+    #debugBtn {
+      font-size: 1em;
+    }
+
+    #infocloseBtn {
+      font-size: 1.8em;
+    }
+
+
+    #infotext {
+        font-size: 1em;
+        height: calc(100% - 2em);
+        width: calc(100% - 2em);
+    }
+
+  }
+
+  </style>
+
+</head>
+<body>
+    <div id="content">
+        <div id="loading">Benchmarking...</div>
+        <canvas id="bgcanvas0" ></canvas>
+        <canvas id="bgcanvas1" ></canvas>
+        <canvas id="canvas"></canvas>
+        <textarea cols=26 rows=5 id="stdout"></textarea>
+        <textarea cols=26 rows=5 id="stderr"></textarea>
+    <button id="debugBtn">debug</button>
+    </div>
+        <script>
+            var stderr = document.getElementById('stderr');
+            var stdout = document.getElementById('stdout');
+            var canvas = document.getElementById('canvas');
+            var bgcanvas0 = document.getElementById('bgcanvas0');
+            var bgcanvas1 = document.getElementById('bgcanvas1');
+            var bgctx0 = bgcanvas0.getContext('2d');
+            var bgctx1 = bgcanvas1.getContext('2d');
+            bgctx0.scale(2.5, 1.25);
+            bgctx1.scale(2.5, 1.25);
+
+            function copyToBg() {
+                bgctx0.drawImage(canvas,0,0);
+                bgctx1.drawImage(canvas,0,0);
+                window.requestAnimationFrame(copyToBg);
+            }
+
+            var Module = {
+				print: (function() {
+					return function(message) {
+                        var threading = typeof Atomics !== 'undefined' && typeof SharedArrayBuffer !== 'undefined';
+                        var score = parseInt(message);
+                        var lowres = score < 50;
+                        var highres = score > 1000; 
+
+                        if(threading) {
+                            if(lowres) {
+                            window.location.href = "/dive-mt-low/dive.html"
+                            } else if(highres) {
+                            window.location.href = "/dive-mt-high/dive.html"
+                            } else {
+                            window.location.href = "/dive-mt/dive.html"
+                            }
+                        } else {
+                            if(lowres) {
+                            window.location.href = "/dive-low/dive.html"
+                            } else if(highres) {
+                            window.location.href = "/dive-high/dive.html"
+                            } else {
+                            window.location.href = "/dive/dive.html"
+                            }
+                        }
+                        stdout.innerHTML += message + '\n';
+                        console.log(message);
+					};
+				})(),
+				printErr: function(message) {
+                    stderr.innerHTML += '> ' + message + '\n';
+                    stderr.scrollTop = stderr.scrollHeight;
+                    console.error(message);
+                },				
+				canvas: (function() {
+					return document.getElementById('canvas');
+				})()
+			};
+           window.requestAnimationFrame(copyToBg);
+
+            var debugBtn = document.getElementById("debugBtn");
+            var err = document.getElementById("stderr");
+            var out = document.getElementById("stdout");
+            var info = document.getElementById("info");
+
+            
+            debugBtn.onclick = function() {
+                var err = document.getElementById("stderr");
+                var out = document.getElementById("stdout");
+                if(err.style.visibility === undefined || err.style.visibility === "" || err.style.visibility === "hidden") {
+                    out.style.visibility = "visible";
+                    err.style.visibility = "visible";
+                } else { 
+                    out.style.visibility = "hidden";
+                    err.style.visibility = "hidden";
+                }
+            }
+		</script>
+		<script src="dive.js"></script>
+	</body>
+</html>

@@ -15,6 +15,10 @@ ifeq ($(UNAME_P),x86_64)
 LIBDIR = lib64
 endif
 
+ifdef BENCHMARK_ONLY
+CXXFLAGS += -D_BENCHMARK_ONLY
+endif
+
 ifndef JAVASCRIPT
 ifndef AMIGA
 CXXFLAGS += -march=native
@@ -173,11 +177,11 @@ ifdef JAVASCRIPT
 asan: CXXFLAGS += -fsanitize=undefined -s STACK_OVERFLOW_CHECK=2 -s ASSERTIONS=2 -s SAFE_HEAP=1
 asan: LDFLAGS += -fsanitize=undefined -s STACK_OVERFLOW_CHECK=2 -s ASSERTIONS=2 -s SAFE_HEAP=1
 else
-debug: CXXFLAGS += -rdynamic -fsanitize=address
-debug: LDFLAGS += -rdynamic -fsanitize=address
+debug: CXXFLAGS += -rdynamic
+debug: LDFLAGS += -rdynamic
 endif
-asan: CXXFLAGS += -g3 -O0 -fno-omit-frame-pointer
-asan: LDFLAGS += -Wl,--export-dynamic
+asan: CXXFLAGS += -g3 -O0 -fno-omit-frame-pointer  -fsanitize=address 
+asan: LDFLAGS += -Wl,--export-dynamic  -fsanitize=address 
 ifndef JAVASCRIPT
 asan: LIBS+= -lbfd -ldw
 endif

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <deque>
 #include <vector>
+#include <cstring>
 #include <mutex>
 
 #include "types.hpp"
@@ -49,6 +50,7 @@ public:
 			panSmoothLen_(panSmoothLen),
 			imageData_(new fd_image_pix_t[width * height]),
 			palette_(makePalette()){
+			memset(imageData_, 0, width * height * sizeof(fd_image_pix_t));
 	}
 
 	virtual ~Renderer() {
