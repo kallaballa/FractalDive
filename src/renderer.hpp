@@ -34,6 +34,7 @@ private:
 	std::deque<fd_coord_t> panHistoryY_;
 public:
 	image_t const imageData_;
+	const std::vector<uint32_t> palette_;
 
 	Renderer(const fd_dim_t& width, const fd_dim_t& height, const fd_iter_count_t& maxIterations,
 			const fd_float_t& zoomFactor, const size_t& panSmoothLen) :
@@ -46,7 +47,8 @@ public:
 			defaultZoom_(zoomFactor),
 			zoom_(zoomFactor),
 			panSmoothLen_(panSmoothLen),
-			imageData_(new fd_image_pix_t[width * height]) {
+			imageData_(new fd_image_pix_t[width * height]),
+			palette_(makePalette()){
 	}
 
 	virtual ~Renderer() {
@@ -59,6 +61,7 @@ public:
 	inline fd_iter_count_t mandelbrot(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t& currentIt) const;
 
 	void reset() {
+		srand(time(NULL));
 		offsetx_ = -fd_float_t(WIDTH_) / 2.0;
 		offsety_ = -fd_float_t(WIDTH_) / 2.0;
 		panx_ = 0;

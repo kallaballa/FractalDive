@@ -105,7 +105,11 @@ bool dive(bool zoom, bool benchmark) {
 	}
 	if (zoom) {
 		std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
-		centerOfHighDetail = identifyCenterOfTileOfHighestDetail(config.frameTiling_);
+		if(detail < 0.3) {
+			centerOfHighDetail = identifyCenterOfTileOfHighestDetail(config.frameTiling_);
+		} else {
+			centerOfHighDetail = {config.width_ / 2.0, config.height_ / 2.0};
+		}
 		const auto& pv = calculatePanVector(centerOfHighDetail.first, centerOfHighDetail.second);
 		fd_float_t zoomFactor = 1.0 + (config.zoomSpeed_ / config.fps_);
 		renderer.pan(pv.first, pv.second);
@@ -226,6 +230,7 @@ void run() {
 		renderer.pan(0, 0);
 		renderer.render();
 		fd_float_t detail = measureImageDetail(renderer.imageData_, config.frameSize_);
+
 		if (detail > config.detailThreshold_) {
 #ifdef _JAVASCRIPT
 			emscripten_set_main_loop(js_step, 0, 1);

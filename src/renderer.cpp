@@ -37,7 +37,7 @@ void Renderer::render() {
 					for (fd_dim_t x = 0; x < WIDTH_; x++) {
 						iterations = mandelbrot(x, y, currentIt);
 						if(iterations < currentIt) {
-							imageData_[yoff + x] = colorPixelAt(calculatePaletteIndex(iterations));
+							imageData_[yoff + x] = colorPixelAt(iterations % palette_.size());
 						} else {
 							imageData_[yoff + x] = 0;
 						}
@@ -55,7 +55,7 @@ void Renderer::render() {
 			for (fd_dim_t x = 0; x < WIDTH_; x++) {
 				iterations = mandelbrot(x, y, currentIt);
 				if (iterations < currentIt) {
-					imageData_[yoff + x] = colorPixelAt(calculatePaletteIndex(iterations));
+					imageData_[yoff + x] = colorPixelAt(iterations % palette_.size());
 				} else {
 					imageData_[yoff + x] = 0;
 				}
@@ -112,17 +112,12 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	return iterations;
 }
 
-inline size_t Renderer::calculatePaletteIndex(const fd_iter_count_t& iterations) const {
-	// 254 so we can use 0 as index for black
-	return iterations % 255;
-}
-
 /*
  * FIXME: Thread safety
  */
 inline const fd_image_pix_t& Renderer::colorPixelAt(const size_t& index) {
 #ifndef _AMIGA
-	return PALETTE[index];
+	return palette_[index];
 #else
 	return index;
 #endif
