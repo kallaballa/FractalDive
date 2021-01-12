@@ -246,9 +246,9 @@ void run() {
 			sleep_millis(1000.0 / config.fps_);
 		}
 	}
-#ifndef _NO_THREADS
-	ThreadPool::getInstance().stop();
-#endif
+//#ifndef _NO_THREADS
+//	ThreadPool::getInstance().stop();
+//#endif
 	SDL_Quit();
 }
 
