@@ -4,7 +4,6 @@
 #include <vector>
 #include <iostream>
 
-
 #include "color.hpp"
 
 namespace fractaldive {

@@ -105,7 +105,7 @@ bool dive(bool zoom, bool benchmark) {
 	}
 	if (zoom) {
 		std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
-		if(detail < 0.3) {
+		if(detail < 0.5) {
 			centerOfHighDetail = identifyCenterOfTileOfHighestDetail(config.frameTiling_);
 		} else {
 			centerOfHighDetail = {config.width_ / 2.0, config.height_ / 2.0};
