@@ -37,6 +37,10 @@ public:
 		return numThreads;
 	}
 
+	static size_t size() {
+		return getInstance().workers_.size();
+	}
+
 	static ThreadPool& getInstance() {
 		std::unique_lock<std::mutex> lock(instanceMtx_);
 		if (instance_ == nullptr) {
@@ -81,8 +85,7 @@ public:
 			std::unique_lock<std::mutex> lock(queue_mutex_);
 
 			// don't allow enqueueing after stopping the pool
-			if (stop_)
-				assert(false);
+			assert(!stop_);
 
 			tasks_.emplace([task]() {(*task)();});
 		}
@@ -111,9 +114,6 @@ public:
 			worker.join();
 	}
 
-	size_t size() {
-		return workers_.size();
-	}
 private:
 	// need to keep track of threads so we can join them
 	std::vector<std::thread> workers_;
@@ -131,6 +131,10 @@ private:
 class ThreadPool {
 public:
 	static size_t cores() {
+		return 0;
+	}
+
+	static size() {
 		return 0;
 	}
 
@@ -154,9 +158,6 @@ public:
 	void stop() {
 	}
 
-	size_t size() {
-		return 0;
-	}
 private:
 	static ThreadPool* instance_;
 	static std::mutex instanceMtx_;

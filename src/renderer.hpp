@@ -2,8 +2,11 @@
 #include <cstddef>
 #include <cmath>
 #include <deque>
+#include <vector>
 #include <mutex>
+
 #include "types.hpp"
+#include "threadpool.hpp"
 
 #ifndef SRC_RENDERER_HPP_
 #define SRC_RENDERER_HPP_
@@ -49,11 +52,11 @@ public:
 	virtual ~Renderer() {
 		delete[] imageData_;
 	}
-
+	inline fd_iter_count_t getCurrentIterations() const;
 	inline size_t calculatePaletteIndex(const fd_iter_count_t& iterations) const;
 	inline const fd_image_pix_t& colorPixelAt(const size_t& index);
 	inline fd_mandelfloat_t square(const fd_mandelfloat_t& n) const;
-	inline fd_iter_count_t mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const;
+	inline fd_iter_count_t mandelbrot(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t& currentIt) const;
 
 	void reset() {
 		offsetx_ = -fd_float_t(WIDTH_) / 2.0;

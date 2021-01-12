@@ -3,12 +3,15 @@
 #include <cassert>
 #include <cmath>
 
-#include "threadpool.hpp"
 #include "printer.hpp"
 #include "util.hpp"
+#include "config.hpp"
 
 namespace fractaldive {
 
+fd_iter_count_t Renderer::getCurrentIterations() const {
+	return std::ceil(maxIterations_ - (maxIterations_ / std::max(1.2,log10(zoom_))));
+}
 // Generate the fractal image
 void Renderer::render() {
 	if (ThreadPool::cores() > 1) {
@@ -19,19 +22,21 @@ void Renderer::render() {
 		fd_dim_t sliceHeight = std::floor(fd_float_t(HEIGHT_) / tpsize);
 		fd_dim_t remainder = (HEIGHT_ % sliceHeight);
 		fd_dim_t extra = 0;
+
 		for (size_t i = 0; i < tpsize; ++i) {
 			if (i == (tpsize - 1) && remainder > 0)
 				extra = remainder;
 
 			//start a worker thread
 			tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra) {
+				fd_iter_count_t currentIt = getCurrentIterations();
 				fd_iter_count_t iterations = 0;
 				fd_coord_t yoff = 0;
 				for (fd_dim_t y = 0; y < HEIGHT_; y++) {
 					yoff = y * WIDTH_;
 					for (fd_dim_t x = 0; x < WIDTH_; x++) {
-						iterations = mandelbrot(x, y);
-						if(iterations < maxIterations_) {
+						iterations = mandelbrot(x, y, currentIt);
+						if(iterations < currentIt) {
 							imageData_[yoff + x] = colorPixelAt(calculatePaletteIndex(iterations));
 						} else {
 							imageData_[yoff + x] = 0;
@@ -41,14 +46,15 @@ void Renderer::render() {
 			}, i, WIDTH_, sliceHeight, extra);
 		}
 	} else {
+		fd_iter_count_t currentIt = getCurrentIterations();
 		fd_iter_count_t iterations = 0;
 		fd_coord_t yoff = 0;
 
 		for (fd_dim_t y = 0; y < HEIGHT_; y++) {
 			yoff = y * WIDTH_;
 			for (fd_dim_t x = 0; x < WIDTH_; x++) {
-				iterations = mandelbrot(x, y);
-				if (iterations < maxIterations_) {
+				iterations = mandelbrot(x, y, currentIt);
+				if (iterations < currentIt) {
 					imageData_[yoff + x] = colorPixelAt(calculatePaletteIndex(iterations));
 				} else {
 					imageData_[yoff + x] = 0;
@@ -56,13 +62,14 @@ void Renderer::render() {
 			}
 		}
 	}
+//	std::cout << getCurrentIterations() << std::endl;
 }
 
 inline fd_mandelfloat_t Renderer::square(const fd_mandelfloat_t& n) const {
 	return n * n;
 }
 
-inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_t& y) const {
+inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t& currentIt) const {
 #if 1
 	fd_iter_count_t iterations = 0;
 	fd_mandelfloat_t x0 = (x + offsetx_ + panx_) / (zoom_ / 10.0);
@@ -78,7 +85,7 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	//Algebraically optimized version that uses addition/subtraction as often as possible while reducing multiplications
 	//and limiting multiplications to squaring only. this pretty nicely compiles to asm on Linux x86_64 (+simd), WASM (+simd) and m68k (000/020/030)
 	//because types are chosen very carefully in "types.hpp"
-	while (iterations < maxIterations_ && zrsqr + zisqr <= four) {
+	while (iterations < currentIt && zrsqr + zisqr <= four) {
 		//zi = (square(zr + zi) - zrsqr) - zisqr; //equals line below as a consequence of binomial expansion
 		zi = (zr + zr) * zi;
 		zi += pointi;
