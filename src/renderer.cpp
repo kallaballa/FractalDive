@@ -10,7 +10,7 @@
 namespace fractaldive {
 
 fd_iter_count_t Renderer::getCurrentIterations() const {
-	return std::ceil(maxIterations_ - (maxIterations_ / std::max(1.2,log10(zoom_))));
+	return std::ceil(maxIterations_ - (maxIterations_ / std::max(1.5,log10(zoom_))));
 }
 // Generate the fractal image
 void Renderer::render() {
