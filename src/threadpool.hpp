@@ -134,7 +134,7 @@ public:
 		return 0;
 	}
 
-	static size() {
+	static size_t size() {
 		return 0;
 	}
 
