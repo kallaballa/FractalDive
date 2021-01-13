@@ -6,6 +6,7 @@
 #include <cstring>
 #include <mutex>
 
+
 #include "types.hpp"
 #include "threadpool.hpp"
 
@@ -35,7 +36,7 @@ private:
 	std::deque<fd_coord_t> panHistoryY_;
 public:
 	image_t const imageData_;
-	const std::vector<uint32_t> palette_;
+	std::vector<uint32_t> palette_;
 
 	Renderer(const fd_dim_t& width, const fd_dim_t& height, const fd_iter_count_t& maxIterations,
 			const fd_float_t& zoomFactor, const size_t& panSmoothLen) :

@@ -21,10 +21,10 @@ public:
 	fd_iter_count_t minIterations_ = 0;
 	fd_iter_count_t maxIterations_ = 0;
 	fd_float_t detailThreshold_ = 0;
-	fd_float_t zoomFactor_ = 1.5;
+	fd_float_t zoomFactor_ = 0;
 	fd_float_t zoomSpeed_ = 0;
 	fd_float_t fps_ = 0;
-
+	fd_float_t findDetailThreshold_ = 0;
 	static Config& getInstance() {
 		if (instance_ == nullptr)
 			instance_ = new Config();

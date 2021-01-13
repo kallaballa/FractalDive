@@ -105,7 +105,7 @@ bool dive(bool zoom, bool benchmark) {
 	}
 	if (zoom) {
 		std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
-		if(detail < 0.5) {
+		if(detail < config.findDetailThreshold_) {
 			centerOfHighDetail = identifyCenterOfTileOfHighestDetail(config.frameTiling_);
 		} else {
 			centerOfHighDetail = {config.width_ / 2.0, config.height_ / 2.0};
@@ -117,8 +117,8 @@ bool dive(bool zoom, bool benchmark) {
 	}
 
 	renderer.render();
-
-	canvas.draw(renderer.imageData_);
+//	if(!benchmark)
+		canvas.draw(renderer.imageData_);
 	return true;
 }
 

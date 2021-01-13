@@ -17,8 +17,10 @@ void Config::resetToDefaults() {
 	benchmarkTimeoutMillis_ = 1000;
 	detailThreshold_ = 0.02;
 	startIterations_ = 100;
-	panSmoothLen_ = 30;
+	panSmoothLen_ = 40;
 	frameTiling_ = 5;
+	zoomFactor_ = 1.5;
+	findDetailThreshold_ = 0.9;
 	#ifndef _AMIGA
 #ifdef _LOW_RES
 	width_ = 128;

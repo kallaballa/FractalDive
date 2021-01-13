@@ -296,20 +296,7 @@
         <script>
             var stderr = document.getElementById('stderr');
             var stdout = document.getElementById('stdout');
-            var canvas = document.getElementById('canvas');
-            var bgcanvas0 = document.getElementById('bgcanvas0');
-            var bgcanvas1 = document.getElementById('bgcanvas1');
-            var bgctx0 = bgcanvas0.getContext('2d');
-            var bgctx1 = bgcanvas1.getContext('2d');
-            bgctx0.scale(2.5, 1.25);
-            bgctx1.scale(2.5, 1.25);
-
-            function copyToBg() {
-                bgctx0.drawImage(canvas,0,0);
-                bgctx1.drawImage(canvas,0,0);
-                window.requestAnimationFrame(copyToBg);
-            }
-
+ 
             var Module = {
 				print: (function() {
 					return function(message) {
@@ -348,13 +335,10 @@
 					return document.getElementById('canvas');
 				})()
 			};
-           window.requestAnimationFrame(copyToBg);
 
             var debugBtn = document.getElementById("debugBtn");
             var err = document.getElementById("stderr");
             var out = document.getElementById("stdout");
-            var info = document.getElementById("info");
-
             
             debugBtn.onclick = function() {
                 var err = document.getElementById("stderr");
