@@ -26,7 +26,6 @@
 #include "renderer.hpp"
 #include "canvas.hpp"
 #include "util.hpp"
-#include "tilingkernel.hpp"
 #include "imagedetail.hpp"
 
 using namespace fractaldive;
@@ -35,10 +34,9 @@ bool do_run = true;
 Config& config = Config::getInstance();
 Renderer renderer(config.width_, config.height_, config.startIterations_, config.zoomFactor_, config.panSmoothLen_);
 Canvas canvas(config.width_, config.height_, false);
-TilingKernel<5> tkernel;
 
 std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_coord_t& tiling) {
-	assert(tiling > 1 && tiling == tkernel.size_);
+	assert(tiling > 1);
 	const fd_coord_t tileW = std::floor(fd_float_t(config.width_) / fd_float_t(tiling));
 	const fd_coord_t tileH = std::floor(fd_float_t(config.height_) / fd_float_t(tiling));
 	assert(tileW > 1);
@@ -67,11 +65,9 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_c
 				}
 			}
 			fd_float_t detail = measureImageDetail(tile.data(), tileW * tileH);
-			fd_float_t weight = tkernel[tx][ty];
-			fd_float_t score = detail * weight;
 
-			if (score > candidateScore) {
-				candidateScore = score;
+			if (detail > candidateScore) {
+				candidateScore = detail;
 				candidateTx = tx;
 				candidateTy = ty;
 			}
@@ -232,7 +228,6 @@ void run() {
 	fd_highres_tick_t start = 0;
 	while (do_run) {
 		start = get_milliseconds();
-		tkernel.initAt(rand() % config.frameTiling_, rand() % config.frameTiling_);
 		renderer.reset();
 		renderer.resetSmoothPan();
 		renderer.pan(0, 0);
