@@ -249,7 +249,7 @@ void run() {
 			sleep_millis(1000.0 / config.fps_);
 		}
 	}
-	std::cout << renderer.getMaxIterations() << "/" << renderer.getZoomCount() << std::endl;
+//	std::cout << renderer.getMaxIterations() << "/" << renderer.getZoomCount() << std::endl;
 
 //#ifndef _NO_THREADS
 //	ThreadPool::getInstance().stop();

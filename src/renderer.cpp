@@ -64,7 +64,7 @@ void Renderer::render() {
 			}
 		}
 	}
-	std::cout << getCurrentIterations() << std::endl;
+//	std::cout << getCurrentIterations() << std::endl;
 }
 
 inline fd_mandelfloat_t Renderer::square(const fd_mandelfloat_t& n) const {
