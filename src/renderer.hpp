@@ -30,6 +30,8 @@ private:
 	fd_coord_t pany_ = 0;
 	fd_float_t defaultZoom_;
 	fd_float_t zoom_;
+	fd_float_t zoomCount_ = 0;
+
 	// used for smoothing automatic panning
 	size_t panSmoothLen_;
 	std::deque<fd_coord_t> panHistoryX_;
@@ -70,6 +72,7 @@ public:
 		panx_ = 0;
 		pany_ = 0;
 		zoom_ = defaultZoom_;
+		zoomCount_ = 0;
 		panHistoryX_.clear();
 		panHistoryY_.clear();
 	}
@@ -79,6 +82,10 @@ public:
 	void resetSmoothPan();
 	void initSmoothPan(const fd_coord_t& x, const fd_coord_t& y);
 	void pan(const fd_coord_t& x, const fd_coord_t& y);
+
+	fd_float_t getZoomCount() const {
+		return zoomCount_;
+	}
 
 	fd_float_t getZoom() const {
 		return zoom_;

@@ -10,7 +10,8 @@
 namespace fractaldive {
 
 fd_iter_count_t Renderer::getCurrentIterations() const {
-	return std::ceil(maxIterations_ - (maxIterations_ / std::max(1.5,log(zoom_))));
+//	return maxIterations_;
+	return std::min(fd_float_t(maxIterations_), (getZoomCount() / 3.0) + Config::getInstance().startIterations_);
 }
 // Generate the fractal image
 void Renderer::render() {
@@ -63,7 +64,7 @@ void Renderer::render() {
 			}
 		}
 	}
-//	std::cout << getCurrentIterations() << std::endl;
+	std::cout << getCurrentIterations() << std::endl;
 }
 
 inline fd_mandelfloat_t Renderer::square(const fd_mandelfloat_t& n) const {
@@ -128,11 +129,13 @@ inline const fd_image_pix_t& Renderer::colorPixelAt(const size_t& index) {
 void Renderer::zoomAt(const fd_coord_t& x, const fd_coord_t& y, const fd_float_t& factor, const bool& zoomin) {
 	if (zoomin) {
 		// Zoom in
+		++zoomCount_;
 		zoom_ *= factor;
 		panx_ = factor * (x + offsetx_ + panx_);
 		pany_ = factor * (y + offsety_ + pany_);
 	} else {
 		// Zoom out
+		--zoomCount_;
 		zoom_ /= factor;
 		panx_ = (x + offsetx_ + panx_) / factor;
 		pany_ = (y + offsety_ + pany_) / factor;
