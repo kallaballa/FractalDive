@@ -31,6 +31,8 @@ private:
 	fd_float_t defaultZoom_;
 	fd_float_t zoom_;
 	fd_float_t zoomCount_ = 0;
+	fd_dim_t frameCount_ = 0;
+
 
 	// used for smoothing automatic panning
 	size_t panSmoothLen_;
@@ -59,7 +61,7 @@ public:
 	virtual ~Renderer() {
 		delete[] imageData_;
 	}
-	inline fd_iter_count_t getCurrentIterations() const;
+	inline fd_iter_count_t getCurrentMaxIterations() const;
 	inline size_t calculatePaletteIndex(const fd_iter_count_t& iterations) const;
 	inline const fd_image_pix_t& colorPixelAt(const size_t& index);
 	inline fd_mandelfloat_t square(const fd_mandelfloat_t& n) const;
@@ -73,6 +75,7 @@ public:
 		pany_ = 0;
 		zoom_ = defaultZoom_;
 		zoomCount_ = 0;
+		frameCount_ = 0;
 		panHistoryX_.clear();
 		panHistoryY_.clear();
 	}
@@ -85,6 +88,10 @@ public:
 
 	fd_float_t getZoomCount() const {
 		return zoomCount_;
+	}
+
+	fd_float_t getFrameCount() const {
+		return frameCount_;
 	}
 
 	fd_float_t getZoom() const {

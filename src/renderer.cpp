@@ -9,7 +9,7 @@
 
 namespace fractaldive {
 
-fd_iter_count_t Renderer::getCurrentIterations() const {
+fd_iter_count_t Renderer::getCurrentMaxIterations() const {
 //	return maxIterations_;
 	return std::min(fd_float_t(maxIterations_), (getZoomCount() / 3.0) + Config::getInstance().startIterations_);
 }
@@ -30,7 +30,7 @@ void Renderer::render() {
 
 			//start a worker thread
 			tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra) {
-				fd_iter_count_t currentIt = getCurrentIterations();
+				fd_iter_count_t currentIt = getCurrentMaxIterations();
 				fd_iter_count_t iterations = 0;
 				fd_coord_t yoff = 0;
 
@@ -48,7 +48,7 @@ void Renderer::render() {
 			}, i, WIDTH_, sliceHeight, extra);
 		}
 	} else {
-		fd_iter_count_t currentIt = getCurrentIterations();
+		fd_iter_count_t currentIt = getCurrentMaxIterations();
 		fd_iter_count_t iterations = 0;
 		fd_coord_t yoff = 0;
 
@@ -64,6 +64,7 @@ void Renderer::render() {
 			}
 		}
 	}
+	++frameCount_;
 //	std::cout << getCurrentIterations() << std::endl;
 }
 

@@ -35,7 +35,7 @@ Config& config = Config::getInstance();
 Renderer renderer(config.width_, config.height_, config.startIterations_, config.zoomFactor_, config.panSmoothLen_);
 Canvas canvas(config.width_, config.height_, false);
 
-std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_coord_t& tiling) {
+std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_coord_t& tiling, const bool& favourCenter = true) {
 	assert(tiling > 1);
 	const fd_coord_t tileW = std::floor(fd_float_t(config.width_) / fd_float_t(tiling));
 	const fd_coord_t tileH = std::floor(fd_float_t(config.height_) / fd_float_t(tiling));
@@ -64,10 +64,15 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_c
 					tile[y * tileW + x] = image[pixIdx];
 				}
 			}
-			fd_float_t detail = measureImageDetail(tile.data(), tileW * tileH);
 
-			if (detail > candidateScore) {
-				candidateScore = detail;
+			fd_float_t half = tiling / 2.0;
+			fd_float_t quart = half / 2.0;
+			fd_float_t score = measureImageDetail(tile.data(), tileW * tileH);
+			if(favourCenter)
+				score = score * ((quart - std::abs(half - tx)) / quart) * ((quart - std::abs(half - ty)) / quart);
+
+			if (score > candidateScore) {
+				candidateScore = score;
 				candidateTx = tx;
 				candidateTy = ty;
 			}
@@ -101,8 +106,9 @@ bool dive(bool zoom, bool benchmark) {
 	}
 	if (zoom) {
 		std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
+		std::cerr << detail << std::endl;
 		if(detail < config.findDetailThreshold_) {
-			centerOfHighDetail = identifyCenterOfTileOfHighestDetail(config.frameTiling_);
+			centerOfHighDetail = identifyCenterOfTileOfHighestDetail(config.frameTiling_, false);
 		} else {
 			centerOfHighDetail = {config.width_ / 2.0, config.height_ / 2.0};
 		}

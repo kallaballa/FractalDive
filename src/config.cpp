@@ -18,9 +18,9 @@ void Config::resetToDefaults() {
 	detailThreshold_ = 0.02;
 	startIterations_ = 100;
 	frameTiling_ = 5;
-	zoomFactor_ = 1.5;
+	zoomFactor_ = 2;
 	panSmoothLen_ = 20;
-	findDetailThreshold_ = 5.0;
+	findDetailThreshold_ = 0.07;
 	#ifndef _AMIGA
 #ifdef _LOW_RES
 	width_ = 128;
