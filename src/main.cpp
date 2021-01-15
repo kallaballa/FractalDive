@@ -119,8 +119,7 @@ bool dive(bool zoom, bool benchmark) {
 	}
 
 	renderer.render();
-//	if(!benchmark)
-		canvas.draw(renderer.imageData_);
+  canvas.draw(renderer.imageData_);
 	return true;
 }
 
