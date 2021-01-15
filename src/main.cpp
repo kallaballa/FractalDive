@@ -27,6 +27,7 @@
 #include "canvas.hpp"
 #include "util.hpp"
 #include "imagedetail.hpp"
+#include "tilingkernel.hpp"
 
 using namespace fractaldive;
 
@@ -34,9 +35,10 @@ bool do_run = true;
 Config& config = Config::getInstance();
 Renderer renderer(config.width_, config.height_, config.startIterations_, config.zoomFactor_, config.panSmoothLen_);
 Canvas canvas(config.width_, config.height_, false);
+TilingKernel<5> tkernel;
 
-std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_coord_t& tiling, const bool& favourCenter = true) {
-	assert(tiling > 1);
+std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_coord_t& tiling) {
+	assert(tiling > 1 && tiling == tkernel.size_);
 	const fd_coord_t tileW = std::floor(fd_float_t(config.width_) / fd_float_t(tiling));
 	const fd_coord_t tileH = std::floor(fd_float_t(config.height_) / fd_float_t(tiling));
 	assert(tileW > 1);
@@ -64,12 +66,10 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_c
 					tile[y * tileW + x] = image[pixIdx];
 				}
 			}
-
+			fd_float_t weight = tkernel[tx][ty];
 			fd_float_t half = tiling / 2.0;
 			fd_float_t quart = half / 2.0;
-			fd_float_t score = measureImageDetail(tile.data(), tileW * tileH);
-			if(favourCenter)
-				score = score * ((quart - std::abs(half - tx)) / quart) * ((quart - std::abs(half - ty)) / quart);
+			fd_float_t score = measureImageDetail(tile.data(), tileW * tileH) * weight;
 
 			if (score > candidateScore) {
 				candidateScore = score;
@@ -106,9 +106,9 @@ bool dive(bool zoom, bool benchmark) {
 	}
 	if (zoom) {
 		std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
-		std::cerr << detail << std::endl;
+//		std::cerr << detail << std::endl;
 		if(detail < config.findDetailThreshold_) {
-			centerOfHighDetail = identifyCenterOfTileOfHighestDetail(config.frameTiling_, false);
+			centerOfHighDetail = identifyCenterOfTileOfHighestDetail(config.frameTiling_);
 		} else {
 			centerOfHighDetail = {config.width_ / 2.0, config.height_ / 2.0};
 		}
@@ -234,6 +234,7 @@ void run() {
 	fd_highres_tick_t start = 0;
 	while (do_run) {
 		start = get_milliseconds();
+		tkernel.initAt(rand() % config.frameTiling_, rand() % config.frameTiling_);
 		renderer.reset();
 		renderer.resetSmoothPan();
 		renderer.pan(0, 0);
