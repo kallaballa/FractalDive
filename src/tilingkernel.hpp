@@ -6,7 +6,7 @@
 #include "types.hpp"
 
 namespace fractaldive {
-template<size_t Tsize>
+template<fd_coord_t Tsize>
 class TilingKernel {
 private:
 	std::vector<std::vector<fd_float_t>> calibration = {
@@ -21,8 +21,8 @@ public:
 	void initAt(const fd_coord_t& gravityX, const fd_coord_t& gravityY) {
 		for (fd_coord_t y = 0; y < Tsize; ++y) {
 			for (fd_coord_t x = 0; x < Tsize; ++x) {
-				const size_t& calX = std::round((fd_float_t(x) / (Tsize - 1.0)) * 4.0);
-				const size_t& calY = std::round((fd_float_t(y) / (Tsize - 1.0)) * 4.0);
+//				const size_t& calX = std::round((fd_float_t(x) / (Tsize - 1.0)) * 4.0);
+//				const size_t& calY = std::round((fd_float_t(y) / (Tsize - 1.0)) * 4.0);
 				fd_float_t gravity = ((((Tsize - std::abs(gravityX - x)) + (Tsize - std::abs(gravityY - y))) / 2.0) / Tsize);
 				kernel[x][y] = gravity;// * calibration[calY][calX];
 			}

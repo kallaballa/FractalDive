@@ -37,7 +37,7 @@ Renderer renderer(config.width_, config.height_, config.startIterations_, config
 Canvas canvas(config.width_, config.height_, false);
 TilingKernel<5> tkernel;
 
-std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_coord_t& tiling) {
+std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_dim_t& tiling) {
 	assert(tiling > 1 && tiling == tkernel.size_);
 	const fd_coord_t tileW = std::floor(fd_float_t(config.width_) / fd_float_t(tiling));
 	const fd_coord_t tileH = std::floor(fd_float_t(config.height_) / fd_float_t(tiling));
@@ -54,8 +54,8 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_c
 	fd_coord_t candidateTy = 0;
 
 	//iterate over tiles
-	for (fd_coord_t ty = 0; ty < tiling; ++ty) {
-		for (fd_coord_t tx = 0; tx < tiling; ++tx) {
+	for (fd_dim_t ty = 0; ty < tiling; ++ty) {
+		for (fd_dim_t tx = 0; tx < tiling; ++tx) {
 			const fd_coord_t offY = tileH * ty * config.width_;
 			const fd_coord_t offX = tileW * tx;
 
@@ -67,8 +67,6 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_c
 				}
 			}
 			fd_float_t weight = tkernel[tx][ty];
-			fd_float_t half = tiling / 2.0;
-			fd_float_t quart = half / 2.0;
 			fd_float_t score = measureImageDetail(tile.data(), tileW * tileH) * weight;
 
 			if (score > candidateScore) {
