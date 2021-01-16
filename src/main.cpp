@@ -28,12 +28,14 @@
 #include "util.hpp"
 #include "imagedetail.hpp"
 #include "tilingkernel.hpp"
+#include "camera.hpp"
 
 using namespace fractaldive;
 
 bool do_run = true;
 Config& config = Config::getInstance();
-Renderer renderer(config.width_, config.height_, config.startIterations_, config.zoomFactor_, config.panSmoothLen_);
+Camera camera(config, config.zoomFactor_, config.panSmoothLen_);
+Renderer renderer(config, camera,config.startIterations_);
 Canvas canvas(config.width_, config.height_, false);
 TilingKernel<5> tkernel;
 
@@ -80,16 +82,6 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 	return { (candidateTx * tileW) + (tileW / 2), (candidateTy * tileH) + (tileH / 2) };
 }
 
-std::pair<fd_coord_t, fd_coord_t> calculatePanVector(const fd_coord_t& x, const fd_coord_t& y) {
-	fd_float_t hDiff = x - std::floor(config.width_ / 2.0);
-	fd_float_t vDiff = y - std::floor(config.height_ / 2.0);
-	fd_float_t scale = (1.0 - (1.0 / (config.width_ / 8.0)))
-			* ((config.fps_ + (config.fps_ * config.zoomSpeed_)) / (config.fps_ / (config.zoomSpeed_ * 0.1)));
-	fd_coord_t panX = (hDiff * scale);
-	fd_coord_t panY = (vDiff * scale);
-	return {panX, panY};
-}
-
 bool dive(bool zoom, bool benchmark) {
 	fd_float_t detail = measureImageDetail(renderer.imageData_, config.frameSize_);
 
@@ -110,10 +102,7 @@ bool dive(bool zoom, bool benchmark) {
 		} else {
 			centerOfHighDetail = {config.width_ / 2.0, config.height_ / 2.0};
 		}
-		const auto& pv = calculatePanVector(centerOfHighDetail.first, centerOfHighDetail.second);
-		fd_float_t zoomFactor = 1.0 + (config.zoomSpeed_ / config.fps_);
-		renderer.pan(pv.first, pv.second);
-		renderer.zoomAt(config.width_ / 2.0, config.height_ / 2.0, zoomFactor, true);
+		camera.zoom(centerOfHighDetail.first, centerOfHighDetail.second);
 	}
 
 	renderer.render();
@@ -131,7 +120,7 @@ bool auto_scale_max_iterations() {
 		++cnt;
 	}
 
-	renderer.reset();
+	camera.reset();
 	fd_float_t fpsMillis = 1000.0 / config.fps_;
 	fd_float_t exp = 1.2 + config.frameSize_ * (0.12 / (128 * 128));
 	fd_float_t millisRatio = (pow(duration / (cnt / 20.0), exp) / fpsMillis);
@@ -232,9 +221,9 @@ void run() {
 	while (do_run) {
 		start = get_milliseconds();
 		tkernel.initAt(rand() % config.frameTiling_, rand() % config.frameTiling_);
-		renderer.reset();
-		renderer.resetSmoothPan();
-		renderer.pan(0, 0);
+		camera.reset();
+		camera.resetSmoothPan();
+		camera.pan(0, 0);
 		renderer.render();
 		fd_float_t detail = measureImageDetail(renderer.imageData_, config.frameSize_);
 
