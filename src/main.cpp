@@ -87,8 +87,7 @@ bool dive(bool zoom, bool benchmark) {
 
 	if (!benchmark && detail < config.detailThreshold_) {
 #ifdef _JAVASCRIPT
-		renderer.reset();
-		renderer.resetSmoothPan();
+		camera.resetSmoothPan();
 		renderer.render();
 		//		emscripten_cancel_main_loop();
 #endif
