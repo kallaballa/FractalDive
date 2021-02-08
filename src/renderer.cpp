@@ -9,8 +9,8 @@
 namespace fractaldive {
 
 fd_iter_count_t Renderer::getCurrentMaxIterations() const {
-//	return maxIterations_;
-	return std::min(fd_float_t(maxIterations_), (camera_.getZoomCount() / 3.0) + config_.startIterations_);
+	return maxIterations_;
+//	return std::min(fd_float_t(maxIterations_), (camera_.getZoomCount() / 3.0) + config_.startIterations_);
 }
 // Generate the fractal image
 void Renderer::render() {
