@@ -57,8 +57,9 @@ make clean;
 HIGHRES=1 AUTOVECTOR=1 JAVASCRIPT_MT=1 make -j8 hardcore; cp src/dive.js src/dive.wasm src/dive.worker.js src/formula.svg web/dive-mt-simd-high; cp src/dive-high.html web/dive-mt-simd-high/dive.html
 
 
+cp src/wasm-detect.js web/
 cp src/index.html web/
-rm diveweb.zip
+rm -f diveweb.zip
 cd web/
 zip -r ../diveweb.zip *
 

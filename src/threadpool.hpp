@@ -140,7 +140,7 @@ public:
 
 	static ThreadPool& getInstance() {
 		assert(false);
-		return *instance_;
+		return *new ThreadPool(0);
 	}
 
 	inline ThreadPool(size_t threads) {
@@ -159,8 +159,6 @@ public:
 	}
 
 private:
-	static ThreadPool* instance_;
-	static std::mutex instanceMtx_;
 };
 #endif
 }

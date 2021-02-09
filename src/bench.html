@@ -7,6 +7,7 @@
   <meta name="keywords" content="mandelbrot, fractal, zoom, realtime, FractalDive, C++, cross-platform, platform independent, optimization">
   <meta name="author" content="amir@viel-zu.org">
   <meta name="viewport" content="width=768">
+  <script src="/wasm-detect.js"></script>
   <style>
 ::-webkit-scrollbar {
     -webkit-appearance: none;
@@ -296,31 +297,55 @@
         <script>
             var stderr = document.getElementById('stderr');
             var stdout = document.getElementById('stdout');
- 
+            var scoreReceived = false;
             var Module = {
 				print: (function() {
 					return function(message) {
-                        var threading = typeof Atomics !== 'undefined' && typeof SharedArrayBuffer !== 'undefined';
-                        var score = parseInt(message);
-                        var lowres = score < 50;
-                        var highres = score > 1000; 
+                        if(!scoreReceived) {
+                            var threading = typeof Atomics !== 'undefined' && typeof SharedArrayBuffer !== 'undefined';
+                            var score = parseInt(message);
+                            var lowres = score < 50;
+                            var highres = score > 1000; 
+                            scoreReceived = true;
+                            wasmFeatureDetect.simd().then(simdSupported => {
+                                if (simdSupported) {
+                                    if(threading) {
+                                        if(lowres) {
+                                            window.location.href = "/dive-mt-simd-low/dive.html"
+                                        } else if(highres) {
+                                            window.location.href = "/dive-mt-simd-high/dive.html"
+                                        } else {
+                                            window.location.href = "/dive-mt-simd/dive.html"
+                                        }
+                                    } else {
+                                        if(lowres) {
+                                            window.location.href = "/dive-simd-low/dive.html"
+                                        } else if(highres) {
+                                            window.location.href = "/dive-simd-high/dive.html"
+                                        } else {
+                                            window.location.href = "/dive-simd/dive.html"
+                                        }
+                                    }                                } else {
+                                    if(threading) {
+                                        if(lowres) {
+                                            window.location.href = "/dive-mt-low/dive.html"
+                                        } else if(highres) {
+                                            window.location.href = "/dive-mt-high/dive.html"
+                                        } else {
+                                            window.location.href = "/dive-mt/dive.html"
+                                        }
+                                    } else {
+                                        if(lowres) {
+                                            window.location.href = "/dive-low/dive.html"
+                                        } else if(highres) {
+                                            window.location.href = "/dive-high/dive.html"
+                                        } else {
+                                            window.location.href = "/dive/dive.html"
+                                        }
+                                    }
+                                }
+                            });
 
-                        if(threading) {
-                            if(lowres) {
-                            window.location.href = "/dive-mt-low/dive.html"
-                            } else if(highres) {
-                            window.location.href = "/dive-mt-high/dive.html"
-                            } else {
-                            window.location.href = "/dive-mt/dive.html"
-                            }
-                        } else {
-                            if(lowres) {
-                            window.location.href = "/dive-low/dive.html"
-                            } else if(highres) {
-                            window.location.href = "/dive-high/dive.html"
-                            } else {
-                            window.location.href = "/dive/dive.html"
-                            }
                         }
                         stdout.innerHTML += message + '\n';
                         console.log(message);

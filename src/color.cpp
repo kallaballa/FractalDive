@@ -1,13 +1,16 @@
 #include <cstdlib>
+#include <cstdint>
 #include <cstddef>
 #include <cmath>
+#include <ctime>
 #include <vector>
 #include <iostream>
-
+#include <stdint.h>
 #include "color.hpp"
 
 namespace fractaldive {
-	std::vector<uint32_t> makePalette() {
+
+std::vector<uint32_t> makePalette() {
 		srand(time(NULL));
 
 		std::vector<uint32_t> palette;

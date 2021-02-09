@@ -36,7 +36,7 @@ inline fd_highres_tick_t get_highres_tick() {
 #ifndef _AMIGA
 	return get_microseconds();
 #else
-	return get_millisecond();
+	return get_milliseconds();
 #endif
 }
 

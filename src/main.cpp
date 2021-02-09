@@ -1,7 +1,7 @@
 /*#include <cwchar>
 #include <cstdio>
 #include <cmath>
-#include <ctime>
+
 #include <cstdint>
 #include <cstdlib>
 #include <cstddef>
@@ -87,20 +87,19 @@ bool dive(bool zoom, bool benchmark) {
 
 	if (!benchmark && detail < config.detailThreshold_) {
 #ifdef _JAVASCRIPT
-		camera.resetSmoothPan();
-		renderer.render();
-		//		emscripten_cancel_main_loop();
+//		camera.resetSmoothPan();
+//		renderer.render();
 #endif
 		return false;
 	}
 	if (zoom) {
 		std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
 //		std::cerr << detail << std::endl;
-		if(detail < config.findDetailThreshold_) {
+//		if(detail < config.findDetailThreshold_) {
 			centerOfHighDetail = identifyCenterOfTileOfHighestDetail(config.frameTiling_);
-		} else {
-			centerOfHighDetail = {config.width_ / 2.0, config.height_ / 2.0};
-		}
+//		} else {
+//			centerOfHighDetail = {config.width_ / 2.0, config.height_ / 2.0};
+//		}
 		camera.zoom(centerOfHighDetail.first, centerOfHighDetail.second);
 	}
 
@@ -126,7 +125,7 @@ bool auto_scale_max_iterations() {
 #ifndef _FIXEDPOINT
 	fd_iter_count_t iterations = std::round((config.startIterations_ / millisRatio) * 10.0);
 #else
-	fd_iter_count_t iterations = std::round((config.startIterations_.ToFloat() / millisRatio) * 10.0);
+	fd_iter_count_t iterations = round((config.startIterations_ / millisRatio) * 10.0);
 #endif
 
 #ifdef _JAVASCRIPT_MT
@@ -142,7 +141,7 @@ bool auto_scale_max_iterations() {
 	return true;
 #endif
 	if (iterations < config.minIterations_)
-		config.fps_ = std::max(std::floor(config.fps_ * (fd_float_t(iterations) / config.minIterations_)), 1.0);
+		config.fps_ = std::max((float)std::floor(config.fps_ * (fd_float_t(iterations) / config.minIterations_)), 1.f);
 	iterations = std::min(config.maxIterations_, std::max(iterations, config.minIterations_));
 	renderer.setMaxIterations(iterations);
 	return false;
@@ -211,6 +210,8 @@ void run() {
 			do_run = false;
 #ifndef _JAVASCRIPT
 			ThreadPool::getInstance().stop();
+#else
+			emscripten_cancel_main_loop();
 #endif
 	}	else {
 		printReport();
@@ -223,18 +224,15 @@ void run() {
 		camera.reset();
 		camera.resetSmoothPan();
 		camera.pan(0, 0);
+		renderer.makeNewPalette();
 		renderer.render();
 		fd_float_t detail = measureImageDetail(renderer.imageData_, config.frameSize_);
 
 		if (detail > config.detailThreshold_) {
-#ifdef _JAVASCRIPT
-			emscripten_set_main_loop(js_step, 0, 1);
-#else
 			bool stepResult = true;
 			while (do_run && stepResult) {
 				stepResult = step();
 			}
-#endif
 			print("Duration:", (get_milliseconds() - start) / 1000.0, "seconds");
 		} else {
 			print("Skip:", detail);
@@ -274,6 +272,10 @@ int main() {
 	signal(SIGINT, sigint_handler);
 #endif
 #endif
+#ifdef _JAVASCRIPT
+			emscripten_set_main_loop(run, 0, 1);
+#else
 	run();
+#endif
 	return 0;
 }

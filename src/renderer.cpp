@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <algorithm>
 
 #include "printer.hpp"
 #include "util.hpp"
@@ -22,13 +23,12 @@ void Renderer::render() {
 		fd_dim_t sliceHeight = std::floor(fd_float_t(config_.height_) / tpsize);
 		fd_dim_t remainder = (config_.height_ % sliceHeight);
 		fd_dim_t extra = 0;
-
 		for (size_t i = 0; i < tpsize; ++i) {
 			if (i == (tpsize - 1) && remainder > 0)
 				extra = remainder;
 
 			//start a worker thread
-			tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra) {
+			tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra, const std::vector<uint32_t>& palette) {
 				fd_iter_count_t currentIt = getCurrentMaxIterations();
 				fd_iter_count_t iterations = 0;
 				fd_coord_t yoff = 0;
@@ -38,13 +38,17 @@ void Renderer::render() {
 					for (fd_dim_t x = 0; x < config_.width_; x++) {
 						iterations = mandelbrot(x, y, currentIt);
 						if(iterations < currentIt) {
-							imageData_[yoff + x] = colorPixelAt(iterations % palette_.size());
+#ifndef _AMIGA
+							imageData_[yoff + x] = palette[iterations % palette.size()];
+#else
+							imageData_[yoff + x] = iterations % palette.size();
+#endif
 						} else {
 							imageData_[yoff + x] = 0;
 						}
 					}
 				}
-			}, i, config_.width_, sliceHeight, extra);
+			}, i, config_.width_, sliceHeight, extra, palette_);
 		}
 	} else {
 		fd_iter_count_t currentIt = getCurrentMaxIterations();
@@ -56,7 +60,11 @@ void Renderer::render() {
 			for (fd_dim_t x = 0; x < config_.width_; x++) {
 				iterations = mandelbrot(x, y, currentIt);
 				if (iterations < currentIt) {
-					imageData_[yoff + x] = colorPixelAt(iterations % palette_.size());
+#ifndef _AMIGA
+							imageData_[yoff + x] = palette_[iterations % palette_.size()];
+#else
+							imageData_[yoff + x] = iterations % palette.size();
+#endif
 				} else {
 					imageData_[yoff + x] = 0;
 				}
@@ -66,12 +74,10 @@ void Renderer::render() {
 
 //	std::cout << getCurrentIterations() << std::endl;
 }
-
 inline fd_mandelfloat_t Renderer::square(const fd_mandelfloat_t& n) const {
 	return n * n;
 }
-
-inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t& currentIt) const {
+inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t& currentIt) {
 #if 1
 	fd_iter_count_t iterations = 0;
 	fd_mandelfloat_t x0 = (x + camera_.getOffsetX() + camera_.getPanX()) / (camera_.getZoom() / 10.0);
@@ -112,17 +118,6 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	return iterations;
 #endif
 	return iterations;
-}
-
-/*
- * FIXME: Thread safety
- */
-inline const fd_image_pix_t& Renderer::colorPixelAt(const size_t& index) {
-#ifndef _AMIGA
-	return palette_[index];
-#else
-	return index;
-#endif
 }
 
 

@@ -92,7 +92,7 @@ CXX	:= em++
 # defines
 EMFLAGS = -DNDEBUG -D_JAVASCRIPT -flto
 # emscripteb options
-EMFLAGS +=  -s INITIAL_MEMORY=104857600 -s ASYNCIFY -s DISABLE_EXCEPTION_CATCHING=1 -s TOTAL_STACK=52428800
+EMFLAGS +=  -s INITIAL_MEMORY=209715200 -s ASYNCIFY -s DISABLE_EXCEPTION_CATCHING=1 -s TOTAL_STACK=52428800
 
 
 ifdef AUTOVECTOR
@@ -131,7 +131,7 @@ ifneq ($(UNAME_S), Darwin)
 release: LDFLAGS += -s
 endif
 ifdef JAVASCRIPT
-release: CXXFLAGS += -s STACK_OVERFLOW_CHECK=2 -0 ASSERTIONS=0 -s SAFE_HEAP=0
+release: CXXFLAGS += -s STACK_OVERFLOW_CHECK=2 -s ASSERTIONS=0 -s SAFE_HEAP=0
 endif
 release: CXXFLAGS += -g0 -O3 -c
 release: dirs
@@ -195,13 +195,16 @@ export LIBS
 
 dirs:
 	${MAKE} -C src/ ${MAKEFLAGS} CXX=${CXX} ${MAKECMDGOALS}
+#	${MAKE} -C exp/ ${MAKEFLAGS} CXX=${CXX} ${MAKECMDGOALS}
 
 debian-release:
 	${MAKE} -C src/ -${MAKEFLAGS} CXX=${CXX} release
-
+#	${MAKE} -C exp/ -${MAKEFLAGS} CXX=${CXX} release
+	
 debian-clean:
 	${MAKE} -C src/ -${MAKEFLAGS} CXX=${CXX} clean
-
+#	${MAKE} -C exp/ -${MAKEFLAGS} CXX=${CXX} clean
+	
 install: ${TARGET}
 	true
 	
