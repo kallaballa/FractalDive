@@ -28,7 +28,7 @@ void Renderer::render() {
 				extra = remainder;
 
 			//start a worker thread
-			tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra, const std::vector<uint32_t>& palette) {
+			tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra) {
 				fd_iter_count_t currentIt = getCurrentMaxIterations();
 				fd_iter_count_t iterations = 0;
 				fd_coord_t yoff = 0;
@@ -39,16 +39,16 @@ void Renderer::render() {
 						iterations = mandelbrot(x, y, currentIt);
 						if(iterations < currentIt) {
 #ifndef _AMIGA
-							imageData_[yoff + x] = palette[iterations % palette.size()];
+							imageData_[yoff + x] = palette_[iterations % palette_.size()];
 #else
-							imageData_[yoff + x] = iterations % palette.size();
+							imageData_[yoff + x] = iterations % palette_.size();
 #endif
 						} else {
 							imageData_[yoff + x] = 0;
 						}
 					}
 				}
-			}, i, config_.width_, sliceHeight, extra, palette_);
+			}, i, config_.width_, sliceHeight, extra);
 		}
 	} else {
 		fd_iter_count_t currentIt = getCurrentMaxIterations();

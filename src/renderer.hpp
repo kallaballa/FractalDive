@@ -6,7 +6,6 @@
 #include <cstring>
 #include <mutex>
 
-
 #include "types.hpp"
 #include "threadpool.hpp"
 
