@@ -220,7 +220,7 @@ void run() {
 	fd_highres_tick_t start = 0;
 	while (do_run) {
 		start = get_milliseconds();
-		tkernel.initAt(rand() % config.frameTiling_, rand() % config.frameTiling_);
+		tkernel.initAt(config.frameTiling_ / 2, config.frameTiling_ / 2);
 		camera.reset();
 		camera.resetSmoothPan();
 		camera.pan(0, 0);
