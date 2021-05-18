@@ -34,15 +34,14 @@ void Config::resetToDefaults() {
 	height_ = 256;
 #endif
 #endif
+	maxIterations_ = (width_ * height_) / 24;
 #else
-	width_ = 30;
-	height_ = 30;
-	panSmoothLen_ = 2;
-	maxIterations_ = 100;
+	width_ = 52;
+	height_ = 52;
+	panSmoothLen_ = 10;
+	maxIterations_ = 300;
 #endif
 	frameSize_ = width_ * height_;
-	maxIterations_ = frameSize_ / 24;
-
 
 #ifdef _FAST_ZOOM
 	zoomSpeed_ = 1;

@@ -69,6 +69,8 @@ public:
 						return;
 						task = std::move(this->tasks_.front());
 						this->tasks_.pop();
+						if(this->tasks_.empty())
+							joinCondition_.notify_all();
 					}
 
 					task();
@@ -102,6 +104,12 @@ public:
 		return tasks_.size();
 	}
 
+	void join() {
+		std::unique_lock<std::mutex> lock(this->queue_mutex_);
+		if(!this->tasks_.empty())
+			joinCondition_.wait(lock);
+	}
+
 	void stop() {
 		{
 			std::unique_lock<std::mutex> lock(queue_mutex_);
@@ -123,6 +131,8 @@ private:
 	// synchronization
 	std::mutex queue_mutex_;
 	std::condition_variable condition_;
+	std::condition_variable joinCondition_;
+
 	bool stop_;
 	static ThreadPool* instance_;
 	static std::mutex instanceMtx_;

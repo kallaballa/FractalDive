@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <complex>
 #include <algorithm>
 
 #include "printer.hpp"
@@ -50,6 +51,7 @@ void Renderer::render() {
 				}
 			}, i, config_.width_, sliceHeight, extra);
 		}
+		tpool.join();
 	} else {
 		fd_iter_count_t currentIt = getCurrentMaxIterations();
 		fd_iter_count_t iterations = 0;
@@ -63,7 +65,7 @@ void Renderer::render() {
 #ifndef _AMIGA
 							imageData_[yoff + x] = palette_[iterations % palette_.size()];
 #else
-							imageData_[yoff + x] = iterations % palette.size();
+							imageData_[yoff + x] = iterations % palette_.size();
 #endif
 				} else {
 					imageData_[yoff + x] = 0;
@@ -77,6 +79,7 @@ void Renderer::render() {
 inline fd_mandelfloat_t Renderer::square(const fd_mandelfloat_t& n) const {
 	return n * n;
 }
+
 inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t& currentIt) {
 #if 1
 	fd_iter_count_t iterations = 0;
@@ -104,9 +107,10 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 
 		++iterations;
 	}
+	return iterations;
 #else
-	float x0 = (x + offsetx_ + panx_) / (zoom_ / 10);
-	float y0 = (y + offsety_ + pany_) / (zoom_ / 10);
+	float x0 = (x + camera_.getOffsetX() + camera_.getPanX()) / (camera_.getZoom() / 10.0);
+	float y0 = (y + camera_.getOffsetY() + camera_.getPanY()) / (camera_.getZoom() / 10.0);
 	std::complex<float> point(x0/config_.width_, y0/config_.height_);
 	std::complex<float> z(0, 0);
 	fd_iter_count_t iterations = 0;
@@ -117,7 +121,6 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 
 	return iterations;
 #endif
-	return iterations;
 }
 
 

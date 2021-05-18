@@ -245,6 +245,7 @@ void run() {
 //	ThreadPool::getInstance().stop();
 //#endif
 	SDL_Quit();
+	exit(0);
 }
 
 //does report true for 0
@@ -270,10 +271,11 @@ int main() {
 #ifndef _JAVASCRIPT
 #ifndef _AMIGA
 	signal(SIGINT, sigint_handler);
+	signal(SIGTERM, sigint_handler);
 #endif
 #endif
 #ifdef _JAVASCRIPT
-			emscripten_set_main_loop(run, 0, 1);
+	emscripten_set_main_loop(run, 0, 1);
 #else
 	run();
 #endif

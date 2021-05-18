@@ -29,8 +29,8 @@ namespace fractaldive {
   typedef float fd_float_t;
   typedef int16_t fd_coord_t;
   typedef uint16_t fd_dim_t;
-  typedef uint16_t fd_image_pix_t;
-  constexpr int FD_IMAGE_DEPTH_IN_BYTES = 2;
+  typedef uint8_t fd_image_pix_t;
+  constexpr int FD_IMAGE_DEPTH_IN_BYTES = 1;
   typedef uint16_t fd_iter_count_t;
   typedef fd_image_pix_t* image_t;
   typedef uint32_t fd_highres_tick_t;
@@ -47,7 +47,7 @@ namespace fractaldive {
 	constexpr char FD_PRECISION[] = "16bit/16bit";
 	#endif
 #else
-	typedef double fd_mandelfloat_t;
+	typedef float fd_mandelfloat_t;
 	constexpr char FD_PRECISION[] = "double";
 #endif
 

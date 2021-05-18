@@ -7,7 +7,6 @@
 namespace fractaldive {
 Canvas::Canvas(const fd_dim_t& width, const fd_dim_t& height, const bool& offscreen) :
 		width_(width), height_(height), screen_(NULL), offscreen_(offscreen) {
-	assert(BYTES_PER_PIXEL > 1); //SDL doesn't support 8bit images. It interpretes 8bit as paletted image
 
 	if (width > 0 && height > 0) {
 		if (SDL_Init(SDL_INIT_VIDEO) == -1) {
@@ -42,7 +41,7 @@ void Canvas::draw(image_t const& image) {
 	if (SDL_MUSTLOCK(screen_))
 		SDL_LockSurface(screen_);
 
-	memcpy(static_cast<void*>(screen_->pixels), static_cast<void*>(image), width_ * height_ * BYTES_PER_PIXEL);
+	memcpy(static_cast<void*>(screen_->pixels), static_cast<void*>(image), width_ * height_ * sizeof(fd_image_pix_t));
 	flip();
 
 	if (SDL_MUSTLOCK(screen_))
