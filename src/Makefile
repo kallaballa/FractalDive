@@ -10,7 +10,6 @@ endif
 
 SRCS  := main.cpp renderer.cpp canvas.cpp threadpool.cpp printer.cpp config.cpp color.cpp camera.cpp
 
-CXXFLAGS += -I../third/SpatiumLib-master/include/
 ifndef JAVASCRIPT
 ifndef JAVASCRIPT_MT
 ifndef AMIGA

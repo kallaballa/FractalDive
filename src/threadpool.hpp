@@ -164,6 +164,10 @@ public:
 
 	}
 
+	void join() {
+
+	}
+
 	void stop() {
 	}
 
