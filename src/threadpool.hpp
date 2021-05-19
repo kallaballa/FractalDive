@@ -118,8 +118,7 @@ public:
 			stop_ = true;
 		}
 		condition_.notify_all();
-		for (std::thread &worker : workers_)
-			worker.join();
+		this->join();
 	}
 
 private:
