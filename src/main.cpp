@@ -226,18 +226,12 @@ void run() {
 		camera.pan(0, 0);
 		renderer.makeNewPalette();
 		renderer.render();
-		fd_float_t detail = measureImageDetail(renderer.imageData_, config.frameSize_);
 
-		if (detail > config.detailThreshold_) {
-			bool stepResult = true;
-			while (do_run && stepResult) {
-				stepResult = step();
-			}
-			print("Duration:", (get_milliseconds() - start) / 1000.0, "seconds");
-		} else {
-			print("Skip:", detail);
-			sleep_millis(1000.0 / config.fps_);
+		bool stepResult = true;
+		while (do_run && stepResult) {
+			stepResult = step();
 		}
+		print("Duration:", (get_milliseconds() - start) / 1000.0, "seconds");
 	}
 
 #ifndef _NO_THREADS
