@@ -23,13 +23,15 @@ void Renderer::render() {
 		//slice the image into vertical stripes
 		fd_dim_t sliceHeight = std::floor(fd_float_t(config_.height_) / tpsize);
 		fd_dim_t remainder = (config_.height_ % sliceHeight);
-		fd_dim_t extra = 0;
-		for (size_t i = 0; i < tpsize; ++i) {
-			if (i == (tpsize - 1) && remainder > 0)
-				extra = remainder;
-
+		for (size_t i = 0; i < tpsize + 1; ++i) {
+			if (i == tpsize) {
+				if(remainder > 0)
+					sliceHeight = remainder;
+				else
+					break;
+			}
 			//start a worker thread
-			tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight, const fd_dim_t& extra) {
+			tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight) {
 				fd_iter_count_t currentIt = getCurrentMaxIterations();
 				fd_iter_count_t iterations = 0;
 				fd_coord_t yoff = 0;
@@ -49,9 +51,15 @@ void Renderer::render() {
 						}
 					}
 				}
-			}, i, config_.width_, sliceHeight, extra);
+			}, i, config_.width_, sliceHeight);
 		}
+#ifndef _JAVASCRIPT
 		tpool.join();
+//#else
+//		while(tpool.taskCount() > 0) {
+//			sleep_millis(1);
+//		}
+#endif
 	} else {
 		fd_iter_count_t currentIt = getCurrentMaxIterations();
 		fd_iter_count_t iterations = 0;

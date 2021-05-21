@@ -128,13 +128,13 @@ bool auto_scale_max_iterations() {
 	fd_iter_count_t iterations = round((config.startIterations_ / millisRatio) * 10.0);
 #endif
 
-#ifdef _JAVASCRIPT_MT
-	iterations = (iterations * (ThreadPool::cores()));
-#endif
-
-#ifdef _JAVASCRIPT
-	iterations *= 0.7;
-#endif
+//#ifdef _JAVASCRIPT_MT
+//	iterations = (iterations * (ThreadPool::cores()));
+//#endif
+//
+//#ifdef _JAVASCRIPT
+//	iterations *= 0.7;
+//#endif
 
 	print(iterations);
 #ifdef _BENCHMARK_ONLY
@@ -218,13 +218,18 @@ void run() {
 	}
 
 	fd_highres_tick_t start = 0;
+#ifndef _JAVASCRIPT
 	while (do_run) {
+#else
+	while (true) {
+#endif
 		start = get_milliseconds();
 		tkernel.initAt(config.frameTiling_ / 2, config.frameTiling_ / 2);
 		camera.reset();
-		camera.resetSmoothPan();
 		camera.pan(0, 0);
+#ifndef _JAVASCRIPT
 		renderer.makeNewPalette();
+#endif
 		renderer.render();
 
 		bool stepResult = true;
@@ -232,6 +237,7 @@ void run() {
 			stepResult = step();
 		}
 		print("Duration:", (get_milliseconds() - start) / 1000.0, "seconds");
+//		ThreadPool::getInstance().join();
 	}
 
 #ifndef _NO_THREADS

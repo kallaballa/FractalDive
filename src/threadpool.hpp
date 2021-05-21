@@ -67,6 +67,8 @@ public:
 								[this] {return this->stop_ || !this->tasks_.empty();});
 						if(this->stop_ && this->tasks_.empty())
 						return;
+
+						std::unique_lock<std::mutex> lock2(this->join_mutex_);
 						task = std::move(this->tasks_.front());
 						this->tasks_.pop();
 						if(this->tasks_.empty())
@@ -105,7 +107,7 @@ public:
 	}
 
 	void join() {
-		std::unique_lock<std::mutex> lock(this->queue_mutex_);
+		std::unique_lock<std::mutex> lock(this->join_mutex_);
 		if(!this->tasks_.empty())
 			joinCondition_.wait(lock);
 	}
@@ -129,6 +131,7 @@ private:
 
 	// synchronization
 	std::mutex queue_mutex_;
+	std::mutex join_mutex_;
 	std::condition_variable condition_;
 	std::condition_variable joinCondition_;
 

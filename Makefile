@@ -75,7 +75,7 @@ endif
 
 ifdef JAVASCRIPT_MT
 JAVASCRIPT=1
-CXXFLAGS += -D_JAVASCRIPT_MT -s USE_PTHREADS=1 -s PROXY_TO_PTHREAD -pthread
+CXXFLAGS += -D_JAVASCRIPT_MT -s USE_PTHREADS=1 -pthread
 LDFLAGS += -D_JAVASCRIPT_MT -s USE_PTHREADS=1 -s PROXY_TO_PTHREAD -pthread
 endif
 
@@ -90,17 +90,17 @@ endif
 ifdef JAVASCRIPT
 CXX	:= em++
 # defines
-EMFLAGS = -DNDEBUG -D_JAVASCRIPT -flto
+EMCXXFLAGS = -DNDEBUG -D_JAVASCRIPT -flto
 # emscripteb options
-EMFLAGS +=  -s INITIAL_MEMORY=419430400 -s ASYNCIFY -s DISABLE_EXCEPTION_CATCHING=1 -s TOTAL_STACK=52428800 -s WASM_BIGINT -s MALLOC=emmalloc
-
+EMCXXFLAGS +=  -s DISABLE_EXCEPTION_CATCHING=1
+EMLDFLAGS +=  -s INITIAL_MEMORY=419430400 -s ASYNCIFY -s TOTAL_STACK=52428800 -s WASM_BIGINT -s MALLOC=emmalloc
 
 ifdef AUTOVECTOR
-EMFLAGS += -msimd128
+EMCXXFLAGS += -msimd128
 endif
 
-CXXFLAGS += $(EMFLAGS) -c
-LDFLAGS += $(EMFLAGS)
+CXXFLAGS += $(EMCXXFLAGS) -c
+LDFLAGS += $(EMLDFLAGS)
 endif
 
 ifdef AUTOVECTOR
@@ -131,7 +131,7 @@ ifneq ($(UNAME_S), Darwin)
 release: LDFLAGS += -s
 endif
 ifdef JAVASCRIPT
-release: CXXFLAGS += -s STACK_OVERFLOW_CHECK=2 -s ASSERTIONS=0 -s SAFE_HEAP=0
+release: LDFLAGS += -s STACK_OVERFLOW_CHECK=2 -s ASSERTIONS=0 -s SAFE_HEAP=0
 endif
 release: CXXFLAGS += -g0 -O3 -c
 release: dirs
@@ -164,7 +164,8 @@ endif
 profile: dirs
 
 ifdef JAVASCRIPT
-hardcore: CXXFLAGS += -g0 -O3 -ffp-contract=fast -freciprocal-math -fno-signed-zeros --llvm-opts "['-menable-no-infs', '-menable-no-nans', '-menable-unsafe-fp-math']" -s STACK_OVERFLOW_CHECK=0 -s ASSERTIONS=0 -s SAFE_HEAP=0 --closure 1
+hardcore: CXXFLAGS += -g0 -O3 -ffp-contract=fast -freciprocal-math -fno-signed-zeros --closure 1 
+hardcore: LDFLAGS += -s STACK_OVERFLOW_CHECK=0 -s ASSERTIONS=0 -s SAFE_HEAP=0 --closure 1 -menable-unsafe-fp-math
 else
 hardcore: CXXFLAGS += -g0 -Ofast
 endif
