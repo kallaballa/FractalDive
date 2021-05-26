@@ -87,8 +87,7 @@ bool dive(bool zoom, bool benchmark) {
 
 	if (!benchmark && detail < config.detailThreshold_) {
 #ifdef _JAVASCRIPT
-//		camera.resetSmoothPan();
-//		renderer.render();
+//		ThreadPool::getInstance().join();
 #endif
 		return false;
 	}
@@ -132,9 +131,9 @@ bool auto_scale_max_iterations() {
 //	iterations = (iterations * (ThreadPool::cores()));
 //#endif
 //
-//#ifdef _JAVASCRIPT
-//	iterations *= 0.7;
-//#endif
+#ifdef _JAVASCRIPT_MT
+	iterations *= 0.5;
+#endif
 
 	print(iterations);
 #ifdef _BENCHMARK_ONLY
@@ -218,18 +217,12 @@ void run() {
 	}
 
 	fd_highres_tick_t start = 0;
-#ifndef _JAVASCRIPT
 	while (do_run) {
-#else
-	while (true) {
-#endif
 		start = get_milliseconds();
 		tkernel.initAt(config.frameTiling_ / 2, config.frameTiling_ / 2);
 		camera.reset();
 		camera.pan(0, 0);
-#ifndef _JAVASCRIPT
 		renderer.makeNewPalette();
-#endif
 		renderer.render();
 
 		bool stepResult = true;

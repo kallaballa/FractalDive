@@ -4,6 +4,7 @@
 #include <cmath>
 #include <complex>
 #include <algorithm>
+#include <map>
 
 #include "printer.hpp"
 #include "util.hpp"
@@ -41,11 +42,16 @@ void Renderer::render() {
 					for (fd_dim_t x = 0; x < config_.width_; x++) {
 						iterations = mandelbrot(x, y, currentIt);
 						if(iterations < currentIt) {
+							size_t pSize = palette_.size();
+							if(pSize > 0) {
 #ifndef _AMIGA
-							imageData_[yoff + x] = palette_[iterations % palette_.size()];
+								imageData_[yoff + x] = palette_[iterations % palette_.size()];
 #else
-							imageData_[yoff + x] = iterations % palette_.size();
+								imageData_[yoff + x] = iterations % palette_.size();
 #endif
+							} else {
+								imageData_[yoff + x] = 0;
+							}
 						} else {
 							imageData_[yoff + x] = 0;
 						}
@@ -70,11 +76,16 @@ void Renderer::render() {
 			for (fd_dim_t x = 0; x < config_.width_; x++) {
 				iterations = mandelbrot(x, y, currentIt);
 				if (iterations < currentIt) {
+					size_t pSize = palette_.size();
+					if(pSize > 0) {
 #ifndef _AMIGA
-							imageData_[yoff + x] = palette_[iterations % palette_.size()];
+							imageData_[yoff + x] = palette_[iterations % pSize];
 #else
-							imageData_[yoff + x] = iterations % palette_.size();
+							imageData_[yoff + x] = iterations % pSize;
 #endif
+					} else {
+						imageData_[yoff + x] = 0;
+					}
 				} else {
 					imageData_[yoff + x] = 0;
 				}
@@ -84,9 +95,28 @@ void Renderer::render() {
 
 //	std::cout << getCurrentIterations() << std::endl;
 }
+
+
+
+#if 0
+// LUT experiments for AMIGA. doesn't make a real difference yet.
+static std::vector<fd_mandelfloat_t> LUT(std::pow(2, 8),0);
+inline fd_mandelfloat_t Renderer::square(const fd_mandelfloat_t& n) const {
+	uint8_t idx = n.GetRawVal() >> 4;
+
+	auto& p = LUT[idx];
+
+	if(p == 0) {
+		return p = n * n;
+	} else {
+		return p;
+	}
+}
+#else
 inline fd_mandelfloat_t Renderer::square(const fd_mandelfloat_t& n) const {
 	return n * n;
 }
+#endif
 
 inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_t& y, const fd_iter_count_t& currentIt) {
 #if 1
