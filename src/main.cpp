@@ -39,6 +39,35 @@ Renderer renderer(config, camera,config.startIterations_);
 Canvas canvas(config.width_, config.height_, false);
 TilingKernel<5> tkernel;
 
+struct ZoomEvent {
+	std::pair<size_t, size_t> zoomPoint_ = { 0, 0};
+	bool active_ = false;
+};
+
+ZoomEvent current_zoom_event;
+void process_events() {
+	SDL_Event test_event;
+	while (SDL_PollEvent(&test_event)) {
+		switch (test_event.type) {
+		case SDL_MOUSEBUTTONDOWN:
+			current_zoom_event.zoomPoint_ = {test_event.motion.x, test_event.motion.y};
+			current_zoom_event.active_ = true;
+			break;
+		case SDL_MOUSEMOTION:
+			if(current_zoom_event.active_)
+				current_zoom_event.zoomPoint_ = {test_event.motion.x, test_event.motion.y};
+			break;
+		case SDL_MOUSEBUTTONUP:
+			current_zoom_event.zoomPoint_ = {0 , 0};
+			current_zoom_event.active_ = false;
+			break;
+
+		default:
+			break;
+		}
+	}
+}
+
 std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_dim_t& tiling) {
 	assert(tiling > 1 && tiling == tkernel.size_);
 	const fd_coord_t tileW = std::floor(fd_float_t(config.width_) / fd_float_t(tiling));
@@ -92,14 +121,22 @@ bool dive(bool zoom, bool benchmark) {
 		return false;
 	}
 	if (zoom) {
+		process_events();
 		std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
-//		std::cerr << detail << std::endl;
-//		if(detail < config.findDetailThreshold_) {
+		if(current_zoom_event.zoomPoint_.first == 0 && current_zoom_event.zoomPoint_.second == 0) {
+			camera.panSmoothLen_ = 20;
 			centerOfHighDetail = identifyCenterOfTileOfHighestDetail(config.frameTiling_);
-//		} else {
-//			centerOfHighDetail = {config.width_ / 2.0, config.height_ / 2.0};
-//		}
-		camera.zoom(centerOfHighDetail.first, centerOfHighDetail.second);
+			camera.zoom(centerOfHighDetail.first, centerOfHighDetail.second);
+		} else {
+			camera.panSmoothLen_ = 1;
+			camera.panHistoryX_.resize(1);
+			camera.panHistoryY_.resize(1);
+			if (current_zoom_event.active_) {
+				camera.zoom((current_zoom_event.zoomPoint_.first), (current_zoom_event.zoomPoint_.second));
+			} else {
+				camera.zoom(config.width_ / 2.0, config.height_ / 2.0);
+			}
+		}
 	}
 
 	renderer.render();
@@ -220,6 +257,7 @@ void run() {
 	while (do_run) {
 		start = get_milliseconds();
 		tkernel.initAt(config.frameTiling_ / 2, config.frameTiling_ / 2);
+		current_zoom_event = ZoomEvent();
 		camera.reset();
 		camera.pan(0, 0);
 		renderer.makeNewPalette();

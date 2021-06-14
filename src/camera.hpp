@@ -17,19 +17,19 @@ class Camera {
 	fd_coord_t offsety_;
 
 	// Pan and zoom parameters
-	fd_coord_t panx_ = 0;
-	fd_coord_t pany_ = 0;
+
 	fd_float_t defaultZoom_;
 	fd_float_t zoom_;
 	fd_float_t zoomCount_ = 0;
 	fd_dim_t frameCount_ = 0;
-
-
+public:
 	// used for smoothing automatic panning
-	size_t panSmoothLen_;
 	std::deque<fd_coord_t> panHistoryX_;
 	std::deque<fd_coord_t> panHistoryY_;
-public:
+	fd_coord_t panx_ = 0;
+	fd_coord_t pany_ = 0;
+	size_t panSmoothLen_;
+
 	Camera(Config& config, const fd_float_t& zoomFactor, const size_t& panSmoothLen) :
 			config_(config),
 			offsetx_(-fd_float_t(config.width_) / 2.0),

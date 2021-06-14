@@ -59,13 +59,13 @@ void Renderer::render() {
 				}
 			}, i, config_.width_, sliceHeight);
 		}
-#ifndef _JAVASCRIPT
-		tpool.join();
+//#ifndef _JAVASCRIPT
+//		tpool.join();
 //#else
 //		while(tpool.taskCount() > 0) {
 //			sleep_millis(1);
 //		}
-#endif
+//#endif
 	} else {
 		fd_iter_count_t currentIt = getCurrentMaxIterations();
 		fd_iter_count_t iterations = 0;
