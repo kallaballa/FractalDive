@@ -313,6 +313,8 @@
             var bgcanvas1 = document.getElementById('bgcanvas1');
             var bgctx0 = bgcanvas0.getContext('2d');
             var bgctx1 = bgcanvas1.getContext('2d');
+            bgctx0.imageSmoothingEnabled = false;
+            bgctx1.imageSmoothingEnabled = false;
             bgctx0.scale(2.5, 1.25);
             bgctx1.scale(2.5, 1.25);
 
