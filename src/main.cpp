@@ -1,15 +1,3 @@
-/*#include <cwchar>
-#include <cstdio>
-#include <cmath>
-
-#include <cstdint>
-#include <cstdlib>
-#include <cstddef>
-#include <cassert>
-#include <unistd.h>
-#include <sys/time.h>
-*/
-
 #ifndef _JAVASCRIPT
 #include <csignal>
 #else
@@ -34,7 +22,7 @@ using namespace fractaldive;
 
 bool do_run = true;
 Config& config = Config::getInstance();
-Camera camera(config, config.zoomFactor_, config.panSmoothLen_);
+Camera camera(config, config.zoomFactor_);
 Renderer renderer(config, camera,config.startIterations_);
 Canvas canvas(config.width_, config.height_, false);
 TilingKernel<5> tkernel;
@@ -124,15 +112,19 @@ bool dive(bool zoom, bool benchmark) {
 		process_events();
 		std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
 		if(current_zoom_event.zoomPoint_.first == 0 && current_zoom_event.zoomPoint_.second == 0) {
-			camera.panSmoothLen_ = 20;
 			centerOfHighDetail = identifyCenterOfTileOfHighestDetail(config.frameTiling_);
+			if(camera.panSmoothLength() != config.panSmoothLen_) {
+				camera.resetSmoothPan();
+				camera.initSmoothPan(0,0, config.panSmoothLen_);
+			}
 			camera.zoom(centerOfHighDetail.first, centerOfHighDetail.second);
 		} else {
-			camera.panSmoothLen_ = 1;
-			camera.panHistoryX_.resize(1);
-			camera.panHistoryY_.resize(1);
 			if (current_zoom_event.active_) {
-				camera.zoom((current_zoom_event.zoomPoint_.first), (current_zoom_event.zoomPoint_.second));
+				if(camera.panSmoothLength() != 1) {
+					camera.resetSmoothPan();
+					camera.initSmoothPan(current_zoom_event.zoomPoint_.first, current_zoom_event.zoomPoint_.second, 1);
+				}
+				camera.zoom(current_zoom_event.zoomPoint_.first, current_zoom_event.zoomPoint_.second);
 			} else {
 				camera.zoom(config.width_ / 2.0, config.height_ / 2.0);
 			}
@@ -156,20 +148,11 @@ bool auto_scale_max_iterations() {
 
 	camera.reset();
 	fd_float_t fpsMillis = 1000.0 / config.fps_;
-	fd_float_t exp = 1.2 + config.frameSize_ * (0.12 / (128 * 128));
-	fd_float_t millisRatio = (pow(duration / (cnt / 20.0), exp) / fpsMillis);
+	fd_float_t millisRatio = ((fd_float_t)duration / cnt) / fpsMillis;
 #ifndef _FIXEDPOINT
-	fd_iter_count_t iterations = std::round((config.startIterations_ / millisRatio) * 10.0);
+	fd_iter_count_t iterations = std::round((config.startIterations_ / millisRatio)) / 10.0;
 #else
-	fd_iter_count_t iterations = round((config.startIterations_ / millisRatio) * 10.0);
-#endif
-
-//#ifdef _JAVASCRIPT_MT
-//	iterations = (iterations * (ThreadPool::cores()));
-//#endif
-//
-#ifdef _JAVASCRIPT_MT
-	iterations *= 0.5;
+	fd_iter_count_t iterations = round((config.startIterations_ / millisRatio)) / 10.0;
 #endif
 
 	print(iterations);
@@ -259,7 +242,7 @@ void run() {
 		tkernel.initAt(config.frameTiling_ / 2, config.frameTiling_ / 2);
 		current_zoom_event = ZoomEvent();
 		camera.reset();
-		camera.pan(0, 0);
+		camera.initSmoothPan(0,0, config.panSmoothLen_);
 		renderer.makeNewPalette();
 		renderer.render();
 

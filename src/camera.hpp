@@ -22,30 +22,32 @@ class Camera {
 	fd_float_t zoom_;
 	fd_float_t zoomCount_ = 0;
 	fd_dim_t frameCount_ = 0;
-public:
+
 	// used for smoothing automatic panning
 	std::deque<fd_coord_t> panHistoryX_;
 	std::deque<fd_coord_t> panHistoryY_;
 	fd_coord_t panx_ = 0;
 	fd_coord_t pany_ = 0;
-	size_t panSmoothLen_;
+public:
 
-	Camera(Config& config, const fd_float_t& zoomFactor, const size_t& panSmoothLen) :
+
+	Camera(Config& config, const fd_float_t& zoomFactor) :
 			config_(config),
 			offsetx_(-fd_float_t(config.width_) / 2.0),
 			offsety_(-fd_float_t(config.height_) / 2.0),
 			defaultZoom_(zoomFactor),
-			zoom_(zoomFactor),
-			panSmoothLen_(panSmoothLen)
-	{
+			zoom_(zoomFactor) {
 	}
 	virtual ~Camera();
 	std::pair<fd_coord_t, fd_coord_t> calculatePanVector(const fd_coord_t& x, const fd_coord_t& y);
 	void zoom(fd_coord_t atX, fd_coord_t atY);
 	void zoomAt(const fd_coord_t& x, const fd_coord_t& y, const fd_float_t& factor, const bool& zoomin);
 	void resetSmoothPan();
-	void initSmoothPan(const fd_coord_t& x, const fd_coord_t& y);
+	void initSmoothPan(const fd_coord_t& x, const fd_coord_t& y, const size_t& panSmoothLen);
 	std::pair<fd_coord_t, fd_coord_t> smoothPan(const fd_coord_t& x, const fd_coord_t& y);
+	size_t panSmoothLength() {
+		return panHistoryX_.size();
+	}
 	void pan(const fd_coord_t& x, const fd_coord_t& y);
 	void reset() {
 		srand(time(NULL));

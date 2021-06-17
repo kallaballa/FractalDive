@@ -52,27 +52,24 @@ void Camera::resetSmoothPan() {
 	panHistoryY_.clear();
 }
 
-void Camera::initSmoothPan(const fd_coord_t& x, const fd_coord_t& y) {
-	panHistoryX_.resize(panSmoothLen_);
-	panHistoryY_.resize(panSmoothLen_);
+void Camera::initSmoothPan(const fd_coord_t& x, const fd_coord_t& y, const size_t& panSmoothLen) {
+	panHistoryX_.resize(panSmoothLen);
+	panHistoryY_.resize(panSmoothLen);
 
-	fd_float_t xstep = (x / panSmoothLen_);
-	fd_float_t ystep = (y / panSmoothLen_);
+	fd_float_t xstep = (x / panSmoothLen);
+	fd_float_t ystep = (y / panSmoothLen);
 
-	for (size_t i = 0; i < panSmoothLen_; ++i) {
+	for (size_t i = 0; i < panSmoothLen; ++i) {
 		panHistoryX_[i] = (xstep * i);
 	}
 
-	for (size_t i = 0; i < panSmoothLen_; ++i) {
+	for (size_t i = 0; i < panSmoothLen; ++i) {
 		panHistoryY_[i] = (ystep * i);
 	}
 }
 
 std::pair<fd_coord_t, fd_coord_t> Camera::smoothPan(const fd_coord_t& x, const fd_coord_t& y) {
-	assert((panHistoryX_.empty() && panHistoryY_.empty()) || (!panHistoryX_.empty() && !panHistoryY_.empty()));
-	if (panHistoryX_.empty()) {
-		initSmoothPan(x, y);
-	}
+	assert((!panHistoryX_.empty() && !panHistoryY_.empty()));
 
 	panHistoryX_.pop_back();
 	panHistoryY_.pop_back();
@@ -90,7 +87,7 @@ std::pair<fd_coord_t, fd_coord_t> Camera::smoothPan(const fd_coord_t& x, const f
 		yhtotal += yh;
 	}
 
-	return {fd_float_t(xhtotal) / panSmoothLen_, fd_float_t(yhtotal) / panSmoothLen_};
+	return {fd_float_t(xhtotal) / panHistoryX_.size(), fd_float_t(yhtotal) / panHistoryY_.size()};
 }
 
 // Pan the fractal

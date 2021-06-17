@@ -22,7 +22,7 @@ void Renderer::render() {
 		ThreadPool& tpool = ThreadPool::getInstance();
 		size_t tpsize = tpool.size();
 		//slice the image into vertical stripes
-		fd_dim_t sliceHeight = std::floor(fd_float_t(config_.height_) / tpsize);
+		fd_dim_t sliceHeight = std::floor(fd_float_t(config_.height_) / (tpsize * 4));
 		fd_dim_t remainder = (config_.height_ % sliceHeight);
 		for (size_t i = 0; i < tpsize + 1; ++i) {
 			if (i == tpsize) {
@@ -60,7 +60,7 @@ void Renderer::render() {
 			}, i, config_.width_, sliceHeight);
 		}
 //#ifndef _JAVASCRIPT
-//		tpool.join();
+		tpool.join();
 //#else
 //		while(tpool.taskCount() > 0) {
 //			sleep_millis(1);
