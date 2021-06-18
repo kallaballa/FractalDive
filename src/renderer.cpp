@@ -11,17 +11,17 @@
 
 namespace fractaldive {
 
-fd_iter_count_t Renderer::getCurrentMaxIterations() const {
+inline fd_iter_count_t Renderer::getCurrentMaxIterations() const {
 	return maxIterations_;
-//	return std::min(fd_float_t(maxIterations_), (camera_.getZoomCount() / 3.0) + config_.startIterations_);
 }
+
 // Generate the fractal image
 void Renderer::render() {
 	if (ThreadPool::cores() > 1) {
 		//use a thread pool to reduce thread start overhead
 		ThreadPool& tpool = ThreadPool::getInstance();
 		size_t tpsize = tpool.size();
-		//slice the image into vertical stripes
+		//slice the image into horizontal stripes
 		fd_dim_t sliceHeight = std::floor(fd_float_t(config_.height_) / (tpsize * 4));
 		fd_dim_t remainder = (config_.height_ % sliceHeight);
 		for (size_t i = 0; i < tpsize + 1; ++i) {
@@ -59,13 +59,7 @@ void Renderer::render() {
 				}
 			}, i, config_.width_, sliceHeight);
 		}
-//#ifndef _JAVASCRIPT
 		tpool.join();
-//#else
-//		while(tpool.taskCount() > 0) {
-//			sleep_millis(1);
-//		}
-//#endif
 	} else {
 		fd_iter_count_t currentIt = getCurrentMaxIterations();
 		fd_iter_count_t iterations = 0;
@@ -92,11 +86,7 @@ void Renderer::render() {
 			}
 		}
 	}
-
-//	std::cout << getCurrentIterations() << std::endl;
 }
-
-
 
 #if 0
 // LUT experiments for AMIGA. doesn't make a real difference yet.
