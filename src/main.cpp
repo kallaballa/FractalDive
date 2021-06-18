@@ -4,10 +4,6 @@
 #include <emscripten.h>
 #endif
 
-#ifdef _AMIGA
-#include "amiga.hpp"
-#endif
-
 #include "printer.hpp"
 #include "threadpool.hpp"
 #include "config.hpp"
