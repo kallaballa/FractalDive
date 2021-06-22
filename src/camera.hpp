@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cmath>
 #include <ctime>
+#include <random>
 
 #include "config.hpp"
 
