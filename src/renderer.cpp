@@ -22,7 +22,7 @@ void Renderer::render() {
 		ThreadPool& tpool = ThreadPool::getInstance();
 		size_t tpsize = tpool.size();
 		//slice the image into horizontal stripes
-		fd_dim_t sliceHeight = std::floor(fd_float_t(config_.height_) / (tpsize * 4));
+		fd_dim_t sliceHeight = std::floor(fd_float_t(config_.height_) / tpsize);
 		fd_dim_t remainder = (config_.height_ % sliceHeight);
 		for (size_t i = 0; i < tpsize + 1; ++i) {
 			if (i == tpsize) {
@@ -37,9 +37,9 @@ void Renderer::render() {
 				fd_iter_count_t iterations = 0;
 				fd_coord_t yoff = 0;
 
-				for (fd_dim_t y = 0; y < config_.height_; y++) {
-					yoff = y * config_.width_;
-					for (fd_dim_t x = 0; x < config_.width_; x++) {
+				for (fd_dim_t y = sliceHeight * i; y < (sliceHeight * i + sliceHeight); y++) {
+					yoff = y * width;
+					for (fd_dim_t x = 0; x < width; x++) {
 						iterations = mandelbrot(x, y, currentIt);
 						if(iterations < currentIt) {
 							size_t pSize = palette_.size();
