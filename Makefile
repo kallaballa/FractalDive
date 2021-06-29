@@ -21,7 +21,7 @@ endif
 
 ifndef JAVASCRIPT
 ifndef AMIGA
-CXXFLAGS += -march=native
+#CXXFLAGS += -march=native
 endif
 endif
 
@@ -90,7 +90,7 @@ endif
 ifdef JAVASCRIPT
 CXX	:= em++
 # defines
-EMCXXFLAGS = -DNDEBUG -D_JAVASCRIPT -flto
+EMCXXFLAGS = -D_JAVASCRIPT -flto
 # emscripteb options
 EMCXXFLAGS +=  -s DISABLE_EXCEPTION_CATCHING=1
 EMLDFLAGS +=  -s INITIAL_MEMORY=419430400 -s ASYNCIFY -s TOTAL_STACK=52428800 -s WASM_BIGINT -s MALLOC=emmalloc
@@ -164,10 +164,10 @@ endif
 profile: dirs
 
 ifdef JAVASCRIPT
-hardcore: CXXFLAGS += -g0 -O3 -ffp-contract=fast -freciprocal-math -fno-signed-zeros --closure 1 
+hardcore: CXXFLAGS += -DNDEBUG -g0 -O3 -ffp-contract=fast -freciprocal-math -fno-signed-zeros --closure 1 
 hardcore: LDFLAGS += -s STACK_OVERFLOW_CHECK=0 -s ASSERTIONS=0 -s SAFE_HEAP=0 --closure 1 -menable-unsafe-fp-math
 else
-hardcore: CXXFLAGS += -g0 -Ofast
+hardcore: CXXFLAGS += -DNDEBUG -g0 -Ofast
 endif
 #ifeq ($(UNAME_S), Darwin)
 hardcore: LDFLAGS += -s

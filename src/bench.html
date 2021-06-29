@@ -7,7 +7,7 @@
   <meta name="keywords" content="mandelbrot, fractal, zoom, realtime, FractalDive, C++, cross-platform, platform independent, optimization">
   <meta name="author" content="amir@viel-zu.org">
   <meta name="viewport" content="width=768">
-  <script src="/wasm-detect.js"></script>
+  <script src="/get.php?res=/wasm-detect.js"></script>
   <style>
 ::-webkit-scrollbar {
     -webkit-appearance: none;
@@ -311,36 +311,36 @@
                                 if (simdSupported) {
                                     if(threading) {
                                         if(lowres) {
-                                            window.location.href = "/dive-mt-simd-low/dive.html"
+                                            window.location.href = "/dive-mt-simd-low/get.php?res=dive.html"
                                         } else if(highres) {
-                                            window.location.href = "/dive-mt-simd-high/dive.html"
+                                            window.location.href = "/dive-mt-simd-high/get.php?res=dive.html"
                                         } else {
-                                            window.location.href = "/dive-mt-simd/dive.html"
+                                            window.location.href = "/dive-mt-simd/get.php?res=dive.html"
                                         }
                                     } else {
                                         if(lowres) {
-                                            window.location.href = "/dive-simd-low/dive.html"
+                                            window.location.href = "/dive-simd-low/get.php?res=dive.html"
                                         } else if(highres) {
-                                            window.location.href = "/dive-simd-high/dive.html"
+                                            window.location.href = "/dive-simd-high/get.php?res=dive.html"
                                         } else {
-                                            window.location.href = "/dive-simd/dive.html"
+                                            window.location.href = "/dive-simd/get.php?res=dive.html"
                                         }
                                     }                                } else {
                                     if(threading) {
                                         if(lowres) {
-                                            window.location.href = "/dive-mt-low/dive.html"
+                                            window.location.href = "/dive-mt-low/get.php?res=dive.html"
                                         } else if(highres) {
-                                            window.location.href = "/dive-mt-high/dive.html"
+                                            window.location.href = "/dive-mt-high/get.php?res=dive.html"
                                         } else {
-                                            window.location.href = "/dive-mt/dive.html"
+                                            window.location.href = "/dive-mt/get.php?res=dive.html"
                                         }
                                     } else {
                                         if(lowres) {
-                                            window.location.href = "/dive-low/dive.html"
+                                            window.location.href = "/dive-low/get.php?res=dive.html"
                                         } else if(highres) {
-                                            window.location.href = "/dive-high/dive.html"
+                                            window.location.href = "/dive-high/get.php?res=dive.html"
                                         } else {
-                                            window.location.href = "/dive/dive.html"
+                                            window.location.href = "/dive/get.php?res=dive.html"
                                         }
                                     }
                                 }
@@ -377,6 +377,6 @@
                 }
             }
 		</script>
-		<script src="dive.js"></script>
+		<script src="./get.php?res=dive.js"></script>
 	</body>
 </html>

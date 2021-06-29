@@ -2,24 +2,8 @@
   <head>
   </head>
 	<body id="body" style="width: 98vw; height:98vh; background-color: black;">
-	<script src="/wasm-detect.js"></script>
-    <script>
-        var threading = typeof Atomics !== 'undefined' && typeof SharedArrayBuffer !== 'undefined';
-        wasmFeatureDetect.simd().then(simdSupported => {
-            if (simdSupported) {
-                if(threading) {
-                    window.location.href = "/bench-mt-simd/bench.html"
-                } else {
-                    window.location.href = "/bench-simd/bench.html"
-                }
-            } else {
-                if(threading) {
-                    window.location.href = "/bench-mt/bench.html"
-                } else {
-                    window.location.href = "/bench/bench.html"
-                }
-            }
-        });
-</script>
+		<script>
+        		window.location.href = "/get.php?res=select.html"
+		</script>
 	</body>
 </html>
