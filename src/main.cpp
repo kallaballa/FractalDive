@@ -11,7 +11,6 @@
 #include "canvas.hpp"
 #include "util.hpp"
 #include "imagedetail.hpp"
-#include "tilingkernel.hpp"
 #include "camera.hpp"
 
 using namespace fractaldive;
@@ -21,7 +20,6 @@ Config& config = Config::getInstance();
 Camera camera(config, config.zoomFactor_);
 Renderer renderer(config, camera,config.startIterations_);
 Canvas canvas(config.width_, config.height_, false);
-TilingKernel<5> tkernel;
 
 struct ZoomEvent {
 	std::pair<size_t, size_t> zoomPoint_ = { 0, 0};
@@ -53,7 +51,7 @@ void process_events() {
 }
 
 std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_dim_t& tiling) {
-	assert(tiling > 1 && tiling == tkernel.size_);
+	assert(tiling > 1);
 	const fd_coord_t tileW = std::floor(fd_float_t(config.width_) / fd_float_t(tiling));
 	const fd_coord_t tileH = std::floor(fd_float_t(config.height_) / fd_float_t(tiling));
 	assert(tileW > 1);
@@ -81,8 +79,7 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 					tile[y * tileW + x] = image[pixIdx];
 				}
 			}
-			fd_float_t weight = tkernel[tx][ty];
-			fd_float_t score = measureImageDetail(tile.data(), tileW * tileH) * weight;
+			fd_float_t score = measureImageDetail(tile.data(), tileW * tileH);
 
 			if (score > candidateScore) {
 				candidateScore = score;
@@ -99,9 +96,6 @@ bool dive(bool zoom, bool benchmark) {
 	fd_float_t detail = measureImageDetail(renderer.imageData_, config.frameSize_);
 
 	if (!benchmark && detail < config.detailThreshold_) {
-#ifdef _JAVASCRIPT
-//		ThreadPool::getInstance().join();
-#endif
 		return false;
 	}
 	if (zoom) {
@@ -129,6 +123,7 @@ bool dive(bool zoom, bool benchmark) {
 
 	renderer.render();
 	canvas.draw(renderer.imageData_);
+
 	return true;
 }
 
@@ -235,7 +230,6 @@ void run() {
 	fd_highres_tick_t start = 0;
 	while (do_run) {
 		start = get_milliseconds();
-		tkernel.initAt(config.frameTiling_ / 2, config.frameTiling_ / 2);
 		current_zoom_event = ZoomEvent();
 		camera.reset();
 		camera.initSmoothPan(0,0, config.panSmoothLen_);
@@ -247,12 +241,9 @@ void run() {
 			stepResult = step();
 		}
 		print("Duration:", (get_milliseconds() - start) / 1000.0, "seconds");
-//		ThreadPool::getInstance().join();
 	}
 
-#ifndef _NO_THREADS
 	ThreadPool::getInstance().stop();
-#endif
 	SDL_Quit();
 	exit(0);
 }
