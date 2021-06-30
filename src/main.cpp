@@ -31,6 +31,9 @@ void process_events() {
 	SDL_Event test_event;
 	while (SDL_PollEvent(&test_event)) {
 		switch (test_event.type) {
+		case SDL_QUIT:
+			do_run = false;
+			break;
 		case SDL_MOUSEBUTTONDOWN:
 			current_zoom_event.zoomPoint_ = {test_event.motion.x, test_event.motion.y};
 			current_zoom_event.active_ = true;
