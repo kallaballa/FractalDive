@@ -49,4 +49,3 @@ void Canvas::draw(image_t const& image) {
 }
 
 }
-

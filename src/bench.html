@@ -302,50 +302,52 @@
 				print: (function() {
 					return function(message) {
                         if(!scoreReceived) {
-                            var threading = typeof Atomics !== 'undefined' && typeof SharedArrayBuffer !== 'undefined';
                             var score = parseInt(message);
                             var lowres = score < 50;
                             var highres = score > 1000; 
                             scoreReceived = true;
                             wasmFeatureDetect.simd().then(simdSupported => {
-                                if (simdSupported) {
-                                    if(threading) {
-                                        if(lowres) {
-                                            window.location.href = "/dive-mt-simd-low/get.php?res=dive.html"
-                                        } else if(highres) {
-                                            window.location.href = "/dive-mt-simd-high/get.php?res=dive.html"
+                                wasmFeatureDetect.threads().then(threadsSupported => {
+                                    var threading = threadsSupported && typeof Atomics !== 'undefined' && typeof SharedArrayBuffer !== 'undefined';
+                                    if (simdSupported) {
+                                        if(threading) {
+                                            if(lowres) {
+                                                window.location.href = "/dive-mt-simd-low/get.php?res=dive.html"
+                                            } else if(highres) {
+                                                window.location.href = "/dive-mt-simd-high/get.php?res=dive.html"
+                                            } else {
+                                                window.location.href = "/dive-mt-simd/get.php?res=dive.html"
+                                            }
                                         } else {
-                                            window.location.href = "/dive-mt-simd/get.php?res=dive.html"
+                                            if(lowres) {
+                                                window.location.href = "/dive-simd-low/get.php?res=dive.html"
+                                            } else if(highres) {
+                                                window.location.href = "/dive-simd-high/get.php?res=dive.html"
+                                            } else {
+                                                window.location.href = "/dive-simd/get.php?res=dive.html"
+                                            }
                                         }
                                     } else {
-                                        if(lowres) {
-                                            window.location.href = "/dive-simd-low/get.php?res=dive.html"
-                                        } else if(highres) {
-                                            window.location.href = "/dive-simd-high/get.php?res=dive.html"
+                                        if(threading) {
+                                            if(lowres) {
+                                                window.location.href = "/dive-mt-low/get.php?res=dive.html"
+                                            } else if(highres) {
+                                                window.location.href = "/dive-mt-high/get.php?res=dive.html"
+                                            } else {
+                                                window.location.href = "/dive-mt/get.php?res=dive.html"
+                                            }
                                         } else {
-                                            window.location.href = "/dive-simd/get.php?res=dive.html"
-                                        }
-                                    }                                } else {
-                                    if(threading) {
-                                        if(lowres) {
-                                            window.location.href = "/dive-mt-low/get.php?res=dive.html"
-                                        } else if(highres) {
-                                            window.location.href = "/dive-mt-high/get.php?res=dive.html"
-                                        } else {
-                                            window.location.href = "/dive-mt/get.php?res=dive.html"
-                                        }
-                                    } else {
-                                        if(lowres) {
-                                            window.location.href = "/dive-low/get.php?res=dive.html"
-                                        } else if(highres) {
-                                            window.location.href = "/dive-high/get.php?res=dive.html"
-                                        } else {
-                                            window.location.href = "/dive/get.php?res=dive.html"
+                                            if(lowres) {
+                                                window.location.href = "/dive-low/get.php?res=dive.html"
+                                            } else if(highres) {
+                                                window.location.href = "/dive-high/get.php?res=dive.html"
+                                            } else {
+                                                window.location.href = "/dive/get.php?res=dive.html"
+                                            }
                                         }
                                     }
-                                }
+                                });
                             });
-
                         }
                         stdout.innerHTML += message + '\n';
                         console.log(message);

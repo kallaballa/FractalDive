@@ -4,21 +4,23 @@
 	<body id="body" style="width: 98vw; height:98vh; background-color: black;">
 	<script src="/get.php?res=wasm-detect.js"></script>
     <script>
-        var threading = typeof Atomics !== 'undefined' && typeof SharedArrayBuffer !== 'undefined';
         wasmFeatureDetect.simd().then(simdSupported => {
-            if (simdSupported) {
-                if(threading) {
-                    window.location.href = "/bench-mt-simd/get.php?res=bench.html"
+            wasmFeatureDetect.threads().then(threadsSupported => {
+                var threading = threadsSupported && typeof Atomics !== 'undefined' && typeof SharedArrayBuffer !== 'undefined';
+                if (simdSupported) {
+                    if(threading) {
+                        window.location.href = "/bench-mt-simd/get.php?res=bench.html"
+                    } else {
+                        window.location.href = "/bench-simd/get.php?res=bench.html"
+                    }
                 } else {
-                    window.location.href = "/bench-simd/get.php?res=bench.html"
+                    if(threading) {
+                        window.location.href = "/bench-mt/get.php?res=bench.html"
+                    } else {
+                        window.location.href = "/bench/get.php?res=bench.html"
+                    }
                 }
-            } else {
-                if(threading) {
-                    window.location.href = "/bench-mt/get.php?res=bench.html"
-                } else {
-                    window.location.href = "/bench/get.php?res=bench.html"
-                }
-            }
+            });
         });
 </script>
 	</body>
