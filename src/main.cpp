@@ -143,11 +143,7 @@ bool auto_scale_max_iterations() {
 	camera.reset();
 	fd_float_t fpsMillis = 1000.0 / config.fps_;
 	fd_float_t millisRatio = ((fd_float_t)duration / cnt) / fpsMillis;
-#ifndef _FIXEDPOINT
-	fd_iter_count_t iterations = std::round((config.startIterations_ / millisRatio)) / 10.0;
-#else
 	fd_iter_count_t iterations = round((config.startIterations_ / millisRatio)) / 10.0;
-#endif
 
 	print(iterations);
 #ifdef _BENCHMARK_ONLY
@@ -176,12 +172,6 @@ bool step() {
 	}
 	return result;
 }
-
-#ifdef _JAVASCRIPT
-void js_step() {
-	step();
-}
-#endif
 
 void printReport() {
 	print("#####");
