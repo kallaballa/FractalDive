@@ -340,7 +340,8 @@
 					return document.getElementById('canvas');
 				})()
 			};
-           window.requestAnimationFrame(copyToBg);
+			Module.doNotCaptureKeyboard = true;
+            window.requestAnimationFrame(copyToBg);
 
             var infoBtn = document.getElementById("infoBtn");
             var debugBtn = document.getElementById("debugBtn");
