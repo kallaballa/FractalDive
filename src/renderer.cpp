@@ -59,7 +59,6 @@ void Renderer::render() {
 				}
 			}, i, config_.width_, sliceHeight);
 		}
-		tpool.join();
 	} else {
 		fd_iter_count_t currentIt = getCurrentMaxIterations();
 		fd_iter_count_t iterations = 0;

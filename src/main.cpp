@@ -124,9 +124,9 @@ bool dive(bool zoom, bool benchmark) {
 		}
 	}
 
-	renderer.render();
+	ThreadPool::getInstance().join();
 	canvas.draw(renderer.imageData_);
-
+	renderer.render();
 	return true;
 }
 
