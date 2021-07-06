@@ -14,14 +14,14 @@ Config::~Config() {
 void Config::resetToDefaults() {
 	fps_ = 24;
 	minIterations_ = 10;
-	benchmarkTimeoutMillis_ = 1000;
+	benchmarkTimeoutMillis_ = 3000;
 	detailThreshold_ = 0.02;
 	startIterations_ = 100;
 	frameTiling_ = 5;
 	zoomFactor_ = 2;
 	panSmoothLen_ = 20;
 	findDetailThreshold_ = 0.1;
-	#ifndef _AMIGA
+#ifndef _AMIGA
 #ifdef _LOW_RES
 	width_ = 128;
 	height_ = 128;
@@ -40,6 +40,7 @@ void Config::resetToDefaults() {
 	height_ = 52;
 	panSmoothLen_ = 10;
 	maxIterations_ = 300;
+	benchmarkTimeoutMillis_ = 1000;
 #endif
 	frameSize_ = width_ * height_;
 

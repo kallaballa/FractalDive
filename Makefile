@@ -76,7 +76,7 @@ endif
 ifdef JAVASCRIPT_MT
 JAVASCRIPT=1
 CXXFLAGS += -D_JAVASCRIPT_MT -s USE_PTHREADS=1 -pthread
-LDFLAGS += -D_JAVASCRIPT_MT -s USE_PTHREADS=1 -s PROXY_TO_PTHREAD -pthread
+LDFLAGS += -D_JAVASCRIPT_MT -s USE_PTHREADS=1 -s PROXY_TO_PTHREAD -pthread -s PTHREAD_POOL_SIZE=navigator.hardwareConcurrency
 endif
 
 ifeq ($(UNAME_S), Darwin)
@@ -93,6 +93,9 @@ CXX	:= em++
 EMCXXFLAGS = -D_JAVASCRIPT -flto
 # emscripteb options
 EMCXXFLAGS +=  -s DISABLE_EXCEPTION_CATCHING=1
+ifndef JAVASCRIPT_MT
+EMCXXFLAGS += -D_NO_THREADS
+endif
 EMLDFLAGS +=  -s INITIAL_MEMORY=419430400 -s ASYNCIFY -s TOTAL_STACK=52428800 -s WASM_BIGINT -s MALLOC=emmalloc
 
 ifdef AUTOVECTOR
@@ -159,7 +162,9 @@ profile: LDFLAGS += --profiling
 profile: CXXFLAGS += --profiling
 endif
 ifndef AMIGA
+ifndef JAVASCRIPT
 profile: CXXFLAGS += -rdynamic
+endif
 endif
 profile: dirs
 
@@ -175,8 +180,8 @@ hardcore: LDFLAGS += -s
 hardcore: dirs
 
 ifdef JAVASCRIPT
-asan: CXXFLAGS += -fsanitize=undefined
-asan: LDFLAGS += -fsanitize=undefined -s STACK_OVERFLOW_CHECK=2 -s ASSERTIONS=2
+#asan: CXXFLAGS += -fsanitize=undefined
+asan: LDFLAGS += -s STACK_OVERFLOW_CHECK=2 -s ASSERTIONS=2 #-fsanitize=undefined
 else
 asan: CXXFLAGS += -rdynamic -fsanitize=address
 asan: LDFLAGS += -rdynamic -fsanitize=address

@@ -44,7 +44,6 @@ public:
 	static ThreadPool& getInstance() {
 		std::unique_lock<std::mutex> lock(instanceMtx_);
 		if (instance_ == nullptr) {
-			assert(ThreadPool::cores() > 1);
 			instance_ = new ThreadPool(ThreadPool::cores());
 		}
 
@@ -151,8 +150,11 @@ public:
 	}
 
 	static ThreadPool& getInstance() {
-		assert(false);
-		return *new ThreadPool(0);
+		if (instance_ == nullptr) {
+			instance_ = new ThreadPool(0);
+		}
+
+		return *instance_;
 	}
 
 	inline ThreadPool(size_t threads) {
@@ -175,6 +177,7 @@ public:
 	}
 
 private:
+	static ThreadPool* instance_;
 };
 #endif
 }

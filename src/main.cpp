@@ -124,7 +124,12 @@ bool dive(bool zoom, bool benchmark) {
 		}
 	}
 
-	ThreadPool::getInstance().join();
+#ifndef _AMIGA
+	if(benchmark) {
+		ThreadPool::getInstance().join();
+	}
+#endif
+
 	canvas.draw(renderer.imageData_);
 	renderer.render();
 	return true;
