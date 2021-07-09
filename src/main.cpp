@@ -124,8 +124,8 @@ bool dive(bool zoom, bool benchmark) {
 		}
 	}
 
-#ifndef _AMIGA
-	if(benchmark) {
+#ifndef _NO_THREADS
+	if(ThreadPool::getInstance().taskCount() > 0) {
 		ThreadPool::getInstance().join();
 	}
 #endif
