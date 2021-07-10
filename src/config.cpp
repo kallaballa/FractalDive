@@ -30,8 +30,13 @@ void Config::resetToDefaults() {
 	width_ = 384;
 	height_ = 384;
 #else
+#ifdef _ULTRA_RES
+	width_ = 768;
+	height_ = 768;
+#else
 	width_ = 256;
 	height_ = 256;
+#endif
 #endif
 #endif
 	maxIterations_ = (width_ * height_) / 24;

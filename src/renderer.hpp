@@ -1,3 +1,6 @@
+#ifndef SRC_RENDERER_HPP_
+#define SRC_RENDERER_HPP_
+
 #include <cstdint>
 #include <cstddef>
 #include <cmath>
@@ -8,11 +11,12 @@
 
 #include "types.hpp"
 #include "threadpool.hpp"
-
-#ifndef SRC_RENDERER_HPP_
-#define SRC_RENDERER_HPP_
 #include "config.hpp"
 #include "camera.hpp"
+
+#ifndef _AMIGA
+#include "digital_filters.hpp"
+#endif
 
 namespace fractaldive {
 
@@ -20,6 +24,9 @@ class Renderer {
 public:
 	Config& config_;
 	Camera& camera_;
+#ifndef _AMIGA
+	LowPassFilter lpf_;
+#endif
 	const fd_dim_t BUFFERSIZE;
 private:
 	fd_iter_count_t maxIterations_;
@@ -31,6 +38,9 @@ public:
 	Renderer(Config& config, Camera& camera, const fd_iter_count_t& maxIterations) :
 			config_(config),
 			camera_(camera),
+#ifndef _AMIGA
+			lpf_(0.01, 2 * M_PI * 10),
+#endif
 			BUFFERSIZE(config.width_ * config.height_),
 			maxIterations_(maxIterations),
 			imageData_(new fd_image_pix_t[BUFFERSIZE]) {

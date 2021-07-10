@@ -56,6 +56,10 @@ CXXFLAGS += -D_LOW_RES
 else
   ifdef HIGHRES
 CXXFLAGS += -D_HIGH_RES
+  else
+    ifdef ULTRARES
+CXXFLAGS += -D_ULTRA_RES
+    endif
   endif
 endif
 
