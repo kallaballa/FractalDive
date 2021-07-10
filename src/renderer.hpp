@@ -39,7 +39,7 @@ public:
 			config_(config),
 			camera_(camera),
 #ifndef _AMIGA
-			lpf_(0.01, 2 * M_PI * 10),
+			lpf_(0.0001, 2 * M_PI * 1),
 #endif
 			BUFFERSIZE(config.width_ * config.height_),
 			maxIterations_(maxIterations),

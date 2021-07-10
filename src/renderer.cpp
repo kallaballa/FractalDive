@@ -72,7 +72,7 @@ void Renderer::render() {
 					size_t pSize = palette_.size();
 					if(pSize > 0) {
 #ifndef _AMIGA
-							imageData_[yoff + x] = lpf_.update(palette_[iterations % pSize]);
+						imageData_[yoff + x] = lpf_.update(palette_[iterations % pSize]);
 #else
 							imageData_[yoff + x] = iterations % pSize;
 #endif
