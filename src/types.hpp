@@ -39,21 +39,19 @@ namespace fractaldive {
 #ifdef _FIXEDPOINT
 	#ifdef _AMIGA
 	//on 000, 020 and 030 the multiplication of a 8bit+8bit in square translates to "muls.w d0,d0" and the precision seems to be enough for what we can achieve there
+	typedef mn::MFixedPoint::FpF32<16> fd_mandellongfloat_t;
 	typedef mn::MFixedPoint::FpF16<8> fd_mandelfloat_t;
 	constexpr char FD_PRECISION[] = "8bit/8bit";
 	#else
 	//Enough precision on all real-world examples we tested.
+	typedef mn::MFixedPoint::FpF64<24> fd_mandellongfloat_t;
 	typedef mn::MFixedPoint::FpF32<16> fd_mandelfloat_t;
 	constexpr char FD_PRECISION[] = "16bit/16bit";
 	#endif
 #else
-#ifdef _JAVASCRIPT
+	typedef long double fd_mandellongfloat_t;
 	typedef double fd_mandelfloat_t;
 	constexpr char FD_PRECISION[] = "double";
-#else
-	typedef long double fd_mandelfloat_t;
-	constexpr char FD_PRECISION[] = "long double";
-#endif
 #endif
 
 }
