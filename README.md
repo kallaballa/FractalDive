@@ -2,13 +2,13 @@
 
 This is an attempt at implementing a highly optimized realtime mandelbrot fractal zoom in a highly platform independent fashion using modern C++. I started this project because I have a tattoo of the formular for the mandebrot set on my left arm and people kept asking what it is - so instead of describing it in my own words, every time, i decided to write this demo. At the prospect of optimizing javascript code (and fighting its nature) i decided to write it in C++ and bow to the power of llvm by using emscripten :). And hey, If I'm writing it in C++ why not have it run on a bunch of platforms? :D
 
-My most important guideline is a quick and nice out-of-box experience and therefore I implemented (a rather naive) automatic scaling of the iteration depth and the program automatically selects areas of interest. Depending on platform capabilities a number of optional features is available, the most important being: threading, auto vectorization, fixed/floating point.
+My most important guideline is a quick and nice out-of-box experience and therefore I implemented automatic scaling of the iteration depth and the program automatically selects areas of interest. Depending on platform capabilities a number of optional features is available, the most important being: threading, auto vectorization, fixed/floating point.
 
 List of tested platforms are:
 - Many kinds of browsers on mobile and desktop. Example: http://viel-zu.org/
 - x86 Linux and MacOSX
 - armv7 Linux
-- Amiga 1200 (https://gfycat.com/simplebonyfairyfly) / 4000 (https://gfycat.com/adolescentkindamericanredsquirrel)
+- Amiga 1200 / 4000
 
 The list of supported platforms probably is way longer.
 
@@ -28,7 +28,7 @@ There are many build targets. The default is "release" but on some platforms you
 * "shrink": optimize for size
 
 ## JavaScript/WASM
-To build for Javascript you need em++ > 1.39.1. The following builds might need specific browsers or even special browser configurations. In src/index.html you can an example of how to select the right javascript build to load by using feature checking.
+To build for Javascript you need em++ > 2.0.24. The following builds might need specific browsers or even special browser configurations. In src/index.html you can an example of how to select the right javascript build to load by using feature checking.
 ```bash
 make clean && JAVASCRIPT=1 make -j2 hardcore
 ```
@@ -96,8 +96,8 @@ fd_mandelfloat_t y0 = (y + offsety_ + pany_) / (zoom_ / 10.0);
 fd_mandelfloat_t zr = 0.0, zi = 0.0;
 fd_mandelfloat_t zrsqr = 0;
 fd_mandelfloat_t zisqr = 0;
-fd_mandelfloat_t pointr = x0 / width_; //0.0 - 1.0
-fd_mandelfloat_t pointi = y0 / height_; //0.0 - 1.0
+fd_mandellongfloat_t pointr = x0 / width_; //0.0 - 1.0
+fd_mandellongfloat_t pointi = y0 / height_; //0.0 - 1.0
 fd_mandelfloat_t four = 4.0;
 
 while (iterations < maxIterations_ && zrsqr + zisqr <= four) {
