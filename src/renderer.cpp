@@ -14,6 +14,11 @@
 
 namespace fractaldive {
 
+double filter(LowPassFilter& lfp, const double& toppix, const double& pix) {
+	lfp.update(toppix);
+	return lfp.update(pix);
+}
+
 inline fd_iter_count_t Renderer::getCurrentMaxIterations() const {
 	return maxIterations_;
 }
@@ -52,17 +57,15 @@ void Renderer::render() {
 							size_t pSize = palette_.size();
 							if(pSize > 0) {
 #ifndef _AMIGA
-								if(yoff > 0)
-									lpf.update(imageData_[yoff - width + x]);
-								imageData_[yoff + x] = lpf.update(palette_[iterations % pSize]);
+								imageData_[yoff + x] = filter(lpf, yoff > 0 ? imageData_[yoff - width + x] : 0, palette_[iterations % pSize]);
 #else
 								imageData_[yoff + x] = iterations % palette_.size();
 #endif
 							} else {
-								imageData_[yoff + x] = 0;
+								imageData_[yoff + x] = filter(lpf, yoff > 0 ? imageData_[yoff - width + x] : 0, 0);
 							}
 						} else {
-							imageData_[yoff + x] = 0;
+							imageData_[yoff + x] = filter(lpf, yoff > 0 ? imageData_[yoff - width + x] : 0, 0);
 						}
 					}
 				}
@@ -70,7 +73,7 @@ void Renderer::render() {
 		}
 	} else {
 #ifndef _AMIGA
-		LowPassFilter lpf(0.01, 2 * M_PI * 1);
+		LowPassFilter lpf(0.01, 2 * M_PI * 100000);
 #endif
 		fd_iter_count_t currentIt = getCurrentMaxIterations();
 		fd_iter_count_t iterations = 0;
@@ -128,8 +131,8 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	fd_mandelfloat_t zr = 0.0, zi = 0.0;
 	fd_mandelfloat_t zrsqr = 0;
 	fd_mandelfloat_t zisqr = 0;
-	fd_mandellongfloat_t pointr = x0 / config_.width_; //0.0 - 1.0
-	fd_mandellongfloat_t pointi = y0 / config_.height_; //0.0 - 1.0
+	fd_quadfloat_t pointr = x0 / config_.width_; //0.0 - 1.0
+	fd_quadfloat_t pointi = y0 / config_.height_; //0.0 - 1.0
 	fd_mandelfloat_t four = 4.0;
 
 	//Algebraically optimized version that uses addition/subtraction as often as possible while reducing multiplications
