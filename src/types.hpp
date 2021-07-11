@@ -12,6 +12,10 @@
 #include <chrono>
 #endif
 
+#ifdef _MSC_VER
+#include <cquadmath.h>
+#endif
+
 #include "color.hpp"
 
 namespace fractaldive {
@@ -38,16 +42,21 @@ namespace fractaldive {
 
 #ifdef _FIXEDPOINT
 	#ifdef _AMIGA
-  	typedef mn::MFixedPoint::FpF16<8> fd_mandellongfloat_t;
+  	typedef mn::MFixedPoint::FpF16<8> fd_quadfloat_t;
 	typedef mn::MFixedPoint::FpF16<8> fd_mandelfloat_t;
 	constexpr char FD_PRECISION[] = "8bit/8bit";
 	#else
-	typedef mn::MFixedPoint::FpF32<16> fd_mandellongfloat_t;
+	typedef mn::MFixedPoint::FpF32<16> fd_quadfloat_t;
 	typedef mn::MFixedPoint::FpF32<16> fd_mandelfloat_t;
 	constexpr char FD_PRECISION[] = "16bit/16bit";
 	#endif
 #else
-	typedef long double fd_mandellongfloat_t;
+	#ifdef __INTEL_COMPILER
+typedef _Quad fd_quadfloat_t;
+	#else
+typedef __float128 fd_quadfloat_t;
+	#endif
+
 	typedef double fd_mandelfloat_t;
 	constexpr char FD_PRECISION[] = "double";
 #endif
