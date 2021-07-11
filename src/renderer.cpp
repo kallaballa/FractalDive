@@ -131,8 +131,8 @@ inline fd_iter_count_t Renderer::mandelbrot(const fd_coord_t& x, const fd_coord_
 	fd_mandelfloat_t zr = 0.0, zi = 0.0;
 	fd_mandelfloat_t zrsqr = 0;
 	fd_mandelfloat_t zisqr = 0;
-	fd_quadfloat_t pointr = x0 / config_.width_; //0.0 - 1.0
-	fd_quadfloat_t pointi = y0 / config_.height_; //0.0 - 1.0
+	fd_bigfloat_t pointr = x0 / config_.width_; //0.0 - 1.0
+	fd_bigfloat_t pointi = y0 / config_.height_; //0.0 - 1.0
 	fd_mandelfloat_t four = 4.0;
 
 	//Algebraically optimized version that uses addition/subtraction as often as possible while reducing multiplications
