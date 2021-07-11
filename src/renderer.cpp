@@ -8,6 +8,9 @@
 
 #include "printer.hpp"
 #include "util.hpp"
+#ifndef _AMIGA
+#include "digital_filters.hpp"
+#endif
 
 namespace fractaldive {
 
@@ -33,6 +36,10 @@ void Renderer::render() {
 			}
 			//start a worker thread
 			tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight) {
+#ifndef _AMIGA
+				LowPassFilter lpf(0.01, 2 * M_PI * 100000);
+#endif
+
 				fd_iter_count_t currentIt = getCurrentMaxIterations();
 				fd_iter_count_t iterations = 0;
 				fd_coord_t yoff = 0;
@@ -45,7 +52,9 @@ void Renderer::render() {
 							size_t pSize = palette_.size();
 							if(pSize > 0) {
 #ifndef _AMIGA
-								imageData_[yoff + x] = palette_[iterations % palette_.size()];
+								if(yoff > 0)
+									lpf.update(imageData_[yoff - width + x]);
+								imageData_[yoff + x] = lpf.update(palette_[iterations % pSize]);
 #else
 								imageData_[yoff + x] = iterations % palette_.size();
 #endif
@@ -60,6 +69,9 @@ void Renderer::render() {
 			}, i, config_.width_, sliceHeight);
 		}
 	} else {
+#ifndef _AMIGA
+		LowPassFilter lpf(0.01, 2 * M_PI * 1);
+#endif
 		fd_iter_count_t currentIt = getCurrentMaxIterations();
 		fd_iter_count_t iterations = 0;
 		fd_coord_t yoff = 0;
@@ -72,9 +84,9 @@ void Renderer::render() {
 					size_t pSize = palette_.size();
 					if(pSize > 0) {
 #ifndef _AMIGA
-						imageData_[yoff + x] = lpf_.update(palette_[iterations % pSize]);
+						imageData_[yoff + x] = lpf.update(palette_[iterations % pSize]);
 #else
-							imageData_[yoff + x] = iterations % pSize;
+						imageData_[yoff + x] = iterations % pSize;
 #endif
 					} else {
 						imageData_[yoff + x] = 0;

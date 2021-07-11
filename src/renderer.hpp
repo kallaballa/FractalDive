@@ -14,19 +14,12 @@
 #include "config.hpp"
 #include "camera.hpp"
 
-#ifndef _AMIGA
-#include "digital_filters.hpp"
-#endif
-
 namespace fractaldive {
 
 class Renderer {
 public:
 	Config& config_;
 	Camera& camera_;
-#ifndef _AMIGA
-	LowPassFilter lpf_;
-#endif
 	const fd_dim_t BUFFERSIZE;
 private:
 	fd_iter_count_t maxIterations_;
@@ -38,9 +31,6 @@ public:
 	Renderer(Config& config, Camera& camera, const fd_iter_count_t& maxIterations) :
 			config_(config),
 			camera_(camera),
-#ifndef _AMIGA
-			lpf_(0.0001, 2 * M_PI * 1),
-#endif
 			BUFFERSIZE(config.width_ * config.height_),
 			maxIterations_(maxIterations),
 			imageData_(new fd_image_pix_t[BUFFERSIZE]) {
