@@ -10,7 +10,7 @@ List of tested platforms are:
 - Many kinds of browsers on mobile and desktop. Example: http://viel-zu.org/
 - x86 Linux and MacOSX
 - armv7 Linux
-- Amiga 1200 / 4000
+- Amiga 1200 / 4000. Example: https://vimeo.com/578666410
 
 The list of supported platforms probably is way longer.
 
