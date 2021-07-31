@@ -1,5 +1,3 @@
-![FractalDive on an Amiga 4000](https://viel-zu.org/amiga4000.gif "FractalDive on an Amiga 4000")
-
 ***Note***: While i think this code might by very interesting to a lot of people, this is strictly an educational fun-project. It also is very much still a work-in-progress and in some respects not optimal.
 
 This is an attempt at implementing a highly optimized realtime mandelbrot fractal zoom in a highly platform independent fashion using modern C++. I started this project because I have a tattoo of the formular for the mandebrot set on my left arm and people kept asking what it is - so instead of describing it in my own words, every time, i decided to write this demo. At the prospect of optimizing javascript code (and fighting its nature) i decided to write it in C++ and bow to the power of llvm by using emscripten :). And hey, If I'm writing it in C++ why not have it run on a bunch of platforms? :D
@@ -10,7 +8,7 @@ List of tested platforms are:
 - Many kinds of browsers on mobile and desktop. Example: http://viel-zu.org/
 - x86 Linux and MacOSX
 - armv7 Linux
-- Amiga 1200 / 4000
+- Amiga 1200 / 4000. Example: https://vimeo.com/578666410
 
 The list of supported platforms probably is way longer.
 
