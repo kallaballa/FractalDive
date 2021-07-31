@@ -1,3 +1,4 @@
+#include <map>
 #ifndef _JAVASCRIPT
 #include <csignal>
 #else
@@ -15,11 +16,11 @@
 
 using namespace fractaldive;
 
-bool do_run = true;
-Config& config = Config::getInstance();
-Camera camera(config, config.zoomFactor_);
-Renderer renderer(config, camera,config.startIterations_);
-Canvas canvas(config.width_, config.height_, false);
+bool DO_RUN = true;
+Config& CONFIG = Config::getInstance();
+Camera CAMERA(CONFIG, CONFIG.zoomFactor_);
+Renderer RENDERER(CONFIG, CAMERA,CONFIG.startIterations_);
+Canvas CANVAS(CONFIG.width_, CONFIG.height_, false);
 
 struct ZoomEvent {
 	std::pair<size_t, size_t> zoomPoint_ = { 0, 0};
@@ -32,7 +33,7 @@ void process_events() {
 	while (SDL_PollEvent(&test_event)) {
 		switch (test_event.type) {
 		case SDL_QUIT:
-			do_run = false;
+			DO_RUN = false;
 			break;
 		case SDL_MOUSEBUTTONDOWN:
 			current_zoom_event.zoomPoint_ = {test_event.motion.x, test_event.motion.y};
@@ -53,42 +54,50 @@ void process_events() {
 	}
 }
 
-std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_dim_t& tiling) {
+std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfDetail(const fd_dim_t& tiling) {
 	assert(tiling > 1);
-	const fd_coord_t tileW = std::floor(fd_float_t(config.width_) / fd_float_t(tiling));
-	const fd_coord_t tileH = std::floor(fd_float_t(config.height_) / fd_float_t(tiling));
+	const fd_coord_t tileW = std::floor(fd_float_t(CONFIG.width_) / fd_float_t(tiling));
+	const fd_coord_t tileH = std::floor(fd_float_t(CONFIG.height_) / fd_float_t(tiling));
 	assert(tileW > 1);
 	assert(tileH > 1);
 
 	const size_t tileSize = tileW * tileH;
 
-	const auto& image = renderer.imageData_;
+	const auto& image = RENDERER.imageData_;
 	std::vector<fd_image_pix_t> tile(tileSize);
-	std::vector<fd_float_t> tileScores;
-	fd_float_t candidateScore = 0;
-	fd_coord_t candidateTx = 0;
-	fd_coord_t candidateTy = 0;
+	std::map<fd_float_t,std::pair<fd_float_t, fd_float_t>> candidates;
+
 
 	//iterate over tiles
 	for (fd_dim_t ty = 0; ty < tiling; ++ty) {
 		for (fd_dim_t tx = 0; tx < tiling; ++tx) {
-			const fd_coord_t offY = tileH * ty * config.width_;
+			const fd_coord_t offY = tileH * ty * CONFIG.width_;
 			const fd_coord_t offX = tileW * tx;
 
 			//iterate over pixels of the tile
 			for (fd_coord_t y = 0; y < tileH; ++y) {
 				for (fd_coord_t x = 0; x < tileW; ++x) {
-					const size_t pixIdx = (offY + (y * config.width_)) + (offX + x);
+					const size_t pixIdx = (offY + (y * CONFIG.width_)) + (offX + x);
 					tile[y * tileW + x] = image[pixIdx];
 				}
 			}
 			fd_float_t score = measureImageDetail(tile.data(), tileW * tileH);
+			candidates[score] = {tx, ty};
+		}
+	}
 
-			if (score > candidateScore) {
-				candidateScore = score;
-				candidateTx = tx;
-				candidateTy = ty;
-			}
+	fd_float_t min = (*candidates.begin()).first;
+	fd_float_t max = (*candidates.rbegin()).first;
+	fd_float_t med = (max - min) * 0.75;
+	fd_float_t candidateScore = max + 1;
+	fd_coord_t candidateTx = 0;
+	fd_coord_t candidateTy = 0;
+
+	for(auto& p : candidates) {
+		if(std::fabs(p.first - med) < std::fabs(candidateScore - med)) {
+			candidateScore = p.first;
+			candidateTx = p.second.first;
+			candidateTy = p.second.second;
 		}
 	}
 
@@ -96,30 +105,30 @@ std::pair<fd_coord_t, fd_coord_t> identifyCenterOfTileOfHighestDetail(const fd_d
 }
 
 bool dive(bool zoom, bool benchmark) {
-	fd_float_t detail = measureImageDetail(renderer.imageData_, config.frameSize_);
+	fd_float_t detail = measureImageDetail(RENDERER.imageData_, CONFIG.frameSize_);
 
-	if (!benchmark && detail < config.detailThreshold_) {
+	if (!benchmark && detail < CONFIG.detailThreshold_) {
 		return false;
 	}
 	if (zoom) {
 		process_events();
 		std::pair<fd_coord_t, fd_coord_t> centerOfHighDetail;
 		if(current_zoom_event.zoomPoint_.first == 0 && current_zoom_event.zoomPoint_.second == 0) {
-			centerOfHighDetail = identifyCenterOfTileOfHighestDetail(config.frameTiling_);
-			if(camera.panSmoothLength() != config.panSmoothLen_) {
-				camera.resetSmoothPan();
-				camera.initSmoothPan(0,0, config.panSmoothLen_);
+			centerOfHighDetail = identifyCenterOfTileOfDetail(CONFIG.frameTiling_);
+			if(CAMERA.panSmoothLength() != CONFIG.panSmoothLen_) {
+				CAMERA.resetSmoothPan();
+				CAMERA.initSmoothPan(0,0, CONFIG.panSmoothLen_);
 			}
-			camera.zoom(centerOfHighDetail.first, centerOfHighDetail.second);
+			CAMERA.zoom(centerOfHighDetail.first, centerOfHighDetail.second);
 		} else {
 			if (current_zoom_event.active_) {
-				if(camera.panSmoothLength() != 1) {
-					camera.resetSmoothPan();
-					camera.initSmoothPan(current_zoom_event.zoomPoint_.first, current_zoom_event.zoomPoint_.second, 1);
+				if(CAMERA.panSmoothLength() != 1) {
+					CAMERA.resetSmoothPan();
+					CAMERA.initSmoothPan(current_zoom_event.zoomPoint_.first, current_zoom_event.zoomPoint_.second, 1);
 				}
-				camera.zoom(current_zoom_event.zoomPoint_.first, current_zoom_event.zoomPoint_.second);
+				CAMERA.zoom(current_zoom_event.zoomPoint_.first, current_zoom_event.zoomPoint_.second);
 			} else {
-				camera.zoom(config.width_ / 2.0, config.height_ / 2.0);
+				CAMERA.zoom(CONFIG.width_ / 2.0, CONFIG.height_ / 2.0);
 			}
 		}
 	}
@@ -130,8 +139,8 @@ bool dive(bool zoom, bool benchmark) {
 	}
 #endif
 
-	canvas.draw(renderer.imageData_);
-	renderer.render();
+	CANVAS.draw(RENDERER.imageData_);
+	RENDERER.render();
 	return true;
 }
 
@@ -140,24 +149,24 @@ bool auto_scale_max_iterations() {
 	auto duration = start;
 
 	size_t cnt = 0;
-	while ((duration = (get_milliseconds() - start)) < config.benchmarkTimeoutMillis_) {
+	while ((duration = (get_milliseconds() - start)) < CONFIG.benchmarkTimeoutMillis_) {
 		dive(false, true);
 		++cnt;
 	}
 
-	camera.reset();
-	fd_float_t fpsMillis = 1000.0 / config.fps_;
+	CAMERA.reset();
+	fd_float_t fpsMillis = 1000.0 / CONFIG.fps_;
 	fd_float_t millisRatio = ((fd_float_t)duration / cnt) / fpsMillis;
-	fd_iter_count_t iterations = round((config.startIterations_ / millisRatio)) / 10.0;
+	fd_iter_count_t iterations = round((CONFIG.startIterations_ / millisRatio)) / 10.0;
 
 	print(iterations);
 #ifdef _BENCHMARK_ONLY
 	return true;
 #endif
-	if (iterations < config.minIterations_)
-		config.fps_ = std::max((float)std::floor(config.fps_ * (fd_float_t(iterations) / config.minIterations_)), 1.f);
-	iterations = std::min(config.maxIterations_, std::max(iterations, config.minIterations_));
-	renderer.setMaxIterations(iterations);
+	if (iterations < CONFIG.minIterations_)
+		CONFIG.fps_ = std::max((float)std::floor(CONFIG.fps_ * (fd_float_t(iterations) / CONFIG.minIterations_)), 1.f);
+	iterations = std::min(CONFIG.maxIterations_, std::max(iterations, CONFIG.minIterations_));
+	RENDERER.setMaxIterations(iterations);
 	return false;
 }
 
@@ -166,7 +175,7 @@ bool step() {
 	bool result = dive(true, false);
 	auto duration = get_milliseconds() - start;
 
-	int32_t targetMillis = 1000.0 / config.fps_;
+	int32_t targetMillis = 1000.0 / CONFIG.fps_;
 	int32_t diff = targetMillis - duration;
 
 	if (result) {
@@ -182,10 +191,10 @@ void printReport() {
 	print("#####");
 	print("# SETTINGS");
 	size_t padWidth = 20;
-	print(pad_string("Width:", padWidth), config.width_);
-	print(pad_string("Height:", padWidth), config.height_);
-	print(pad_string("Zoom speed:", padWidth), config.zoomSpeed_);
-	print(pad_string("Benchmark timeout:", padWidth), config.benchmarkTimeoutMillis_, "ms");
+	print(pad_string("Width:", padWidth), CONFIG.width_);
+	print(pad_string("Height:", padWidth), CONFIG.height_);
+	print(pad_string("Zoom speed:", padWidth), CONFIG.zoomSpeed_);
+	print(pad_string("Benchmark timeout:", padWidth), CONFIG.benchmarkTimeoutMillis_, "ms");
 
 	print("");
 	print("# FEATURES");
@@ -205,17 +214,17 @@ void printReport() {
 	print("");
 
 	print("# SCALING");
-	print(pad_string("FPS:", padWidth), config.fps_);
-	print(pad_string("Max iterations:", padWidth), renderer.getMaxIterations(), "of", config.maxIterations_);
-	print(pad_string("Detail threshold:", padWidth), config.detailThreshold_);
-	print(pad_string("Pan history:", padWidth), config.panSmoothLen_);
+	print(pad_string("FPS:", padWidth), CONFIG.fps_);
+	print(pad_string("Max iterations:", padWidth), RENDERER.getMaxIterations(), "of", CONFIG.maxIterations_);
+	print(pad_string("Detail threshold:", padWidth), CONFIG.detailThreshold_);
+	print(pad_string("Pan history:", padWidth), CONFIG.panSmoothLen_);
 	print("#####");
 	print("");
 }
 
 void run() {
 	if(auto_scale_max_iterations()){
-			do_run = false;
+			DO_RUN = false;
 #ifndef _JAVASCRIPT
 			ThreadPool::getInstance().stop();
 #else
@@ -226,16 +235,16 @@ void run() {
 	}
 
 	fd_highres_tick_t start = 0;
-	while (do_run) {
+	while (DO_RUN) {
 		start = get_milliseconds();
 		current_zoom_event = ZoomEvent();
-		camera.reset();
-		camera.initSmoothPan(0,0, config.panSmoothLen_);
-		renderer.makeNewPalette();
-		renderer.render();
+		CAMERA.reset();
+		CAMERA.initSmoothPan(0,0, CONFIG.panSmoothLen_);
+		RENDERER.makeNewPalette();
+		RENDERER.render();
 
 		bool stepResult = true;
-		while (do_run && stepResult) {
+		while (DO_RUN && stepResult) {
 			stepResult = step();
 		}
 		print("Duration:", (get_milliseconds() - start) / 1000.0, "seconds");
@@ -254,16 +263,16 @@ bool is_power_of_two(const fd_coord_t& x) {
 #ifndef _JAVASCRIPT
 #ifndef _AMIGA
 void sigint_handler(int sig) {
-	do_run = false;
+	DO_RUN = false;
 }
 #endif
 #endif
 
 int main() {
-	assert(config.width_ >= 16 && config.width_ % 2 == 0);
-	assert(config.height_ >= 16 && config.height_ % 2 == 0);
-	assert(config.startIterations_ > 3);
-	assert(config.fps_ > 0);
+	assert(CONFIG.width_ >= 16 && CONFIG.width_ % 2 == 0);
+	assert(CONFIG.height_ >= 16 && CONFIG.height_ % 2 == 0);
+	assert(CONFIG.startIterations_ > 3);
+	assert(CONFIG.fps_ > 0);
 
 	srand(time(NULL));
 #ifndef _JAVASCRIPT
