@@ -27,6 +27,13 @@ struct ZoomEvent {
 	bool active_ = false;
 };
 
+#ifdef _AMIGA
+namespace __gnu_cxx {
+	void __verbose_terminate_handler() {
+	}
+}
+#endif
+
 ZoomEvent current_zoom_event;
 void process_events() {
 	SDL_Event test_event;

@@ -10,14 +10,22 @@
 #include "util.hpp"
 #ifndef _AMIGA
 #include "digital_filters.hpp"
+#else
+struct LowPassFilter {};
 #endif
 
 namespace fractaldive {
 
+#ifndef _AMIGA
 double filter(LowPassFilter& lfp, const double& toppix, const double& pix) {
 	lfp.update(toppix);
 	return lfp.update(pix);
 }
+#else
+double filter(LowPassFilter& lfp, const double& toppix, const double& pix) {
+	return pix;
+}
+#endif
 
 inline fd_iter_count_t Renderer::getCurrentMaxIterations() const {
 	return maxIterations_;
@@ -43,6 +51,8 @@ void Renderer::render() {
 			tpool.enqueue([&](const size_t& i, const fd_dim_t& width, const fd_dim_t& sliceHeight) {
 #ifndef _AMIGA
 				LowPassFilter lpf(0.01, 2 * M_PI * 100000);
+#else
+				LowPassFilter lpf;
 #endif
 
 				fd_iter_count_t currentIt = getCurrentMaxIterations();
@@ -74,6 +84,8 @@ void Renderer::render() {
 	} else {
 #ifndef _AMIGA
 		LowPassFilter lpf(0.01, 2 * M_PI * 100000);
+#else
+		LowPassFilter lpf;
 #endif
 		fd_iter_count_t currentIt = getCurrentMaxIterations();
 		fd_iter_count_t iterations = 0;

@@ -16,6 +16,16 @@
 #include <emscripten.h>
 #endif
 
+void* operator new(std::size_t size);
+void* operator new[](std::size_t size);
+void operator delete(void* ptr);
+void operator delete[](void* ptr);
+void* operator new(std::size_t size, const std::nothrow_t&);
+void* operator new[](std::size_t size, const std::nothrow_t&);
+void operator delete(void* ptr, const std::nothrow_t&);
+void operator delete[](void* ptr, const std::nothrow_t&);
+
+extern "C" void __cxa_pure_virtual();
 namespace fractaldive {
 inline fd_highres_tick_t get_milliseconds() {
 	return SDL_GetTicks();
