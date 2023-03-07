@@ -282,7 +282,7 @@ int main() {
 #endif
 #endif
 #ifdef _JAVASCRIPT
-	emscripten_set_main_loop(run, 0, 1);
+	emscripten_set_main_loop(run, -1, true);
 #else
 	run();
 #endif

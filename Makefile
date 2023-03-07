@@ -100,7 +100,7 @@ EMCXXFLAGS +=  -s DISABLE_EXCEPTION_CATCHING=1
 ifndef JAVASCRIPT_MT
 EMCXXFLAGS += -D_NO_THREADS
 endif
-EMLDFLAGS +=  -s INITIAL_MEMORY=419430400 -s ASYNCIFY -s TOTAL_STACK=52428800 -s WASM_BIGINT -s MALLOC=emmalloc
+EMLDFLAGS +=  -s INITIAL_MEMORY=536870912 -s ASYNCIFY -s TOTAL_STACK=52428800 -s WASM_BIGINT -s MALLOC=emmalloc
 
 ifdef AUTOVECTOR
 EMCXXFLAGS += -msimd128
@@ -173,8 +173,8 @@ endif
 profile: dirs
 
 ifdef JAVASCRIPT
-hardcore: CXXFLAGS += -DNDEBUG -g0 -O3 -ffp-contract=fast -freciprocal-math -fno-signed-zeros --closure 1 
-hardcore: LDFLAGS += -s STACK_OVERFLOW_CHECK=0 -s ASSERTIONS=0 -s SAFE_HEAP=0 --closure 1 -menable-unsafe-fp-math
+hardcore: CXXFLAGS += -DNDEBUG -g0 -O3 -ffp-contract=fast -freciprocal-math -fno-signed-zeros
+hardcore: LDFLAGS += -s STACK_OVERFLOW_CHECK=0 -s ASSERTIONS=0 -s SAFE_HEAP=0 -menable-unsafe-fp-math --closure 1
 else
 hardcore: CXXFLAGS += -DNDEBUG -g0 -Ofast
 endif
