@@ -14,7 +14,7 @@ Config::~Config() {
 void Config::resetToDefaults() {
 	fps_ = 24;
 	minIterations_ = 10;
-	benchmarkTimeoutMillis_ = 6000;
+	benchmarkTimeoutMillis_ = 3000;
 	detailThreshold_ = 0.02;
 	startIterations_ = 100;
 	frameTiling_ = 5;
