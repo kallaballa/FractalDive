@@ -6,8 +6,7 @@
   <meta name="description" content="A demonstration of the beauty of the mandelbrot set implemented as a real-time zoom.">
   <meta name="keywords" content="mandelbrot, fractal, zoom, realtime, FractalDive, C++, cross-platform, platform independent, optimization">
   <meta name="author" content="amir@viel-zu.org">
-  <meta name="viewport" content="width=768">
-  <script src="/get.php?res=/wasm-detect.js"></script>
+  <meta name="viewport" content="width=1024">
   <style>
 ::-webkit-scrollbar {
     -webkit-appearance: none;
@@ -75,21 +74,15 @@
   margin: 0; 
  }
  
- #bgcanvas0 {
-    width: 768px; 
-    height: 768px; 
-    opacity: 0.25;
- }
-
  #bgcanvas1 {
-    width: 512px; 
-    height: 512px; 
+    width: 1024px; 
+    height: 1024px; 
     opacity: 0.5;
  }
 
  #canvas {
-    width: 256px;
-    height: 256px;
+    width: 768px;
+    height: 768px;
  }
 
  #stderr {
@@ -200,7 +193,7 @@
     line-height: 2.1em;
   }
   
-  @media only handheld, (orientation: portrait) and (max-width : 1024px) {
+  @media only handheld, (orientation: portrait) and (max-width : 1280px) {
      #stderr {
     top: 19em;
     font-size: 2.2em;
@@ -211,34 +204,36 @@
     font-size: 2.2em;
   }
 
+
     #info {
       width: 100%;
       height: 100%;
     }
 
     #infoBtn {
-      left: 6em;
-      font-size: 1.6em;
-      width: calc(100% - 12em);
-      min-width: calc(100% - 12em);
+      left: 0.5em;
+      font-size: 3.2em;
+      width: calc(100% - 1.5em);
+      min-width: calc(100% - 1em);
       max-height: 3em;
+
     }
     #infocloseBtn {
-      font-size: 3em
+      font-size: 2em
     }
     #debugBtn {
       font-size: 2.2em;
     }
 
     #infotext {
-        font-size: 1em;
+        font-size: 2em;
         height: calc(100% - 2em);
         width: calc(100% - 2em);
    }
 
   }
 
-  @media only handheld, (orientation: landscape) and (max-width : 1024px) {
+  @media only handheld, (orientation: landscape) and (max-width : 1280px) {
      #stderr {
     top: 19em;
     font-size: 1em;
@@ -258,10 +253,8 @@
       top: 0.5em;
       left: 0.5em;
       font-size: 1.4em;
-      width: 5.0em;
       max-width: 5.0em;
       min-height: calc(100% - 1em);
-      max-height: calc(100% - 1em);
 
     }
     #debugBtn {
@@ -269,7 +262,7 @@
     }
 
     #infocloseBtn {
-      font-size: 1.8em;
+      font-size: 2em;
     }
 
 
@@ -286,71 +279,42 @@
 </head>
 <body>
     <div id="content">
-        <div id="loading">Benchmarking...</div>
-        <canvas id="bgcanvas0" ></canvas>
+        <div id="loading">Loading...</div>
         <canvas id="bgcanvas1" ></canvas>
         <canvas id="canvas"></canvas>
         <textarea cols=26 rows=5 id="stdout"></textarea>
         <textarea cols=26 rows=5 id="stderr"></textarea>
+        <div id="info">
+        <div id="infotext">
+            <button id="infocloseBtn">X</button>
+            <b>A little story</b><br/>I created this page because I have the following formular tattooed on my arm: <img src="formula.svg"/>.
+            People kept asking me about it and I tried to convey a vague sense of what it is in words... no more! The main purpose of this page is to demonstrate the beauty of the mandelbrot set.<br/><br/>
+            <b class="paddedHeading">A little explanation</b><br/>
+            In short: The mandelbrot set is a subset of the <a href="https://www.mathsisfun.com/numbers/complex-numbers.html">complex numbers</a> limited in a funny way. Interpreted in the right way it is a fractal. There are interesting applications for fractal mathematics but most people like them for their visual properties - the closer you look the more shapes emerge, all bearing a certain similarity. If you like math you are going to figure out the <a href="https://plus.maths.org/content/what-mandelbrot-set">basics</a> quickly. The zoom could theoretically go on forever (if you ignore that computers have limits) but because the goal is to have a steady animation the zoom depth is automatically limited to what your computer can handle. Everything is calculated in real-time and no zoom is like the other.<br/><br/>
+            <b class="paddedHeading">A little tech</b><br/>
+            This demo has been implemented using modern C++ and it's goal is to be highly optimized while being highly portable. Check it out on <a href="https://github.com/kallaballa/FractalDive">github</a>. It has been tested on many kinds of browsers, Linux (x86/armv7), MacOS and Amiga (1200/4000). In some respects it is still far from optimal.
+        </div>
+        </div>
+    <button id="infoBtn">Tell me a bit about what i see</button>
     <button id="debugBtn">debug</button>
     </div>
         <script>
             var stderr = document.getElementById('stderr');
             var stdout = document.getElementById('stdout');
-            var scoreReceived = false;
+            var canvas = document.getElementById('canvas');
+            var bgcanvas1 = document.getElementById('bgcanvas1');
+            var bgctx1 = bgcanvas1.getContext('2d');
+	    bgctx1.imageSmoothingEnabled = false;
+            bgctx1.scale(2.5, 1.25);
+
+            function copyToBg() {
+                bgctx1.drawImage(canvas,0,0);
+                window.requestAnimationFrame(copyToBg);
+            }
+
             var Module = {
 				print: (function() {
 					return function(message) {
-                        if(!scoreReceived) {
-                            var score = parseInt(message);
-                            var lowres = score < 50;
-                            var highres = score > 50; 
-			    var ultrares = score > 100; 
-
-			    scoreReceived = true;
-                            wasmFeatureDetect.simd().then(simdSupported => {
-                                wasmFeatureDetect.threads().then(threadsSupported => {
-                                    var threading = threadsSupported && typeof Atomics !== 'undefined' && typeof SharedArrayBuffer !== 'undefined';
-                                    if (simdSupported) {
-                                        if(threading) {
-                                            if(lowres) {
-                                                window.location.href = "/dive-mt-simd-low/get.php?res=dive.html"
-                                            } else if(highres) {
-                                                window.location.href = "/dive-mt-simd-high/get.php?res=dive.html"
-                                            } else if (ultrares) {
-                                                window.location.href = "/dive-mt-simd-ultra/get.php?res=dive.html"
-                                            }
-                                        } else {
-                                            if(lowres) {
-                                                window.location.href = "/dive-simd-low/get.php?res=dive.html"
-                                            } else if(highres) {
-                                                window.location.href = "/dive-simd-high/get.php?res=dive.html"
-                                            } else if (ultrares) {
-                                                window.location.href = "/dive-simd-ultra/get.php?res=dive.html"
-                                            }
-                                        }
-                                    } else {
-                                        if(threading) {
-                                            if(lowres) {
-                                                window.location.href = "/dive-mt-low/get.php?res=dive.html"
-                                            } else if(highres) {
-                                                window.location.href = "/dive-mt-high/get.php?res=dive.html"
-                                            } else if(ultrares) {
-                                                window.location.href = "/dive-mt-ultra/get.php?res=dive.html"
-                                            }
-                                        } else {
-                                            if(lowres) {
-                                                window.location.href = "/dive-low/get.php?res=dive.html"
-                                            } else if(highres) {
-                                                window.location.href = "/dive-high/get.php?res=dive.html"
-                                            } else if (ultrares) {
-                                                window.location.href = "/dive-ultra/get.php?res=dive.html"
-                                            }
-                                        }
-                                    }
-                                });
-                            });
-                        }
                         stdout.innerHTML += message + '\n';
                         console.log(message);
 					};
@@ -364,10 +328,24 @@
 					return document.getElementById('canvas');
 				})()
 			};
+            Module.doNotCaptureKeyboard = true;
+			window.requestAnimationFrame(copyToBg);
 
+            var infoBtn = document.getElementById("infoBtn");
             var debugBtn = document.getElementById("debugBtn");
+            var infocloseBtn = document.getElementById("infocloseBtn");
             var err = document.getElementById("stderr");
             var out = document.getElementById("stdout");
+            var info = document.getElementById("info");
+
+
+            infoBtn.onclick = function() {
+                if(info.style.visibility === "" || info.style.visibility === "hidden") {
+                    info.style.visibility = "visible";
+                    infoBtn.style.visibility = "hidden";
+                    debugBtn.style.visibility = "hidden";
+                } 
+            }
             
             debugBtn.onclick = function() {
                 var err = document.getElementById("stderr");
@@ -379,6 +357,15 @@
                     out.style.visibility = "hidden";
                     err.style.visibility = "hidden";
                 }
+            }
+
+            infocloseBtn.onclick = function() {
+                if(info.style.visibility === undefined || info.style.visibility === "" || info.style.visibility === "visible") {
+                    info.style.visibility = "hidden";
+                    infoBtn.style.visibility = "visible";
+                    debugBtn.style.visibility = "visible";
+                }
+                
             }
 		</script>
 		<script src="./get.php?res=dive.js"></script>
