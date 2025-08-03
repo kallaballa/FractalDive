@@ -5,7 +5,7 @@ This is an attempt at implementing a highly optimized realtime mandelbrot fracta
 My most important guideline is a quick and nice out-of-box experience and therefore I implemented automatic scaling of the iteration depth and the program automatically selects areas of interest. Depending on platform capabilities a number of optional features is available, the most important being: threading, auto vectorization, fixed/floating point.
 
 List of tested platforms are:
-- Many kinds of browsers on mobile and desktop. Example: http://viel-zu.org/
+- Many kinds of browsers on mobile and desktop. Example: https://viel-zu.org/
 - x86 Linux and MacOSX
 - armv7 Linux
 - Amiga 1200 / 4000. Example: https://vimeo.com/578666410
@@ -69,7 +69,7 @@ make clean; AMIGA=68020 make CXX=m68k-amigaos-g++ LD=m68k-amigaos-ld hardcore
 
 ## Core algorithm
 
-The program naturally spends most of the time in the mandelbrot fraktal rendering algorithm so that's where i put most of the work.
+The program naturally spends most of the time in the mandelbrot fractal rendering algorithm so that's where i put most of the work.
 I found that there are many apects to consider in order to get cross-platform and high performance code with C++ only. I will outline the most important considerations and optimizations using the following code snippets.
 
 ## Code
