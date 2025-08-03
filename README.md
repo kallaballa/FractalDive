@@ -1,4 +1,4 @@
-<img width="765" height="765" alt="Screenshot (6)" src="https://github.com/user-attachments/assets/32424f9b-2fcf-41b9-8b33-a6deb3be6046" />
+<img width="512" height="512" alt="fractal" src="https://github.com/user-attachments/assets/d9edf0fb-b323-4bd7-9f9e-4e3148709ae3" />
 
 ***Note***: While i think this code might by very interesting to a lot of people, this is strictly an educational fun-project. It also is very much still a work-in-progress and in some respects not optimal.
 
